@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec 雛型導覽</title><link rel="stylesheet" href="_shared.css">
+<style>body{padding:40px 24px}.wrap2{max-width:980px;margin:0 auto}.t{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.t a{color:inherit;display:block;transition:.15s}.t a:hover{transform:translateY(-2px);border-color:#B9C6EE}.no{font-family:var(--mono);color:var(--brand);font-weight:700}.hero{background:var(--rail);color:#fff;border-radius:22px;padding:30px 34px;margin-bottom:22px;position:relative;overflow:hidden}.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:var(--ai);opacity:.35;filter:blur(30px)}.hero p{color:#B8C3E8;margin:8px 0 0;max-width:620px}</style></head>
+<body><div class="wrap2">
+<div class="hero"><span class="ai-badge">雛型 v1 · 編輯中（尚未對外）＋ v2 草稿</span><h1 style="margin-top:14px;font-size:30px">SyncSpec 平台主體</h1><p>進系統先選專案；各專案資料不同（韋能二階、NCDR健康豬、新北景觀、警大空專案）。從「專案列表」開始點，或直接從下方挑畫面。</p>
+<div class="row" style="margin-top:16px"><a class="btn sm" href="../01_需求整理/01_需求摘要.md">← 回需求摘要</a></div></div>
+
+<div class="card" style="margin-bottom:18px;border-color:var(--brand)"><div class="row spread" style="flex-wrap:wrap;gap:10px"><div><span class="chip brand">v3 草稿</span> <b style="margin-left:6px">公司知識庫的更新與審核（v2 不動，改放 v3）</b><div class="sm muted" style="margin-top:4px">依 11/23～11/24 的決定：建立專案選單位與 AI 判斷領域、專案下選填的「系統」層與既有系統基準、雛型版本／方案／交付快照、知識庫權限與分級審核、工項說明合併為四個分頁；已移除對話存檔、知識庫概觀、技術能力與系統型態。v3 是 v2 的複本加上這些調整；點頂端橘色「v3 草稿」可切回 v1。</div></div></div>
+<div class="t" style="margin-top:14px">
+ <a class="card" href="雛型_v3_01_專案列表.html?ver=3" style="border-color:var(--brand)"><div class="no">v3-01 ⭐入口</div><h2>專案列表與建立專案</h2><div class="sm muted" style="margin-top:4px">客戶單位選已有或新增；領域、專案類型；建立前預覽會帶入哪些知識與規範。</div></a>
+ <a class="card" href="雛型_v3_02_專案總覽.html?p=wn&ver=3"><div class="no">v3-02</div><h2>專案總覽</h2><div class="sm muted" style="margin-top:4px">延續案基準多了「補第一批知識」，顯示自動帶入的單位知識條數。</div></a>
+ <a class="card" href="雛型_v3_03_合約與工項.html?p=wn&ver=3"><div class="no">v3-03</div><h2>工項 › 合約</h2><div class="sm muted" style="margin-top:4px">從素材選合約檔案拆工項、依檔案更新工項；系統（選填）與變更影響清單。</div></a>
+ <a class="card" href="雛型_v3_04_專案設定.html?p=wn&ver=3"><div class="no">v3-04</div><h2>專案設定與知識</h2><div class="sm muted" style="margin-top:4px">系統與既有系統基準（選填拆系統）、使用對象、案件性質；專案只決定要用的公司產品，單位、領域、規範自動帶入。</div></a>
+ <a class="card" href="雛型_v3_05_工項工作區.html?p=wn&i=0&ver=3" style="border-color:var(--brand)"><div class="no">v3-05 ⭐核心</div><h2>工項工作區</h2><div class="sm muted" style="margin-top:4px">四個分頁：工項說明、待確認事項、雛型（版本、方案、凍結、從基準畫面開始）、驗收條件。</div></a>
+ <a class="card" href="雛型_v3_10_知識庫維護人.html?ver=3"><div class="no">v3-10</div><h2>知識庫維護人（系統管理）</h2><div class="sm muted" style="margin-top:4px">指定領域、功能、產品、規範的維護人；單位由專案主 PM 維護。</div></a>
+ <a class="card" href="雛型_v3_12_專案素材.html?p=wn&ver=3"><div class="no">v3-12</div><h2>專案素材</h2><div class="sm muted" style="margin-top:4px">AI 自動分類、擷取重點附出處、原檔預覽；依分類決定保留原檔或只留參照；沒有「加入公司素材庫」。</div></a>
+ <a class="card" href="雛型_v3_07_知識庫.html?ver=3" style="border-color:var(--brand)"><div class="no">v3-07 ⭐核心</div><h2>公司知識庫</h2><div class="sm muted" style="margin-top:4px">單位主檔、領域、功能卡狀態、產品、規範；待提取依類型分級審核（一般、加強、嚴格）並有逾期提醒。</div></a>
+ <a class="card" href="雛型_v3_08_冷啟動匯入.html?p=wn&ver=3"><div class="no">v3-08</div><h2>補第一批知識（冷啟動）</h2><div class="sm muted" style="margin-top:4px">延續案或新單位：選來源、確認 AI 解析結果、補問歷史淵源、送審。</div></a>
+</div></div>
+<div class="card" style="margin-bottom:18px;border-color:var(--sun)"><div class="row spread" style="flex-wrap:wrap;gap:10px"><div><span class="chip sun">v2 草稿</span> <b style="margin-left:6px">依「專案生命週期、知識體系」新增與調整的畫面</b><div class="sm muted" style="margin-top:4px">只做有改動的畫面；沒改的（工項清單、工項工作區、完整雛型等）左側導覽仍連到 v1。從專案列表進去，各專案階段與內容不同：韋能二階（執行中・延續案，有合約變更）、<b>示範提案案（開案前提案・新案，虛構示範，只出現在 v2）</b>。警大、NCDR合作案的階段是我暫定的示範值，不是真實狀態。</div></div></div>
+<div class="t" style="margin-top:14px">
+ <a class="card" href="雛型_v2_01_專案列表.html" style="border-color:var(--sun)"><div class="no">v2-01 ⭐入口</div><h2>專案列表</h2><div class="sm muted" style="margin-top:4px">專案階段（開案前提案、執行中、結案；結案原因含未得標）與起點（新案、延續案）；建立專案可選延續自舊專案。</div></a>
+ <a class="card" href="雛型_v2_02_專案總覽.html?p=wn"><div class="no">v2-02</div><h2>專案總覽</h2><div class="sm muted" style="margin-top:4px">生命週期條、三張提醒（合約變更、對話存檔、可提取知識）、延續案基準。</div></a>
+ <a class="card" href="雛型_v2_03_合約與工項.html?p=wn#changes"><div class="no">v2-03</div><h2>合約與工項</h2><div class="sm muted" style="margin-top:4px">合約版本時間軸；提案期草稿工項（試試切到警大）；變更影響清單：AI 建議，PM 確認才改。</div></a>
+ <a class="card" href="雛型_v2_06_對話存檔.html?p=wn"><div class="no">v2-06</div><h2>對話存檔</h2><div class="sm muted" style="margin-top:4px">對話、會議紀錄、檔案的原文；對應工項、重新整理、轉成專案知識（可選擇刪除原文）。</div></a>
+ <a class="card" href="雛型_v2_07_知識與規範.html"><div class="no">v2-07</div><h2>公司知識庫：知識與規範</h2><div class="sm muted" style="margin-top:4px">素材／知識／規範三層；功能卡獨立；規範有強度與檢核，自動帶進驗收條件；待提取審核。</div></a>
+</div></div>
+<div class="t">
+ <a class="card" href="雛型_v1_01_專案列表.html?ver=1" style="border-color:var(--brand)"><div class="no">01 · F-01 ⭐入口</div><h2>專案列表</h2><div class="sm muted" style="margin-top:4px">進系統第一頁；只看到自己的專案。</div></a>
+ <a class="card" href="雛型_v1_02_專案總覽.html?ver=1"><div class="no">02 · F-02</div><h2>專案總覽</h2><div class="sm muted" style="margin-top:4px">進度、待辦、參考的公司素材庫。左側選單是這個專案所有資訊的切換。</div></a>
+ <a class="card" href="雛型_v1_03_專案管理.html?ver=1"><div class="no">03 · F-03／04／05</div><h2>專案管理</h2><div class="sm muted" style="margin-top:4px">合約拆工項審核、成員、專案設定與參考的公司素材庫。</div></a>
+ <a class="card" href="雛型_v1_04_工項清單.html?ver=1"><div class="no">04 · F-06</div><h2>工項清單</h2><div class="sm muted" style="margin-top:4px">階段由 AI 自動標示，可一鍵改。</div></a>
+ <a class="card" href="雛型_v1_05_工項工作區.html?ver=1" style="border-color:var(--brand)"><div class="no">05 · F-07～11 ⭐核心</div><h2>工項工作區</h2><div class="sm muted" style="margin-top:4px">圖文對照需求說明＋雛型＋AI 對話同一頁；下載直接取同一份圖文對照。</div></a>
+ <a class="card" href="雛型_v1_09_完整雛型.html?ver=1"><div class="no">09 · F-10</div><h2>完整雛型</h2><div class="sm muted" style="margin-top:4px">整個專案所有工項的畫面集中檢視；逐頁或畫面流程。</div></a>
+ <a class="card" href="雛型_v1_06_專案素材.html?ver=1"><div class="no">06 · F-12</div><h2>專案素材</h2><div class="sm muted" style="margin-top:4px">本專案專用素材；線上預覽。</div></a>
+ <a class="card" href="雛型_v1_07_公司素材庫.html?ver=1"><div class="no">07 · F-13</div><h2>公司素材庫</h2><div class="sm muted" style="margin-top:4px">公司產品、領域知識、過往經驗；另外控管，專案可選擇是否參考。</div></a>
+ <a class="card" href="雛型_v1_08_後台管理.html?ver=1"><div class="no">08 · F-14</div><h2>後台管理</h2><div class="sm muted" style="margin-top:4px">公司素材庫審核、分類清單、稽核與用量。</div></a>
+</div>
+<div class="card" style="margin-top:22px"><h2>怎麼看</h2>
+<div class="col sm ink2" style="margin-top:8px">
+<div>• 預設畫面是乾淨的，可直接投影。</div>
+<div>• <b>討論模式</b>：右下角小按鈕，或網址加 <code>?notes=1</code>。只列「今天要決定的」未決事項。</div>
+<div>• <b>規格檢視</b>：網址加 <code>?spec=1</code>，頁面下方出現「本畫面規格」，給 PL、PG 看。</div>
+<div>• 工項工作區可試：預設是圖文對照（點圖上編號只看該項說明）；切到「雛型」可標註並實際操作；點「下載圖文對照」會下載同一份文件。左上「專案列表」可切換專案，各專案內容不同。</div></div></div>
+</div></body></html>

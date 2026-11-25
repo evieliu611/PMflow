@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>人口估算 雛型導覽 — 智慧災害模擬演練平台</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body{overflow:auto;}
+  .wrap{max-width:840px;margin:0 auto;padding:28px 22px 60px;}
+  .doc-title{font-size:22px;font-weight:700;color:var(--navy);margin:6px 0 2px;}
+  .doc-sub{color:var(--ink-soft);font-size:13px;margin-bottom:18px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:14px 0;box-shadow:var(--shadow);}
+  .card h3{margin:0 0 6px;font-size:15px;color:var(--ink);}
+  .card p{margin:4px 0;color:var(--ink-soft);font-size:13px;}
+  .links a{display:inline-block;margin:6px 10px 0 0;padding:7px 14px;border-radius:5px;background:var(--blue);color:#fff;text-decoration:none;font-size:13px;}
+  .links a.ghost{background:#fff;color:var(--blue);border:1px solid var(--blue);}
+  .links a.ghost:hover{background:#f2f8ff;}
+  .meta{font-size:12px;color:#8a93a0;}
+  .badge{display:inline-block;background:var(--chip);color:var(--blue);border-radius:10px;padding:1px 9px;font-size:12px;margin-left:6px;}
+  ul.k{margin:6px 0;padding-left:18px;font-size:13px;color:var(--ink);}
+  ul.k li{margin:3px 0;}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="brand"><span class="logo">警</span>智慧災害模擬演練平台</div>
+  <span class="meta" style="color:#dbe6f4">雛型導覽</span>
+</header>
+
+<div class="wrap">
+  <div class="doc-title">人口估算（框選工具）<span class="badge">雛型 v2</span></div>
+  <div class="doc-sub">中央警察大學 115 年智慧災害模擬演練平台系統採購案　·　整理日期 2026-08-04　·　最新版 v2（2026-08-20 客戶訪談回填）</div>
+
+  <div class="card">
+    <h3>這個功能在做什麼</h3>
+    <p>右側面板「人口估算」頁籤下的框選工具：使用者在地圖上以任意多邊形框選範圍，系統自動加總範圍內人數（50m 網格中心點落入即計入）並計算面積(km²)，每筆成果新增到清單、隨專案存檔。</p>
+    <p class="meta">另有圖層「建物人口概況」（分層設色）客戶已確認要做、屬合約內，本次聚焦工具、圖層另行處理。</p>
+  </div>
+
+  <div class="card">
+    <h3>畫面（最新 v2）</h3>
+    <p>從下面連結開啟畫面。PM 一律先看「乾淨模式」（可直接投影）。v1 保留於資料夾供對照。</p>
+    <div class="links">
+      <a href="雛型_v2_人口估算.html">人口估算 v2（乾淨模式）</a>
+      <a class="ghost" href="雛型_v2_人口估算.html?notes=1">討論模式（未決事項＋情境切換）</a>
+      <a class="ghost" href="雛型_v2_人口估算.html?spec=1">規格檢視（欄位表／業務規則）</a>
+    </div>
+    <p class="meta" style="margin-top:8px">舊版：<a href="雛型_v1_人口密度分析.html">雛型 v1（8/20 訪談前）</a></p>
+  </div>
+
+  <div class="card">
+    <h3>v2 已定案重點（含 8/20 客戶訪談）</h3>
+    <ul class="k">
+      <li><b>【8/20】</b>工具改名「人口估算」；只算<b>人數＋面積</b>，<b>移除密度</b>。</li>
+      <li><b>【8/20】</b>網格改 <b>50m</b>（先試跑，效能不行再改回 100m）。</li>
+      <li>框選＝任意多邊形；每次框選新增一筆、不命名；點選清單列與地圖對應範圍高亮連動；可顯示/隱藏、可刪除（刪除二次確認）。</li>
+      <li>成果隨專案存檔，重開專案仍在。</li>
+      <li>情境設定員／系統管理者可框選估算；演練人員僅檢視；專案「演練完成」後唯讀（皆不加橫幅、不出現框選說明）。</li>
+      <li>框到無人口範圍→人數顯示 0，正常儲存。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>還沒定案（討論模式可見）</h3>
+    <ul class="k">
+      <li><b>Q-01</b> 面積小數 2 位、人數四捨五入整數 —— 8/20 訪談回饋未特別提及精度，維持暫定，<b>請 PM 確認當天是否有談到</b>。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>相關文件</h3>
+    <div class="links">
+      <a class="ghost" href="../01_需求整理/01_需求摘要.md">需求摘要</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

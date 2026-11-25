@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜公司知識庫（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.trow{cursor:pointer}.trow:hover td{background:var(--brand-bg)}
+.rsplit{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}@media(max-width:1000px){.rsplit{grid-template-columns:1fr}}
+.rrow{cursor:pointer}.rrow.on td{background:var(--brand-bg)}
+.rd{padding:18px;display:flex;flex-direction:column;gap:10px;position:sticky;top:0}.rd h3{margin:0}.rd .lb{font-size:12px;color:var(--muted);margin-bottom:2px}
+.ac{border:1px dashed var(--brand);border-radius:10px;padding:10px 12px;background:var(--brand-bg);font-size:13px}
+.lvl{display:grid;grid-template-columns:70px 90px minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:start;padding:9px 0;border-top:1px solid var(--line);font-size:13px}.lvl:first-of-type{border-top:0}
+@media(max-width:800px){.lvl{grid-template-columns:1fr}}
+.rv{display:grid;grid-template-columns:90px 1fr 1fr 150px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}.rv:first-of-type{border-top:0}
+@media(max-width:800px){.rv{grid-template-columns:1fr}}
+</style></head>
+<body data-nav="library" data-scope="global" data-crumb="">
+<script>window.NOTES=[
+ {id:'Q-38',text:'領域、功能、產品的審核人是誰？目前只有建議，需跟團隊確認。（單位知識已定：免事前審核，該單位專案的主 PM 維護）',who:'主管'},
+ {id:'Q-39',text:'提取時機：每輪訪談回填後、規格定稿、結案兜底，是否合適？',who:'PM／團隊'},
+ {id:'Q-40',text:'工項要不要新增「已上線」狀態，作為功能卡升為「已實作」的依據？',who:'PM／技術'},
+ {id:'Q-41',text:'領域知識升級門檻「2 個專案以上或 PM 標領域通則」是否合適？',who:'PM／團隊'},
+ {id:'Q-21',text:'單位清單由誰維護、名稱怎麼統一（避免「韋能」「台灣韋能能源」分成兩組）？',who:'PM'},
+ {id:'Q-45',text:'審核分級與逾期提醒天數（7 天提醒、14 天通知負責人）是否合適？',who:'主管／PM'},
+ {id:'Q-28',text:'規範的維護與審核：依規範類型分配（技術主管、資深 PM），細節還沒定。',who:'主管'},
+ {id:'Q-51',text:'知識庫權限：單位只有經手人員看得到、主 PM 可編輯；領域、功能、產品、規範全員可看、僅指定人員可編輯（在系統管理指定）。「經手」怎麼認定（專案成員即算？離開專案後還看得到嗎）？',who:'主管／PM'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page"><div id="root"></div>
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>知識與規範</td><td>公司知識庫分「知識」與「規範」。知識分單位、領域、功能（功能卡）、產品四類；規範是必須遵守、可被檢查的規則</td></tr>
+<tr><td>權限（v3 調整）</td><td>單位：只有經手過該單位專案的人員看得到，該單位專案的主 PM 可新增與編輯。領域、功能、產品、規範：所有進到系統的人都看得到，僅特定人員可編輯，該人員由「系統管理 › 知識庫維護人」指定。畫面右上的「目前身分」是示意，用來切換看不同身分看到什麼</td></tr>
+<tr><td>列表與詳情（v3 調整）</td><td>單位、領域、功能卡、產品因資料多，分頁只放列表（名稱、狀態、來源、最後確認與異動）；點一列進入「知識詳情」頁看細節。規範沿用左右分欄</td></tr>
+<tr><td>最後確認與異動（v3 調整）</td><td>每筆知識記錄「最後確認」與「最後異動」的時間與人員；詳情頁可按「確認無誤」（只更新確認）或編輯後儲存（確認與異動都更新），並留紀錄</td></tr>
+<tr><td>待提取（v3 調整）</td><td>依使用者權限顯示：單位候選只給看得到該單位的人；領域、功能、產品候選只給該類的維護人。無權限的項目不顯示，只提示有幾筆被隱藏</td></tr>
+<tr><td>領域（v3 調整）</td><td>領域清單新增「兵推演練」：偏歷史資料與假設情境（推演、評估），與偏即時資料的「防救災與韌性」分開；不由單一專案直接寫入，同一概念出現在 2 個以上專案，或 PM 標「領域通則」才升級（門檻待確認）</td></tr>
+<tr><td>功能卡</td><td>只收有實作過的功能；狀態：草稿（規格定稿）、已實作（上線確認）、已驗證；只有「已實作」以上預設讓 AI 參考。未得標專案的雛型不做功能卡</td></tr>
+<tr><td>產品</td><td>由產品負責人維護；專案只能回報「與實際不符」，不能直接修改</td></tr>
+<tr><td>免審與審核分級</td><td>單位知識免事前審核（系統自動掃描機敏資料、AI 引用標「未審核」、主 PM 事後修改、每月抽查）；功能卡草稿免審，升為「已實作」需 PG 確認；領域、規範、產品照常審核。候選等待 7 天提醒、14 天通知負責人（Q-45）</td></tr>
+<tr><td>規範</td><td>不從專案自動升級；專案發現新規則只能回報，進規範的審核；欄位、強度、適用範圍、檢核沿用 v2</td></tr></table></section></div>
+<script>
+let tab='unit',rf='全部',selR='R-001',kf='全部',df='全部',cand,me,rv={單位:'',領域:'',功能:'',產品:''};
+const SM={'生效':'mint','待確認':'sun','待討論':'coral'};
+const REVS=['待定','負責 PM','Allen','Evie','Shirley','Ian','主管'];
+const KC={單位:'violet',領域:'mint',功能:'brand',產品:'sun'};
+const CK={unit:'單位',domain:'領域',func:'功能',product:'產品',rule:'規範'};
+const SC={'草稿':'sun','已實作':'brand','已驗證':'mint'};
+function revText(k){if(k==='單位')return '免事前審核；該單位專案的主 PM 維護，每月抽查（已定）';const r=V3.reviewer[k];return rv[k]&&rv[k]!=='待定'?rv[k]+'（已指定）':r.sug+'（待確認）'}
+function href(t,k){const h=DB.href(PAGES.kbdetail);return h+(h.indexOf('?')>-1?'&':'?')+'t='+t+'&k='+encodeURIComponent(k)}
+const stCell=(kind,x)=>{const s=V3.stampOf(kind,x);return '<div class="sm">確認：'+V3.stampTxt(s.conf)+'</div><div class="xs muted">異動：'+V3.stampTxt(s.mod)+'</div>'};
+function edBanner(kind){const names=V3.getEditors()[CK[kind]]||[],can=V3.canEdit(me,kind);return `<div class="banner ${can?'ok':''}" style="margin-bottom:12px">${ic(can?'check':'lock')}<span>所有進到系統的人都看得到${CK[kind]}；僅 <b>${names.join('、')||'（尚未指定）'}</b> 可編輯，維護人由<a href="${DB.href(PAGES.kbadmin)}">系統管理</a>指定。${can?'<b>你可以編輯。</b>':'你目前是唯讀。'}</span></div>`}
+function visCand(){return cand.filter(c=>V3.candVisible(me,c))}
+function draw(){
+ me=V3.user();const vc=visCand(),np=vc.filter(c=>c.state==='待審核').length;
+ const T=[['unit','單位'],['domain','領域'],['func','功能卡'],['product','產品'],['rules','規範']];
+ $('#root').innerHTML=`<div class="page-head"><div><h1>公司知識庫 <span class="chip sun xs">v3 草稿</span></h1><p>跨專案共用的知識與規範。依權限顯示與編輯：單位只給經手人員，其餘全員可看、指定人員可編輯。</p></div><div class="row" style="gap:6px"><span class="xs muted">目前身分（示意）</span><select class="fsel on" id="me">${V3.users().map(u=>`<option ${u===me?'selected':''}>${u}</option>`).join('')}</select></div></div>
+ <div class="tabs2">${T.map(t=>`<button data-t="${t[0]}" class="${tab===t[0]?'on':''}">${t[1]}</button>`).join('')}<button data-t="cand" class="${tab==='cand'?'on':''}">待提取<span class="n">${np}</span></button></div><div id="tb"></div>`;
+ $('#me').onchange=e=>{V3.setUser(e.target.value);draw()};
+ $$('.tabs2 button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+ $('#tb').innerHTML=({unit:unitTab,domain:domainTab,func:funcTab,product:productTab,rules,cand:candH})[tab]();
+ $$('.trow[data-h]').forEach(r=>r.onclick=()=>{location.href=r.dataset.h});
+ ({unit:bindUnit,domain:bindDomain,rules:bindRules,cand:bindCand})[tab]&&({unit:bindUnit,domain:bindDomain,rules:bindRules,cand:bindCand})[tab]()}
+function unitTab(){const vis=V3.units.filter(u=>V3.canSeeUnit(me,u)),hid=V3.units.length-vis.length;
+ return `<div class="banner" style="margin-bottom:12px">${ic('lock')}<span>單位知識只有<b>經手過該單位專案的人員</b>看得到，該單位專案的<b>主 PM</b> 可新增與編輯。你（${me}）看得到 ${vis.length} 個單位${hid?`，另有 ${hid} 個單位因為沒有經手過而不顯示`:''}。</span></div>
+ <div class="row spread" style="margin-bottom:10px"><span class="sm muted">點一列進入單位的詳細頁</span><button class="btn sm" id="newu">＋ 新增單位</button></div>
+ <div class="tbl-wrap"><table class="tbl"><thead><tr><th>單位</th><th>專案</th><th style="width:150px">領域</th><th style="width:130px">主 PM（維護）</th><th style="width:70px">知識</th><th style="width:210px">最後確認／異動</th></tr></thead><tbody>${vis.map(u=>`<tr class="trow" data-h="${href('unit',u.name)}"><td><b>${u.name}</b></td><td class="sm">${u.projects.join('、')}</td><td class="sm">${u.domain.join('、')}</td><td class="sm">${V3.mainPmsOfUnit(u).join('、')||'—'}</td><td>${V3.unitKb(u)?`<span class="chip mint xs">${V3.unitKb(u)} 條</span>`:'<span class="chip xs">空白</span>'}</td><td>${stCell('unit',u)}</td></tr>`).join('')||`<tr><td colspan="6"><div class="empty sm">你沒有經手過任何單位的專案，所以這裡沒有可看的單位。</div></td></tr>`}</tbody></table></div>`}
+function bindUnit(){$('#newu').onclick=()=>toast('新增單位後，新增者成為該單位的主 PM，並建立空白的單位知識主檔（名稱維護方式待確認 Q-21）')}
+function domainTab(){const L=V3.domainKb.filter(x=>df==='全部'||x.d===df);
+ return edBanner('domain')+`<div class="card" style="margin-bottom:12px"><div class="row wrap" style="gap:6px;margin-bottom:8px"><button class="fchip ${df==='全部'?'on':''}" data-df="全部">全部領域</button>${V3.domains.filter(d=>d!=='未分類').map(d=>`<button class="fchip ${df===d?'on':''}" data-df="${d}">${d}</button>`).join('')}</div><div class="sm muted">${df!=='全部'&&V3.domainDesc[df]?df+'：'+V3.domainDesc[df]:'「防救災與韌性」看即時資料（監測、通報、預警）；「兵推演練」看歷史資料與假設情境（推演、評估）。領域知識不由單一專案直接寫入：同一概念出現在 2 個以上專案，或 PM 標「領域通則」才升級（門檻待確認）。'}</div></div>
+ <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:130px">領域</th><th>標題</th><th style="width:80px">狀態</th><th style="width:200px">來源</th><th style="width:210px">最後確認／異動</th></tr></thead><tbody>${L.map(x=>`<tr class="trow" data-h="${href('domain',x.title)}"><td><span class="chip mint xs">${x.d}</span></td><td><b>${x.title}</b></td><td><span class="chip ${x.state==='已升級'?'mint':'sun'} xs">${x.state}</span></td><td class="sm">${x.src}（${x.n} 個專案）</td><td>${stCell('domain',x)}</td></tr>`).join('')||'<tr><td colspan="5"><div class="empty sm">這個領域還沒有知識</div></td></tr>'}</tbody></table></div>`}
+function bindDomain(){$$('[data-df]').forEach(b=>b.onclick=()=>{df=b.dataset.df;draw()})}
+function funcTab(){return edBanner('func')+`<div class="banner" style="margin-bottom:12px">${ic('alert')}<span>只收有實作過的功能。狀態：<b>草稿</b>（規格定稿，免審、AI 不參考）→ <b>已實作</b>（PG 確認已上線）→ <b>已驗證</b>。<b>工項是否新增「已上線」狀態，需跟團隊確認。</b>未得標專案的雛型不做功能卡。</span></div>
+ <div class="tbl-wrap"><table class="tbl"><thead><tr><th>功能卡</th><th style="width:80px">狀態</th><th style="width:210px">來源</th><th style="width:210px">最後確認／異動</th></tr></thead><tbody>${V3.funcs.map(f=>`<tr class="trow" data-h="${href('func',f.title)}"><td><b>${f.title}</b><div class="xs muted">${f.desc}</div></td><td><span class="chip ${SC[V3.funcStatus(f)]}">${V3.funcStatus(f)}</span></td><td class="sm">${f.src}</td><td>${stCell('func',f)}</td></tr>`).join('')}</tbody></table></div><div class="xs muted" style="margin-top:10px">Ian 整理的「專案功能案例參照」可當索引起點，尚未補規則、畫面、踩雷。</div>`}
+function productTab(){return edBanner('product')+`<div class="banner" style="margin-bottom:12px">${ic('book')}<span>產品知識由產品負責人另外維護，不從專案綜整；專案只能回報「與實際不符」。審核人：${revText('產品')}。</span></div>
+ <div class="tbl-wrap"><table class="tbl"><thead><tr><th>產品</th><th style="width:110px">專案回報</th><th style="width:210px">最後確認／異動</th></tr></thead><tbody>${V3.products.map(p=>`<tr class="trow" data-h="${href('product',p.name)}"><td><b>${p.name}</b> <span class="chip sun xs">示意</span><div class="xs muted">${p.desc}</div></td><td>${p.report?`<span class="chip coral xs">${p.report} 件</span>`:'<span class="muted xs">沒有</span>'}</td><td>${stCell('product',p)}</td></tr>`).join('')}</tbody></table></div>`}
+function rules(){const cats=['全部',...new Set(V2.rules.map(r=>r.cat))],L=V2.rules.filter(r=>rf==='全部'||r.cat===rf),r=V2.rules.find(x=>x.id===selR)||L[0],s=V3.stampOf('rule',r);
+ return edBanner('rule')+`<div class="banner warn" style="margin-bottom:12px">${ic('alert')}<span>示意：規範內容與編號是示範；真實規範以 Ian 整理的知識庫為準（目前不更動）。規範不從專案自動升級，專案只能回報，進審核。</span></div>
+ <div class="row wrap" style="gap:6px;margin-bottom:12px">${cats.map(c=>`<button class="fchip ${rf===c?'on':''}" data-f="${c}">${c==='全部'?'全部面向':c}</button>`).join('')}</div>
+ <div class="rsplit"><div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:70px">編號</th><th style="width:56px">面向</th><th>標題</th><th style="width:76px">強度</th><th style="width:110px">適用範圍</th><th style="width:76px">狀態</th></tr></thead><tbody>${L.map(x=>`<tr class="rrow ${x.id===r.id?'on':''}" data-r="${x.id}"><td class="mono sm">${x.id}</td><td><span class="chip xs">${x.cat}</span></td><td><b>${x.title}</b></td><td class="sm">${x.strength}</td><td class="sm">${x.scope}</td><td><span class="chip ${SM[x.state]} xs">${x.state}</span></td></tr>`).join('')}</tbody></table></div>
+ <div class="card rd"><div class="row spread"><h3>${r.title}</h3><span class="chip ${SM[r.state]} xs">${r.state}</span></div><div class="xs muted">${r.id}・${r.cat}・${r.strength}・${r.scope}・${r.sys}</div><div><div class="lb">規範內容</div>${r.body}</div><div><div class="lb">情境做法</div>${r.ctx}</div><div><div class="lb">檢核</div>${r.check}</div><div class="ac"><b>會自動帶進驗收條件</b><div style="margin-top:4px">☐ ${r.check}　<span class="xs muted">PG 自測／PM 驗收</span></div></div><div class="xs muted">來源：${r.src}<br>版本：${r.ver}　負責人：${r.owner}<br>變更紀錄：${r.log}</div><div class="hr"></div><div class="xs muted">最後確認：${V3.stampTxt(s.conf)}<br>最後異動：${V3.stampTxt(s.mod)}</div><button class="btn sm" id="redit" ${V3.canEdit(me,'rule')?'':'disabled'}>${V3.canEdit(me,'rule')?'編輯規範（示意）':'唯讀：僅維護人可編輯'}</button></div></div>`}
+function bindRules(){$$('[data-f]').forEach(b=>b.onclick=()=>{rf=b.dataset.f;selR=null;draw()});$$('.rrow').forEach(t=>t.onclick=()=>{selR=t.dataset.r;draw()});const e=$('#redit');if(e&&!e.disabled)e.onclick=()=>toast('進入規範編輯（示意）；儲存後會更新最後異動時間與人員')}
+const LV={單位:['免事前審核','mint','入庫時系統自動掃描機敏資料；該單位專案的主 PM 可隨時修改並留紀錄','AI 引用時標「未審核」；管理者每月抽查約 10%'],功能:['升級才審','sun','功能卡草稿免審、直接入庫（AI 不參考）','升為「已實作」需 PG 確認已上線'],領域:['加強','sun','資深 PM 或主管審','確認真的跨專案適用才升級'],產品:['嚴格','coral','產品負責人審','專案只能回報，不能直接改'],規範:['嚴格','coral','指定負責人審','更新時標示受影響的工項']};
+const CHK_F=['PG 已確認功能已上線（升為已實作）','規格與實際一致（PG 確認）','標了適用範圍'];
+function actCell(c){if(c.kind==='單位'&&c.state==='待審核'){const u=V3.unitOfCand(c),can=u&&V3.canEditUnit(me,u);return c.deid.indexOf('待去識別')===0?'<span class="chip coral xs">掃到機敏</span> '+(can?'<button class="btn sm" data-deid="'+c.id+'">完成去識別</button>':'<div class="xs muted">僅該單位主 PM 可處理</div>'):'<span class="chip mint">已自動入庫</span><div class="xs muted">未審核・每月抽查</div>'}
+ if(c.state==='待審核')return '<button class="btn sm" data-ok="'+c.id+'">'+(c.kind==='功能'?'PG 確認已上線':'核准')+'</button> <button class="btn sm ghost" data-no="'+c.id+'">退回</button>';
+ return '<span class="chip '+(c.state==='已入庫'?'mint':'')+'">'+c.state+'</span>'}
+const CHK=['已去識別（客戶名、金額、聯絡人）','來源可追溯（專案、日期、對話或文件）','沒有重複（已和既有條目比對）','沒有衝突（衝突時並列，請審核人裁決）','標了適用範圍','有日期'];
+const ageOf=(c,i)=>c.age!==undefined?c.age:[3,6,9,15,2,5,8,1][i%8];
+function waitChip(a){return a>=14?'<span class="chip coral xs">等 '+a+' 天・已通知負責人</span>':a>=7?'<span class="chip sun xs">等 '+a+' 天・提醒審核</span>':'<span class="chip xs">等 '+a+' 天</span>'}
+function candH(){const vc=visCand(),hid=cand.length-vc.length,L=vc.filter(c=>kf==='全部'||c.kind===kf),ed=V3.getEditors(),mine=['領域','功能','產品'].filter(k=>(ed[k]||[]).includes(me));
+ return `<div class="banner" style="margin-bottom:12px">${ic('lock')}<span>待提取<b>依你的權限顯示</b>：單位候選只給看得到該單位的人；領域、功能、產品候選只給該類的維護人。你（${me}）${mine.length?'是 <b>'+mine.join('、')+'</b> 的維護人':'目前不是領域、功能、產品的維護人'}，看得到 ${vc.length} 筆${hid?`，另有 ${hid} 筆因權限不顯示`:''}。</span></div>
+ <div class="banner warn" style="margin-bottom:12px">${ic('alert')}<span><b>單位知識免事前審核（主 PM 維護、每月抽查），功能卡只審「升為已實作」；領域、規範、產品照常審核。</b>領域、功能、產品的審核人尚未決定，下面先放建議值。含機敏資料的一律先去識別。</span></div>
+ <div class="card" style="margin-bottom:14px"><h2>審核分級</h2><div class="sub">團隊小，不逐條人工審：單位免事前審核、功能卡只審「升為已實作」，領域、規範、產品照常審核；起步先單人審核加抽查。<span class="chip sun xs">待確認 Q-45</span></div>${Object.keys(LV).map(k=>`<div class="lvl"><span class="chip ${KC[k]||'coral'}">${k}</span><span class="chip ${LV[k][1]}">${LV[k][0]}</span><span>${LV[k][2]}</span><span class="muted">${LV[k][3]}</span></div>`).join('')}<div class="hr"></div><div class="sm"><b>每次審核看同一份檢查項</b>：${CHK.join('、')}。</div><div class="sm" style="margin-top:6px"><b>防止堆積</b>：候選 7 天內要審；超過 7 天提醒審核人、14 天仍未審通知負責人。退回要寫原因，審核紀錄留版本、可復原。</div></div>
+ <div class="card" style="margin-bottom:14px"><h2>審核人（依類型）</h2><div class="sub">先以建議值顯示，指定後下表的審核人會跟著變；知識庫維護人在<a href="${DB.href(PAGES.kbadmin)}">系統管理</a>指定</div>${V3.reviewKinds.map(k=>`<div class="rv"><span class="chip ${KC[k]}">${k}</span><span class="sm muted">建議：${V3.reviewer[k].sug}</span><span class="sm">目前：${revText(k)}</span><select class="fsel ${rv[k]&&rv[k]!=='待定'?'on':''}" data-rv="${k}">${REVS.map(r=>`<option ${((rv[k]||'待定')===r)?'selected':''}>${r}</option>`).join('')}</select></div>`).join('')}</div>
+ <div class="row wrap" style="gap:6px;margin-bottom:12px">${['全部',...V3.reviewKinds].map(k=>`<button class="fchip ${kf===k?'on':''}" data-k="${k}">${k==='全部'?'全部類型':k}</button>`).join('')}</div>
+ <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:70px">類型</th><th>內容</th><th style="width:150px">來源</th><th style="width:110px">方式</th><th style="width:110px">分級</th><th style="width:120px">等待</th><th style="width:150px">去識別</th><th style="width:170px">審核人</th><th style="width:150px">審核</th></tr></thead><tbody>${L.map((c,ix)=>`<tr><td><span class="chip ${KC[c.kind]} xs">${c.kind}</span></td><td><b>${c.title}</b>${c.note?`<div class="xs muted" style="margin-top:3px">${c.note}</div>`:''}</td><td class="sm">${c.src}</td><td class="sm">${c.origin}</td><td><span class="chip ${(LV[c.kind]||LV.單位)[1]} xs">${(LV[c.kind]||LV.單位)[0]}</span></td><td>${c.state==='待審核'&&c.kind!=='單位'?waitChip(ageOf(c,ix)):'<span class="muted xs">—</span>'}</td><td class="sm">${c.deid}</td><td class="sm">${revText(c.kind)}</td><td>${actCell(c)}</td></tr>`).join('')||'<tr><td colspan="9"><div class="empty sm">沒有你可以看的待提取項目</div></td></tr>'}</tbody></table></div>
+ <details class="card" style="margin-top:14px"><summary style="cursor:pointer;font-weight:700">知識怎麼更新（三道關卡與提取時機）</summary><div class="sub" style="margin-top:6px">即時標記 → 集中整理（每輪訪談後、規格定稿、結案兜底）→ 審核入庫（含去識別、比對合併）。</div><div class="tbl-wrap" style="box-shadow:none"><table class="tbl"><thead><tr><th style="width:60px">類型</th><th>來源</th><th>提取時機</th><th>審核人（待確認）</th><th>更新方式</th></tr></thead><tbody>${V3.mech.map(m=>`<tr><td><span class="chip ${KC[m[0]]}">${m[0]}</span></td><td class="sm">${m[1]}</td><td class="sm">${m[2]}</td><td class="sm">${m[3]}</td><td class="sm">${m[4]}</td></tr>`).join('')}</tbody></table></div></details>
+ <div class="modal-back" id="m-rv"><div class="modal"><div class="mh"><div><h2 id="rvt"></h2><div class="sm muted" id="rvs"></div></div><button class="btn ghost sm" data-close>✕</button></div><div class="mb" id="rvb"></div><div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="rvok" disabled>核准入庫</button></div></div></div>`}
+function bindCand(){$$('[data-deid]').forEach(b=>b.onclick=()=>{const c=cand.find(x=>x.id===b.dataset.deid);c.deid='已去識別';c.state='已入庫';draw();toast('已去識別並自動入庫（單位知識免事前審核，納入每月抽查）')});$$('[data-rv]').forEach(s=>s.onchange=()=>{rv[s.dataset.rv]=s.value;draw()});$$('[data-k]').forEach(b=>b.onclick=()=>{kf=b.dataset.k;draw()});
+ $$('[data-ok]').forEach(b=>b.onclick=()=>{const c=cand.find(x=>x.id===b.dataset.ok);if(c.deid.indexOf('待去識別')===0){toast('這筆含機敏資料，請先去識別再核准');return}
+  const lv=LV[c.kind]||LV.單位;
+  $('#rvt').textContent='核准入庫：'+c.title;$('#rvs').textContent=c.kind+'知識・'+lv[0]+'：'+lv[2];
+  $('#rvb').innerHTML='<div class="sm muted" style="margin-bottom:8px">逐項確認；全部勾選才能核准。</div>'+(c.kind==='功能'?CHK_F:CHK).map(t=>'<label class="row sm" style="margin-bottom:6px"><input type="checkbox" class="check rvc"> '+t+'</label>').join('');
+  const ok=$('#rvok');ok.disabled=true;$$('.rvc').forEach(x=>x.onchange=()=>{ok.disabled=!$$('.rvc').every(y=>y.checked)});
+  ok.onclick=()=>{c.state='已入庫';$('#m-rv').classList.remove('open');draw();toast('已入庫，並記錄最後確認的時間與人員（'+me+'）')};$('#m-rv').classList.add('open')});$$('[data-no]').forEach(b=>b.onclick=()=>{cand.find(x=>x.id===b.dataset.no).state='已退回';draw();toast('已退回給提取人')})}
+window.pageInit=function(){cand=V3.cand.map(x=>Object.assign({},x));const h=location.hash.slice(1);if(['unit','domain','func','product','rules','cand'].includes(h))tab=h;draw()};
+</script>
+</body></html>

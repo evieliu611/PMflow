@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜專案素材（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.mw{display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:0;align-items:stretch;border:1px solid var(--line);border-radius:var(--r);background:#fff;overflow:hidden;min-height:560px}
+@media(max-width:1000px){.mw{grid-template-columns:1fr}}
+.ml{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.mr{display:flex;flex-direction:column;min-width:0;background:#fff}
+.mi{display:flex;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}.mi:hover{background:#FAFBFF}.mi.on{background:var(--brand-bg)}
+.fi{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;font-size:11px;font-weight:700}
+.fi.docx{background:#E3ECFF;color:#2D5BFF}.fi.png{background:var(--mint-bg);color:#067A5D}.fi.xlsx{background:#DDF4E3;color:#1E8A3C}.fi.pdf{background:var(--coral-bg);color:#C2412A}.fi.sql,.fi.eml,.fi.zip{background:#EEF1F8;color:var(--ink2)}
+.cl{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pt{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer;background:#fff}.pt:hover{border-color:#B9C6EE}.pt.on{border-color:var(--brand);background:var(--brand-bg)}
+.paper{max-width:780px;margin:18px auto;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);padding:36px 46px;font-size:15px;line-height:1.95}.paper h3{font-size:18px;margin:0 0 12px}.paper p{margin:10px 0;color:var(--ink2)}.mm summary::-webkit-details-marker{display:none}.drop{border:2px dashed #C3CDE8;border-radius:14px;padding:34px 20px;text-align:center;color:var(--ink2);background:#FAFBFF;cursor:pointer}.drop:hover,.drop.over{border-color:var(--brand);background:var(--brand-bg)}.hl{background:#FFF1CC;border-radius:3px;padding:2px 4px;color:var(--ink)}
+.shot{margin:16px auto;max-width:560px;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);background:#fff}
+</style></head>
+<body data-nav="materials" data-crumb="專案素材">
+<script>window.NOTES=[
+ {id:'Q-57',text:'素材的保留方式預設：合約、會議、信件、現有系統畫面、系統技術資料保留原檔；歷史交付文件、參考資料只留擷取與來源參照。預設值與原檔保留期限（預設到結案）是否合適？',who:'PM／主管'},
+ {id:'Q-58',text:'分類清單先用九類（含「其他」）：是否夠用、要不要讓各專案自訂分類？AI 信心低於多少要請 PM 確認（暫定 70%）？',who:'PM'},
+ {id:'Q-30',text:'素材轉成知識後刪除原文：刪除前怎麼確認、機敏資料怎麼去識別？（目前：預設保留到結案；改成只留參照須二次確認）',who:'PM／主管'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page"><div id="root"></div>
+
+<div class="modal-back" id="m-up"><div class="modal">
+ <div class="mh"><div><h2>上傳素材</h2><div class="sm muted">合約、會議紀錄、需求、截圖都可以；AI 會自動分類並擷取重點</div></div><button class="btn ghost sm" data-close>✕</button></div>
+ <div class="mb"><div class="drop" id="dz"><div style="font-size:30px;line-height:1">⬆</div><b>拖曳檔案到這裡</b><div class="sm muted">或點一下，開啟檔案總管選擇（可多選）</div></div><input type="file" id="fi" multiple style="display:none"><div id="fl" style="margin-top:12px"></div></div>
+ <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="upgo" disabled>上傳並分類</button></div>
+</div></div>
+<div class="modal-back" id="m-cf"><div class="modal">
+ <div class="mh"><h2 id="cft"></h2></div>
+ <div class="mb"><div class="banner warn"><span id="cfi"></span><span id="cfs"></span></div></div>
+ <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="cfok"></button></div>
+</div></div>
+
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>定位</td><td>素材是「原始證據」層：合約、會議紀錄、信件、現有系統畫面等原檔。知識是從素材提取出來的內容，在公司知識庫。素材頁<b>不再有「加入公司素材庫」按鈕</b>；知識由 AI 從素材擬成候選，進公司知識庫「待提取」分級審核</td></tr>
+<tr><td>AI 自動分類</td><td>上傳後 AI 判斷分類並給信心；信心低於 70% 標「需確認」，請 PM 看一眼並可改分類。九類：合約與需求書、會議與訪談、需求與規劃文件、現有系統畫面、系統技術資料、歷史交付文件、往來信件、參考資料、其他。每類都要有下游用途（見詳情頁「用在哪」）</td></tr>
+<tr><td>檢視方式（v3 精簡）</td><td>列表只放檔名與分類（需確認、機敏才另標）。點進去預設看「原檔」（字級放大、版面寬，方便閱讀）；旁邊有「AI 重點」分頁，每條重點附出處，點一條會切到原檔並標出對應段落。分類、保留方式、刪除收在「更多」</td></tr>
+<tr><td>保留方式</td><td>依分類預設：合約、會議、信件、現有系統畫面、系統技術資料、需求文件「保留原檔」（本案證據，原檔預設保留到結案）；歷史交付文件、參考資料「只留擷取與來源參照」。可改；改成只留參照時，原檔會刪除，須二次確認、無法還原（Q-57、Q-30）</td></tr>
+<tr><td>機敏</td><td>含客戶名、金額、聯絡人的檔案標「含機敏」；提取成知識前會先去識別</td></tr>
+<tr><td>知識提取</td><td>素材頁沒有「提取知識候選」按鈕：由 AI 讀完檔案後自行判斷要不要提取，擬成單位、功能卡、領域候選進公司知識庫「待提取」</td></tr>
+<tr><td>上傳（v3）</td><td>素材頁是唯一的上傳入口，按鈕就叫「上傳」：開啟後可以直接把檔案拖進虛線框，或點一下開啟檔案總管選檔（可多選）；也可以拖給「AI 幫手」。合約也在這裡上傳，之後到「工項 › 合約」選它來拆工項或更新工項。上傳後狀態「解析中」，完成改為「已整理」。網址加 ?up=1 會直接開啟上傳視窗（總覽等頁面的「上傳素材」按鈕使用）</td></tr></table></section></div>
+<script>
+const CATS=[['合約與需求書','brand','工項 › 合約：選它來拆工項、更新工項','原檔'],['會議與訪談','mint','回填到各工項的待確認事項','原檔'],['需求與規劃文件','violet','工項說明、User Story','原檔'],['現有系統畫面','sun','既有系統基準的基準畫面','原檔'],['系統技術資料','coral','技術參考（系統資料功能之後再做）','原檔'],['歷史交付文件','','「補第一批知識」的來源','參照'],['往來信件','','對應到工項的臨時決定','原檔'],['參考資料','','規劃時引用','參照'],['其他','','請 PM 歸類','原檔']];
+const CI=n=>CATS.find(c=>c[0]===n)||CATS[8];
+const PT={合約與需求書:[['拆出工項與條文出處','第 2–5 頁'],['履約期限與驗收條件','第 8 頁 §6'],['變更與追加報價條款','第 9 頁 §7']],會議與訪談:[['決議事項（顏色需先經客戶確認）','00:12:30'],['待確認事項 3 項','00:31:10'],['待辦與負責人','00:44:05']],需求與規劃文件:[['需求重點與範圍','第 1–2 頁'],['可轉成的 User Story','第 3 頁'],['客戶強調的限制','第 4 頁']],現有系統畫面:[['畫面上的功能與欄位文字','整張畫面'],['版型與風格（深藍側欄）','整張畫面']],系統技術資料:[['資料表與欄位','全檔'],['關聯與索引','全檔']],歷史交付文件:[['既有功能清單','第 5–9 頁'],['已知限制與歷史淵源','第 12 頁'],['承辦偏好','第 14 頁']],往來信件:[['客戶臨時承諾與決定','第 2 封'],['待回覆事項','最後一封']],參考資料:[['可引用的規定','第 3 節']],其他:[['AI 無法判斷內容','—']]};
+const SUM={合約與需求書:'AI 已拆出工項與條文出處，並整理履約期限與變更條款。',會議與訪談:'整理出決議、待確認事項與待辦，已對應到相關工項。',需求與規劃文件:'擷取需求範圍與重點，可轉成 User Story。',現有系統畫面:'已讀取畫面文字，可作為既有系統基準的基準畫面。',系統技術資料:'解析出資料表與欄位，供技術參考（系統資料功能之後再做）。',歷史交付文件:'整理出既有功能、限制與承辦偏好；知識已可提取，原檔不留。',往來信件:'擷取客戶的臨時承諾與待回覆事項。',參考資料:'整理出可引用的規定與重點。',其他:'AI 無法判斷分類，請 PM 看一眼並歸類。'};
+const V1CAT={'合約':'合約與需求書','現有系統':'現有系統畫面','需求':'需求與規劃文件','未分類':'其他'};
+const SAMPLES=[['新北之森_合約變更協議.pdf','pdf','合約與需求書',95,true],['1124_需求訪談逐字稿.docx','docx','會議與訪談',92,false],['舊圖台_空間分析截圖.png','png','現有系統畫面',89,false],['schema_export.sql','sql','系統技術資料',96,false],['2025_成果報告書.docx','docx','歷史交付文件',82,true],['RE_檔案大小上限討論.eml','eml','往來信件',90,false],['不明_附件1.zip','zip','其他',45,false]];
+let P,L,cur=null,cf='全部',sf='全部',q='',selPt=0,pendingCf=null;
+const sk=()=>'ss_mat_'+P.id;
+function readOv(){try{return JSON.parse(sessionStorage.getItem(sk()))||{ov:{},added:[],rm:[]}}catch(e){return{ov:{},added:[],rm:[]}}}
+function saveOv(o){try{sessionStorage.setItem(sk(),JSON.stringify(o))}catch(e){}}
+function mk(o){const ci=CI(o.cat);return Object.assign({id:'',name:'',ext:'docx',cat:'其他',conf:90,state:'已整理',sens:false,keep:ci[3],meta:'',src:'',lab:'',pts:PT[o.cat]||PT.其他,sum:SUM[o.cat]||SUM.其他,uses:[ci[2]]},o)}
+function baseList(){const a=P.materials.map((m,i)=>{const cat=V1CAT[m.t]||'其他',un=m.t==='未分類';return mk({id:'b'+i,name:m.n,ext:m.e,cat,conf:un?0:92,state:un?'解析中':'已整理',sens:m.t==='合約',meta:m.m.replace(/AI 分類中…/,'').trim(),lab:m.lab||''})});
+ if(P.id==='wn'){a.push(mk({id:'x1',name:'1116_月會會議記錄.docx',ext:'docx',cat:'會議與訪談',conf:94,meta:'86 KB・2026-11-16・EvieLiu'}),mk({id:'x2',name:'韋能一階_成果報告書.docx',ext:'docx',cat:'歷史交付文件',conf:81,keep:'參照',sens:true,src:'公司共用雲端／專案文件／韋能一階／成果報告書',meta:'2.4 MB・2026-11-10・IanPeng'}),mk({id:'x3',name:'RE_檔案大小上限討論.eml',ext:'eml',cat:'往來信件',conf:90,meta:'42 KB・2026-11-18・EvieLiu'}),mk({id:'x4',name:'schema_既有土地評估.sql',ext:'sql',cat:'系統技術資料',conf:96,meta:'118 KB・2026-11-10・AllenYeh'}),mk({id:'x5',name:'不明_附件.zip',ext:'zip',cat:'其他',conf:45,state:'需確認',meta:'3.1 MB・2026-11-19・MinaLo'}))}
+ return a}
+function build(){const o=readOv();let a=baseList().concat((o.added||[]).map(mk));a=a.filter(x=>!(o.rm||[]).includes(x.id));a.forEach(x=>{const v=o.ov[x.id];if(v)Object.assign(x,v);if(x.state==='已整理'&&x.conf<70)x.state='需確認'});return a}
+function isLow(x){return x.state==='需確認'}
+function vis(){return L.filter(x=>(cf==='全部'||x.cat===cf)&&(sf==='全部'||(sf==='需確認'&&isLow(x))||(sf==='解析中'&&x.state==='解析中')||(sf==='含機敏'&&x.sens))&&(!q||x.name.toLowerCase().includes(q.toLowerCase())))}
+function setOv(id,patch){const o=readOv();o.ov[id]=Object.assign(o.ov[id]||{},patch);saveOv(o)}
+function draw(){L=build();if(cur&&!L.find(x=>x.id===cur))cur=null;const V=vis();if(!cur&&V.length)cur=V[0].id;
+ const nLow=L.filter(isLow).length,nSens=L.filter(x=>x.sens).length,nOk=L.filter(x=>x.state==='已整理').length;
+ const cnt=c=>L.filter(x=>x.cat===c).length;
+ $('#root').innerHTML=`<div class="page-head"><div><h1>專案素材</h1><p>合約、會議紀錄、需求、畫面都在這裡上傳（也可以直接拖給 AI 幫手）。AI 會自動分類，也會自己判斷要不要提取成知識；合約上傳後，到「工項 › 合約」選它來拆工項。</p></div><button class="btn" id="up">${ic('upload')}上傳</button></div>
+ <div class="row wrap" style="gap:8px;margin-bottom:10px"><span class="xs muted">AI 已整理 ${nOk} 份${nLow?'・需確認 '+nLow:''}${nSens?'・含機敏 '+nSens:''}</span></div>
+ <div class="row wrap" style="gap:6px;margin-bottom:10px"><select class="fsel ${cf!=='全部'?'on':''}" id="cfs"><option value="全部" ${cf==='全部'?'selected':''}>全部分類 ${L.length}</option>${CATS.filter(c=>cnt(c[0])||c[0]===cf).map(c=>`<option value="${c[0]}" ${cf===c[0]?'selected':''}>${c[0]} ${cnt(c[0])}</option>`).join('')}</select></div>
+ <div class="mw"><div class="ml"><div class="row" style="padding:10px 12px;gap:8px;border-bottom:1px solid var(--line)"><div class="search grow"><span id="ss"></span><input class="input" id="q" placeholder="搜尋檔名" value="${q}"></div><select class="fsel ${sf!=='全部'?'on':''}" id="sf">${['全部','需確認','解析中','含機敏'].map(x=>`<option ${sf===x?'selected':''}>${x}</option>`).join('')}</select></div><div style="overflow:auto;flex:1" id="list">${V.map(item).join('')||'<div class="empty sm" style="padding:30px">沒有符合的素材</div>'}</div></div>
+ <div class="mr" id="det"></div></div>`;
+ $('#ss').innerHTML=ic('search');$('#up').onclick=openUp;
+ $('#cfs').onchange=e=>{cf=e.target.value;cur=null;selPt=0;draw()};
+ $('#q').oninput=e=>{q=e.target.value;const pos=e.target.selectionStart;draw();const n=$('#q');n.focus();n.setSelectionRange(pos,pos)};$('#sf').onchange=e=>{sf=e.target.value;cur=null;draw()};
+ $$('.mi').forEach(m=>m.onclick=()=>{cur=m.dataset.id;selPt=0;draw()});detail()}
+function item(x){const ci=CI(x.cat);return '<div class="mi '+(x.id===cur?'on':'')+'" data-id="'+x.id+'"><div class="fi '+x.ext+'">'+x.ext.toUpperCase().slice(0,4)+'</div><div class="grow" style="min-width:0"><b class="sm" style="word-break:break-all">'+x.name+'</b><div class="row wrap" style="gap:4px;margin-top:4px">'+(x.state==='解析中'?'<span class="chip sun xs">AI 分類中…</span>':'<span class="chip '+ci[1]+' xs">'+x.cat+'</span>'+(isLow(x)?'<span class="chip coral xs">需確認</span>':'')+(x.sens?'<span class="chip coral xs">機敏</span>':''))+'</div></div></div>'}
+let dtab='原檔';
+function pointsHtml(x){return '<div style="padding:16px 20px;background:#fff;min-height:100%"><div class="sm" style="font-weight:700;margin-bottom:10px">AI 擷取重點</div>'+(x.state==='解析中'?'<div class="sm muted">解析中…</div>':x.pts.map((p,i)=>'<div class="pt '+(i===selPt?'on':'')+'" data-p="'+i+'"><div class="grow sm">'+p[0]+'</div><span class="chip xs">'+p[1]+'</span></div>').join(''))+'<div class="xs muted" style="margin-top:8px">點一條會切到「原檔」並標出出處；擷取可能有誤，以原檔為準。</div></div>'}
+function detail(){const x=L.find(y=>y.id===cur),box=$('#det');if(!x){box.innerHTML='<div class="empty" style="margin:auto"><div class="art">'+ic('files')+'</div><b>選一份素材</b><div class="sm">左邊點一份，看原檔與 AI 擷取的重點。</div></div>';return}
+ const ci=CI(x.cat),pts=x.pts;if(selPt>=pts.length)selPt=0;
+ box.innerHTML='<div style="padding:12px 18px;border-bottom:1px solid var(--line)"><div class="row spread" style="gap:8px;flex-wrap:wrap"><div style="min-width:0"><b style="word-break:break-all">'+x.name+'</b><div class="row wrap" style="gap:6px;margin-top:4px"><span class="chip '+ci[1]+' xs">'+x.cat+'</span>'+(isLow(x)?'<span class="chip coral xs">需確認分類</span>':'')+'<div class="seg" id="dt"><button class="'+(dtab==='原檔'?'on':'')+'" data-t="原檔">原檔</button><button class="'+(dtab==='重點'?'on':'')+'" data-t="重點">AI 重點 '+pts.length+'</button></div><span class="xs muted">'+(x.meta||'')+'</span></div></div>'+
+ '<details class="mm" style="position:relative"><summary class="btn sm" style="list-style:none;cursor:pointer">更多 ▾</summary><div class="card" style="position:absolute;right:0;top:34px;z-index:5;width:310px;padding:14px;box-shadow:var(--shadow)"><div class="field" style="margin:0 0 10px"><label>分類（AI 判斷，可改）</label><select class="select" id="sc">'+CATS.map(c=>'<option '+(c[0]===x.cat?'selected':'')+'>'+c[0]+'</option>').join('')+'</select></div><div class="field" style="margin:0 0 10px"><label>保留方式</label><div class="seg" id="kp"><button class="'+(x.keep==='原檔'?'on':'')+'" data-k="原檔">保留原檔</button><button class="'+(x.keep==='參照'?'on':'')+'" data-k="參照">只留參照</button></div></div><div class="xs muted" style="margin-bottom:10px">'+(x.keep==='原檔'?'本案證據，原檔預設保留到結案。':'只留 AI 擷取與來源參照，不存原檔。')+'</div><button class="btn sm ghost" style="color:var(--coral)" id="brm">'+ic('trash')+' 刪除這份素材</button></div></details></div>'+
+ '</div>'+
+ '<div style="flex:1;overflow:auto;background:#EEF1F8;min-height:380px" id="pv">'+(dtab==='原檔'?preview(x):pointsHtml(x))+'</div>'+
+ '<div class="xs muted" style="padding:8px 18px;border-top:1px solid var(--line)">AI 會自動判斷要不要把內容提取成知識，不需要手動操作；知識進公司知識庫「待提取」。</div>';
+ $$('#dt button').forEach(b=>b.onclick=()=>{dtab=b.dataset.t;draw()});
+ $$('.pt').forEach(p=>p.onclick=()=>{selPt=+p.dataset.p;dtab='原檔';draw()});
+ $('#sc').onchange=e=>{setOv(x.id,{cat:e.target.value,conf:100,state:'已整理',keep:CI(e.target.value)[3]});toast('分類改為「'+e.target.value+'」，保留方式依分類預設為「'+(CI(e.target.value)[3]==='原檔'?'保留原檔':'只留參照')+'」');draw()};
+ $$('#kp button').forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(k===x.keep)return;if(k==='參照'){ask('只留擷取與參照？','刪除原檔無法還原：','原檔會被刪除，擷取重點與來源參照保留；之後要查證只能回到原處找。','確認刪除原檔',()=>{setOv(x.id,{keep:'參照'});draw();toast('原檔已刪除，保留擷取與來源參照')})}else toast('原檔已刪除，要保留原檔請重新上傳（示意）')});
+ $('#brm').onclick=()=>ask('刪除這份素材？','刪除「'+x.name+'」','刪除後無法還原；已提取的知識不受影響。','刪除',()=>{const o=readOv();o.rm=(o.rm||[]).concat(x.id);saveOv(o);cur=null;draw();toast('已刪除素材')})}
+function preview(x){if(x.keep==='參照')return `<div class="empty" style="padding:50px 24px"><div class="art">${ic('files')}</div><b>原檔未保存</b><div class="sm" style="max-width:360px;margin:6px auto">只留 AI 擷取的重點與來源參照，不存原檔。</div><div class="sm">來源位置：${x.src||'（未填）'}</div></div>`;
+ if(x.state==='解析中')return '<div class="empty" style="padding:50px"><div class="sm muted">解析中…</div></div>';
+ const p=x.pts[selPt]||['',''];
+ if(x.ext==='png')return `<div class="shot"><div style="height:260px;background:linear-gradient(90deg,#1F3A68 0 18%,#F5F7FB 18% 100%);position:relative"><div style="position:absolute;left:22%;top:16%;right:6%;height:34%;border:2px solid #F5A524;background:rgba(245,165,36,.12);border-radius:6px"></div><div style="position:absolute;left:22%;top:56%;right:6%;height:24%;background:#fff;border:1px solid var(--line);border-radius:6px"></div></div><div class="sm" style="padding:10px 14px">${x.lab||'畫面截圖'}（標出的區塊對應所選重點）</div></div>`;
+ if(x.ext==='sql')return `<div class="paper" style="font-family:var(--mono);font-size:12.5px"><p>CREATE TABLE land_parcel (</p><p class="hl">&nbsp;&nbsp;parcel_id varchar(20) PRIMARY KEY,<br>&nbsp;&nbsp;county varchar(10),<br>&nbsp;&nbsp;geom geometry</p><p>);</p><p>CREATE TABLE analysis_layer (…)</p></div>`;
+ return `<div class="paper"><div class="xs muted" style="margin-bottom:8px">原檔預覽（示意）・所選重點的出處：${p[1]}</div><h3>${x.name.replace(/\.[a-z]+$/,'')}</h3><p>一、背景與範圍。本文件說明本案的需求範圍、期程與雙方權責，供後續規劃使用。</p><p class="hl">${p[0]}：此處為所選重點在原檔中的對應段落（示意文字），AI 的擷取以這一段為依據。</p><p>三、其他事項。未盡事宜，另行協議。</p><p>四、附件與參考資料請見附錄。</p></div>`}
+function ask(t,h,s,ok,fn){$('#cft').textContent=t;$('#cfi').innerHTML=ic('alert');$('#cfs').innerHTML='<b>'+h+'</b><br>'+s;$('#cfok').textContent=ok;pendingCf=fn;$('#m-cf').classList.add('open')}
+let upFiles=[];
+function fmtSize(n){return n>1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB'}
+function drawFl(){$('#fl').innerHTML=upFiles.map((f,i)=>'<div class="row sm" style="padding:5px 0;border-top:1px dashed var(--line);gap:8px"><b class="grow" style="word-break:break-all">'+f.name+'</b><span class="xs muted">'+fmtSize(f.size)+'</span><a data-x="'+i+'" style="cursor:pointer">✕</a></div>').join('');$('#upgo').disabled=!upFiles.length}
+function openUp(){upFiles=[];drawFl();$('#m-up').classList.add('open')}
+window.pageInit=function(){P=DB.cur();
+ const dz=$('#dz'),fi=$('#fi'),addF=l=>{[...l].forEach(f=>upFiles.push(f));drawFl()};
+ dz.onclick=()=>fi.click();fi.onchange=e=>{addF(e.target.files);e.target.value=''};
+ ['dragenter','dragover'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add('over')}));['dragleave','drop'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove('over')}));dz.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files.length)addF(e.dataTransfer.files)});
+ $('#fl').onclick=e=>{const x=e.target.dataset&&e.target.dataset.x;if(x!==undefined&&x!==''){upFiles.splice(+x,1);drawFl()}};
+ $('#upgo').onclick=()=>{if(!upFiles.length){toast('請先選擇或拖入檔案');return}
+  const o=readOv(),ts=Date.now(),added=upFiles.map((f,k)=>{const c=V3.matClassify(f.name);return{id:'u'+ts+k,name:f.name,ext:c.ext,cat:c.cat,conf:c.conf,state:'解析中',sens:c.sens,meta:fmtSize(f.size)+'・剛剛上傳'}});
+  o.added=(o.added||[]).concat(added);saveOv(o);upFiles=[];$('#m-up').classList.remove('open');cf='全部';sf='全部';cur=added[0].id;draw();toast('已上傳 '+added.length+' 份，AI 正在分類與轉文字');
+  setTimeout(()=>{const o2=readOv();added.forEach(a=>{o2.ov[a.id]=Object.assign(o2.ov[a.id]||{},{state:a.conf<70?'需確認':'已整理'})});saveOv(o2);draw();const ct=added.filter(a=>a.cat==='合約與需求書').length;toast('分類完成：'+added.map(a=>a.name.slice(0,8)+'…→'+a.cat).join('；').slice(0,90)+(ct?'；合約請到「工項 › 合約」拆工項':''))},1400)};
+ $('#cfok').onclick=()=>{$('#m-cf').classList.remove('open');if(pendingCf)pendingCf();pendingCf=null};
+ draw();if(new URLSearchParams(location.search).get('up')==='1')openUp();
+ const pend=L.filter(x=>x.state==='解析中'&&x.id[0]==='b');if(pend.length)setTimeout(()=>{pend.forEach(x=>{const c=/會議|紀錄|記錄/.test(x.name)?'會議與訪談':'其他';setOv(x.id,{cat:c,conf:c==='其他'?45:91,state:c==='其他'?'需確認':'已整理',keep:CI(c)[3]})});draw();toast('AI 完成分類：'+pend.map(x=>x.name.slice(0,10)).join('、'))},1500)};
+</script>
+</body></html>

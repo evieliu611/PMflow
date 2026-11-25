@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜公司素材庫</title><link rel="stylesheet" href="_shared.css">
+<style>
+.lw{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+.lc{cursor:pointer;border:1.5px solid var(--line);transition:.15s;padding:16px 18px}.lc:hover{border-color:#B9C6EE}.lc.on{border-color:var(--brand);box-shadow:0 0 0 3px rgba(45,91,255,.12)}
+.lc.lock{background:#FAFBFE}
+.kv{display:grid;grid-template-columns:92px 1fr;gap:6px 10px;font-size:13px}.kv>span:nth-child(odd){color:var(--muted)}
+.reuse{display:inline-flex;gap:3px}.reuse i{width:10px;height:10px;border-radius:3px;background:var(--line)}.reuse i.f{background:var(--mint)}
+.fc{cursor:pointer;border:1.5px solid var(--line);padding:14px 16px}.fc:hover{border-color:#B9C6EE}.fc.on{border-color:var(--brand)}
+</style></head>
+<body data-nav="library" data-scope="global" data-crumb="">
+<script>window.NOTES=[
+ {id:'Q-03',text:'機敏資料去識別規則（客戶名稱、金額、聯絡人、帳號）尚未訂，目前「待審核」的去識別檢查是示意。',who:'主管'},
+ {id:'Q-12',text:'共用層與專案私有層的界線：結案後專案私有內容是否自動轉共用？',who:'主管'},
+ {id:'Q-18',text:'公司素材庫的權限來源：直接用公司 AD 群組，還是在系統內另外維護名單？',who:'主管／技術',tech:true}
+];
+window.NOTES_EXTRA='<div class="nh" style="border-top:1px solid var(--line)"><b>情境切換</b></div><div class="ni"><button class="btn sm" onclick="document.getElementById(\'q\').value=\'水利\';document.getElementById(\'q\').dispatchEvent(new Event(\'input\'))">看「查無相似案例」</button> <button class="btn sm" onclick="document.getElementById(\'q\').value=\'\';document.getElementById(\'q\').dispatchEvent(new Event(\'input\'))">還原</button></div>';</script>
+<script src="_data.js"></script><script src="_shared.js"></script>
+<div id="page">
+<!-- F-13 公司素材庫：跨專案、另外控管；專案在「專案設定」勾選要不要參考 -->
+<div class="page-head"><div><h1>公司素材庫 <span class="chip sun xs">尚未規劃・示意</span></h1><p>公司共用的產品資料、領域知識與過往專案經驗。每個素材庫有自己的管理者與可見範圍；專案可在「專案設定」選擇要不要參考。</p></div>
+ <div class="row"><button class="btn" id="bulk"></button><a class="btn" href="雛型_v1_08_後台管理.html#kb" id="rev"></a></div></div>
+<div class="banner" style="margin-bottom:18px"><span id="b1"></span><span>你目前可使用 <b id="can">4</b> 個素材庫；其餘需向管理者申請。引用時只帶摘要與出處，不會把整份資料複製到專案。</span></div>
+<div class="lw">
+ <div class="col" id="libs" style="gap:12px"></div>
+ <div id="det"></div>
+</div>
+<section class="spec"><h2>本畫面規格</h2>
+<table><tr><th>元素</th><th>欄位</th><th>規則</th></tr>
+<tr><td>素材庫</td><td>名稱、說明、管理者、可見範圍、數量</td><td>跨專案；與「專案素材」分開；每庫獨立控管（F-13）</td></tr>
+<tr><td>可見範圍</td><td>全公司／限部門／僅指定專案</td><td>無權限者看得到存在但看不到內容，可「申請權限」；權限來源待 Q-18</td></tr>
+<tr><td>專案引用</td><td>ref[]</td><td>由專案設定勾選；僅列出有權限者；引用時只帶摘要與出處，每次引用留稽核紀錄</td></tr>
+<tr><td>功能卡</td><td>功能名稱、解決什麼問題、核心流程、踩過的雷、可沿用度；看門人：來源、日期、適用範圍、機敏等級、是否過期</td><td>搜尋找不到時顯示「沒有類似案例」，不硬湊</td></tr>
+<tr><td>入庫</td><td>管理員批次匯入／成員規格定稿時一鍵存卡</td><td>進「待審核」，通過去識別檢查後生效（US-08）</td></tr></table></section>
+</div>
+<script>
+const CARDS=[
+ {t:'空間分析面板擴充（KML 上傳／匯出）',p:'韋能二階',r:4,use:'圖台類系統在既有側欄加上範圍查詢與匯出',flow:'查詢方式下拉 → 上傳 KML → 地圖縮放 → 查詢 → 匯出勾選',pit:'一個檔案多個面不支援，要在提示與錯誤訊息講清楚；檔案大小與頂點數上限要先問。',tag:'圖台'},
+ {t:'點資料共編與編輯歷程',p:'韋能二階',r:3,use:'多人新增、修改、刪除點資料並保留異動記錄',flow:'管理清單 → 新增／編輯 → 編輯軌跡（預設近 1 年）',pit:'面資料共編超出合約；已刪除資料不保留快照要先和客戶確認。',tag:'共編'},
+ {t:'後台使用記錄（登入／下載紀錄）',p:'韋能二階',r:4,use:'後台查看誰在何時登入、下載了什麼',flow:'查詢條件 → 清單 → 分頁；查無資料統一文案',pit:'查詢條件順序與換行要依後台共用規範。',tag:'後台'},
+ {t:'觀賞樹木盤點與巡檢',p:'新北景觀',r:3,use:'樹木資料盤點、巡檢結果登錄與查詢',flow:'列表 → 詳情 → 巡檢紀錄',pit:'現場網路不穩時資料要能暫存。',tag:'景觀'}];
+const ITEMS={decide:['面資料的共編不在原合約範圍（踩雷）','匯出勾選 2 項以上打包 zip，只勾 1 項直接下載（決策）','圖層與分類圖示統一用向量圖示，不用 emoji（決策）'],
+ prod:['公司圖台平台功能清單','圖台平台操作手冊','後台管理共用規範','資料匯出共用元件說明','系統架構說明','維運 SOP'],
+ energy:['光電開發流程（開發中→籌設→容許→施工→併網）','相關法規與審議作業規範摘要','光電名詞與類型對照','環境敏感地區圖層說明'],
+ landscape:['常見樹種與特性','樹木巡檢規範','養護週期與標準','樹木健康分級說明'],
+ secret:['（需授權才可檢視）']};
+let cur='cards',card=0,P=DB.cur();
+const canRead=l=>l.id==='secret'?false:(l.scope==='限部門：景觀專案組'?false:true);
+function libs(){$('#libs').innerHTML=DB.LIB.map(l=>{const ok=canRead(l);return `<div class="card lc ${l.id===cur?'on':''} ${ok?'':'lock'}" data-id="${l.id}"><div class="row spread"><span class="chip ${l.tone}">${l.scope}</span>${ok?`<span class="chip mint xs">${ic('check')}可使用</span>`:`<span class="chip xs">${ic('lock')}需申請</span>`}</div>
+  <h3 style="font-size:15px;margin:10px 0 3px">${l.name}</h3><div class="sm ink2">${l.desc}</div><div class="row spread xs muted" style="margin-top:10px"><span>管理者：${l.owner}</span><span>${l.n}</span></div></div>`}).join('');$('#can').textContent=DB.LIB.filter(canRead).length}
+function detail(){const l=DB.LIB.find(x=>x.id===cur),ok=canRead(l),users=Object.values(DB.P).filter(p=>DB.refOf(p).includes(l.id));
+ let body='';
+ if(!ok)body=`<div class="empty"><div class="art">${ic('lock')}</div><b>你目前沒有權限檢視內容</b><div class="sm" style="max-width:380px;margin:6px auto 14px">${l.access}。向管理者「${l.owner}」申請後即可使用。</div><button class="btn primary" id="req">${ic('send')}申請權限</button></div>`;
+ else if(l.id==='cards'){const q=($('#q')||{}).value||'';const L=CARDS.map((c,i)=>[c,i]).filter(([c])=>!q||(c.t+c.use+c.tag).includes(q));
+  body=`<div class="search" style="margin-bottom:12px"><span id="s3"></span><input class="input" id="q" value="${q}" placeholder="用一句話描述想做的功能，例如：上傳範圍查詢、後台紀錄、資料匯出"></div>
+  ${L.length?`<div class="grid2">${L.map(([c,i])=>`<div class="card fc ${i===card?'on':''}" data-c="${i}"><div class="row spread"><span class="chip brand">${c.tag}</span><span class="reuse">${[1,2,3,4].map(k=>`<i class="${k<=c.r?'f':''}"></i>`).join('')}</span></div><h3 style="font-size:14.5px;margin:8px 0 3px">${c.t}</h3><div class="sm ink2">${c.use}</div><div class="xs muted" style="margin-top:6px">來源：${c.p}</div></div>`).join('')}</div>
+   <div class="card" style="margin-top:14px">${(()=>{const c=CARDS[L.some(x=>x[1]===card)?card:L[0][1]];return `<span class="ai-badge">${ic('book')}功能卡</span><h2 style="margin:10px 0 10px">${c.t}</h2><div class="kv"><span>解決什麼</span><span>${c.use}</span><span>核心流程</span><span>${c.flow}</span><span>踩過的雷</span><span style="color:#8A4A00">${c.pit}</span><span>可沿用度</span><span>${['','低','中低','中','高'][c.r]}</span><span>看門人</span><span>來源：${c.p} · 更新 2026-11 · 機敏等級：一般 · <span class="chip mint xs">有效</span></span></div><button class="btn primary" style="margin-top:12px" id="use">${ic('spark')}帶入目前專案的工項</button>`})()}</div>`
+   :`<div class="empty"><div class="art">${ic('book')}</div><b>知識庫沒有找到類似案例</b><div class="sm" style="max-width:380px;margin:4px auto 0">不會硬湊。這個功能規劃定稿後，可以存成功能卡，讓素材庫越用越好用。</div></div>`}`}
+ else body=`<div class="tbl-wrap" style="box-shadow:none"><table class="tbl"><tbody>${(ITEMS[l.id]||[]).map(t=>`<tr><td>${ic('doc')}</td><td><b>${t}</b></td><td class="muted sm">${l.owner} 維護</td><td><button class="btn sm">開啟</button></td></tr>`).join('')}</tbody></table></div>`;
+ $('#det').innerHTML=`<div class="card"><div class="row spread"><div><h2>${l.name}</h2><div class="sub" style="margin:2px 0 0">${l.desc}</div></div><span class="chip ${l.tone}">${l.scope}</span></div>
+  <div class="tabs" style="margin-top:12px"><button class="tab on" data-g="d" data-tab="c">內容</button><button class="tab" data-g="d" data-tab="a">權限控管</button><button class="tab" data-g="d" data-tab="u">被哪些專案引用 <span class="n">${users.length}</span></button></div>
+  <div data-g="d" data-panel="c" class="on">${body}</div>
+  <div data-g="d" data-panel="a"><div class="kv" style="margin-bottom:14px"><span>管理者</span><span>${l.owner}（可新增、審核、下架內容）</span><span>可見範圍</span><span>${l.scope}</span><span>存取規則</span><span>${l.access}</span><span>引用審核</span><span>${l.id==='secret'?'每次引用須主管核准，並留稽核紀錄':'專案勾選即可引用，留稽核紀錄'}</span></div>
+   <div class="field"><label>調整可見範圍（僅管理者）</label><select class="select"><option ${l.scope==='全公司'?'selected':''}>全公司</option><option ${l.scope.startsWith('限部門')?'selected':''}>限部門</option><option ${l.scope==='僅指定專案'?'selected':''}>僅指定專案</option></select></div>
+   <div class="row" style="justify-content:flex-end"><button class="btn" ${ok&&l.owner==='專案管理部'?'':'disabled'}>儲存權限</button></div><div class="xs muted">你不是此素材庫的管理者時，只能申請，不能修改權限。</div></div>
+  <div data-g="d" data-panel="u">${users.map(p=>`<div class="row" style="padding:9px 0;border-bottom:1px solid var(--line)"><div class="avatar" style="border-radius:9px;background:var(--brand-bg);color:var(--brand)">${p.name.slice(0,1)}</div><div class="grow"><b>${p.name}</b><div class="xs muted">${p.client} · ${p.sub}</div></div><span class="chip">${p.cat}</span></div>`).join('')||'<div class="empty sm">目前沒有專案引用</div>'}</div></div>`;
+ $$('.tab[data-g="d"]').forEach(t=>t.onclick=()=>activateTab('d',t.dataset.tab));
+ if($('#s3'))$('#s3').innerHTML=ic('search');if($('#q'))$('#q').oninput=e=>{detail();$('#q').focus();const v=$('#q').value;$('#q').setSelectionRange(v.length,v.length)};
+ $$('.fc').forEach(c=>c.onclick=()=>{card=+c.dataset.c;detail()});
+ if($('#use'))$('#use').onclick=()=>toast('已帶入「'+P.name+'」目前工項的對話，AI 只引用摘要','前往',()=>go('items'));
+ if($('#req'))$('#req').onclick=()=>toast('已送出申請，管理者「'+l.owner+'」審核後通知你')}
+window.pageInit=function(){
+ $('#bulk').innerHTML=ic('upload')+'批次匯入（管理員）';$('#rev').innerHTML=ic('shield')+'待審核 2';$('#b1').innerHTML=ic('shield');
+ $('#bulk').onclick=()=>toast('已開啟批次匯入：選擇資料夾後，AI 會抽成功能卡草稿送審');
+ $('#libs').addEventListener('click',e=>{const c=e.target.closest('.lc');if(c){cur=c.dataset.id;libs();detail()}});
+ libs();detail();
+};
+</script>
+</body></html>

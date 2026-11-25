@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EMIC 災情整合模組 雛型導覽 — 智慧災害模擬演練平台</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  body{overflow:auto;}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 22px 60px;}
+  .doc-title{font-size:22px;font-weight:700;color:var(--navy);margin:6px 0 2px;}
+  .doc-sub{color:var(--ink-soft);font-size:13px;margin-bottom:18px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:14px 0;box-shadow:var(--shadow);}
+  .card h3{margin:0 0 6px;font-size:15px;color:var(--ink);}
+  .card p{margin:4px 0;color:var(--ink-soft);font-size:13px;}
+  .links a{display:inline-block;margin:6px 10px 0 0;padding:7px 14px;border-radius:5px;background:var(--blue);color:#fff;text-decoration:none;font-size:13px;}
+  .links a.ghost{background:#fff;color:var(--blue);border:1px solid var(--blue);}
+  .links a.ghost:hover{background:#f2f8ff;}
+  .meta{font-size:12px;color:#8a93a0;}
+  .badge{display:inline-block;background:var(--chip);color:var(--blue);border-radius:10px;padding:1px 9px;font-size:12px;margin-left:6px;}
+  ul.k{margin:6px 0;padding-left:18px;font-size:13px;color:var(--ink);}
+  ul.k li{margin:3px 0;}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="brand"><span class="logo">警</span>智慧災害模擬演練平台</div>
+  <span class="meta" style="color:#dbe6f4">雛型導覽</span>
+</header>
+
+<div class="wrap">
+  <div class="doc-title">EMIC 災情整合模組<span class="badge">雛型 v2</span></div>
+  <div class="doc-sub">中央警察大學 115 年智慧災害模擬演練平台系統採購案　·　整理日期 2026-08-05（v2：Q-01 技術主管銷案）</div>
+
+  <div class="card">
+    <h3>這個功能在做什麼</h3>
+    <p>前台右側「EMIC」頁籤：演練開始後系統自動每 10 分鐘向消防署 EMIC 演練區 API 取回災情與處理狀態，在地圖上以 14 類災情圖徵（顏色代表處理狀態）呈現點位，並用時間播放器回放整場演練期間災情處理狀態的時序變化；災情清單可依類別/縣市/狀態篩選，點位可顯示/隱藏、可刪除，資料隨專案儲存。</p>
+    <p class="meta">EMIC 無處理歷程 API，時序變化由本系統在演練期間「只記狀態變更時間戳」自行累積而成。</p>
+  </div>
+
+  <div class="card">
+    <h3>畫面</h3>
+    <p>從下面連結開啟畫面。PM 一律先看「乾淨模式」（可直接投影，預設演示演練中）。</p>
+    <div class="links">
+      <a href="雛型_v2_EMIC災情.html">EMIC 災情（乾淨模式・演練中）</a>
+      <a class="ghost" href="雛型_v2_EMIC災情.html?sc=pre">演練前</a>
+      <a class="ghost" href="雛型_v2_EMIC災情.html?sc=done">演練完成（唯讀）</a>
+    </div>
+    <div class="links" style="margin-top:4px">
+      <a class="ghost" href="雛型_v2_EMIC災情.html?notes=1">討論模式（未決事項＋情境切換）</a>
+      <a class="ghost" href="雛型_v2_EMIC災情.html?spec=1">規格檢視（欄位表／業務規則）</a>
+    </div>
+    <p class="meta" style="margin-top:8px">操作提示：拖拉時間軸或按 ▶ 播放，可看同一案件顏色由紅→黃→綠變化；點地圖點位或清單列看災情詳情與附件。</p>
+  </div>
+
+  <div class="card">
+    <h3>本版已定案重點</h3>
+    <ul class="k">
+      <li>演練開始後每 10 分鐘取一次 EMIC 災情；<b>不存全快照，只記狀態變更時間戳</b>供播放器回放。</li>
+      <li>14 類災情圖徵 × 4 狀態色（灰未指派／紅待處理／黃處理中／綠已處理）。</li>
+      <li>點位<b>眼睛</b>＝地圖顯示/隱藏（狀態存專案）；<b>刪除</b>＝二次確認後不存入專案（兩者不同）。</li>
+      <li>演練日期<b>只能當天</b>（頂部改為單一日期、非起迄）；23:59 未結束→<b>自動視同結束演練</b>並凍結。</li>
+      <li>查詢<b>全國、自動分批取完</b>；篩選＝類別(複選)/縣市/狀態(複選)；點位詳情含 EMIC 全欄位＋附件。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>還沒定案</h3>
+    <ul class="k">
+      <li style="color:#2e9b57">✅ 目前無待決事項。<b>Q-01</b> 已於 2026-08-05 經技術主管確認銷案（分頁由開發者實作、逾時加重試、狀態歷程缺漏屬 EMIC 端限制且客戶已接受）—— 需求已收斂完成，可進入規格。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>相關文件</h3>
+    <div class="links">
+      <a class="ghost" href="../01_需求整理/01_需求摘要.md">需求摘要</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

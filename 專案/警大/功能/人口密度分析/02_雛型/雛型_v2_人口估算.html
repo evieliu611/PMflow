@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>人口估算（框選工具）雛型 v2 — 智慧災害模擬演練平台</title>
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<!--
+  ===== 人口估算（框選工具）雛型 v2 =====
+  v2 異動（2026-08-20 客戶訪談回填）：①工具改名「人口估算」②移除密度欄位，只留人數+面積 ③網格 100m→50m（先試跑）
+  對應需求摘要：../01_需求整理/01_需求摘要.md
+  三個檢視：
+    預設        → 乾淨畫面（投影給客戶/主管）
+    ?notes=1    → 討論模式（只放未決事項＋情境切換器），或右下角按鈕
+    ?spec=1     → 規格檢視（欄位表、業務規則、例外流程；給 PL/PG/設計）
+-->
+
+<!-- ---------- Header ---------- -->
+<header class="app-header">
+  <div class="brand"><span class="logo">警</span>智慧災害模擬演練平台</div>
+  <a class="to-admin" href="#">進入後台</a>
+</header>
+
+<!-- ---------- Toolbar ---------- -->
+<div class="app-toolbar">
+  <button class="tb-btn"><span>☰</span> 專案管理</button>
+  <select class="tb-select"><option>115年演練專案</option><option>未分類</option></select>
+  <span class="tb-proj">北投區地震演練</span>
+  <span class="tb-sep"></span>
+  <button class="tb-btn">儲存</button>
+  <button class="tb-btn">另存</button>
+  <button class="tb-btn">權限設定</button>
+  <span class="tb-spacer"></span>
+  <span class="tb-date">📅 2026/07/20 下午 08:22</span>
+  <span class="tb-toggle"><span class="sw"></span>EMIC整合</span>
+  <button class="tb-btn danger">演練開始</button>
+</div>
+
+<!-- ---------- Body：地圖 + 右側面板 ---------- -->
+<div class="app-body">
+
+  <!-- 地圖（離線示意，非真 Mapbox）。橘點=100m 網格中心點，落入框選範圍者上色加總 -->
+  <div class="map" id="map">
+    <div class="sea"></div>
+    <div class="land"></div>
+
+    <!-- 50m 網格中心點示意（計算邏輯：中心點落入範圍即計入） -->
+    <!-- SPEC: 人口加總點位 F-01【明確】【調整 v2 2026-08-20】來源:50m人口網格中心點（原100m，先試跑）規則:網格中心點落入框選多邊形即計入該筆估算 -->
+    <div class="grid-dot" style="left:30%;top:40%"></div>
+    <div class="grid-dot in" style="left:38%;top:44%"></div>
+    <div class="grid-dot in" style="left:44%;top:48%"></div>
+    <div class="grid-dot in" style="left:40%;top:54%"></div>
+    <div class="grid-dot in" style="left:47%;top:56%"></div>
+    <div class="grid-dot" style="left:55%;top:46%"></div>
+    <div class="grid-dot" style="left:60%;top:60%"></div>
+    <div class="grid-dot" style="left:26%;top:58%"></div>
+    <div class="grid-dot in" style="left:43%;top:60%"></div>
+    <div class="grid-dot" style="left:66%;top:38%"></div>
+
+    <!-- 框選多邊形（示意，可被清單點選高亮） -->
+    <div class="poly" id="poly1" style="left:34%;top:40%;width:20%;height:24%;
+         clip-path:polygon(20% 0,100% 18%,86% 100%,0 74%)"></div>
+    <div class="poly-label" id="poly1lbl" style="left:44%;top:40%">估算 1</div>
+
+    <div class="map-controls">
+      <div class="mc">◈</div>
+      <div class="mc">＋</div>
+      <div class="mc">－</div>
+      <div class="mc solid">2D</div>
+      <div class="mc">◎</div>
+    </div>
+    <div class="map-credit">© Mapbox　© OpenStreetMap</div>
+
+  </div>
+
+  <!-- 右側面板：人口密度頁籤 -->
+  <aside class="panel">
+    <div class="panel-tabs">
+      <div class="tab"><span class="ic">▤</span>圖層</div>
+      <div class="tab"><span class="ic">✔</span>已選</div>
+      <div class="tab"><span class="ic">▦</span>建物</div>
+      <div class="tab"><span class="ic">✎</span>繪製</div>
+      <div class="tab"><span class="ic">⚠</span>EMIC</div>
+      <div class="tab active"><span class="ic">👥</span>人口估算</div>
+    </div>
+
+    <div class="panel-body">
+
+      <!-- SPEC: 演練完成鎖定 F-05【調整 v1 2026-08-04 PM決定】規則:專案狀態=演練完成時，隱藏「開始框選」與各列刪除鈕，僅可檢視已存成果；不顯示唯讀橫幅（呈現與演練人員檢視一致） -->
+
+      <!-- SPEC: 框選工具區 F-05【調整 v1 2026-08-04 PM決定】演練完成/演練人員檢視時，整個「框選計算範圍」區塊（標題+說明+按鈕）皆隱藏，不出現「點擊開始框選…」文字 -->
+      <div id="drawGuide">
+        <div class="p-section-title">框選計算範圍</div>
+        <div class="p-hint">
+          點擊 <b>「開始框選」</b> 後，在地圖上點選多邊形範圍；<b>圈選完成（點回起點）即自動計算</b>
+          範圍面積與範圍內人數。繪製中可點 <b>「取消」</b> 放棄。
+        </div>
+
+        <!-- SPEC: 框選估算 F-01【對話確認】【調整 v2 2026-08-20】形狀:任意多邊形 產出:人數/面積(km²)（移除密度）
+             【調整 v2 2026-08-24 PG提問→PM決定 D-02】單一按鈕在「開始框選↔取消」間切換：點開始框選→進入繪製、按鈕變「取消」；
+             於地圖圈選完成（點回起點/雙擊）→**自動計算**並新增一筆成果、按鈕回「開始框選」（無獨立「完成計算」鈕）；
+             繪製中點「取消」或按 Esc→放棄本次框選、回初始態、不存成果 -->
+        <button class="btn-block" id="drawBtn">✛ 開始框選</button>
+      </div>
+
+      <div class="result-title">
+        估算成果清單 <span class="cnt" id="rCnt">共 3 筆</span>
+      </div>
+
+      <!-- SPEC: 成果清單 F-02【對話確認】【調整 v2 2026-08-20】欄位:人數/面積(km²)（移除密度）每次框選新增一筆 不命名
+           互動:點選整列→地圖對應範圍高亮; 眼睛→顯示/隱藏; 垃圾桶→刪除
+           【調整 v1 2026-08-04 PM決定 D-01】刪除需二次確認：跳「確定刪除此筆估算成果？」確認後才移除 -->
+      <table class="result-table" id="rTable">
+        <thead>
+          <tr>
+            <th class="lead"></th>
+            <th>人數</th>
+            <th>面積(km²)</th>
+            <th class="act"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row sel" data-poly="poly1">
+            <td class="lead"><button class="ic-btn eye" title="顯示/隱藏">👁</button></td>
+            <td>4,500</td><td>10.00</td>
+            <td class="act"><button class="ic-btn del" title="刪除">🗑</button></td>
+          </tr>
+          <tr class="row" data-poly="">
+            <td class="lead"><button class="ic-btn eye" title="顯示/隱藏">👁</button></td>
+            <td>12,180</td><td>26.34</td>
+            <td class="act"><button class="ic-btn del" title="刪除">🗑</button></td>
+          </tr>
+          <tr class="row" data-poly="">
+            <td class="lead"><button class="ic-btn eye" title="顯示/隱藏">👁</button></td>
+            <td>0</td><td>3.51</td>
+            <td class="act"><button class="ic-btn del" title="刪除">🗑</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- SPEC: 無人口範圍 F-01【對話確認】規則:框選範圍內無網格中心點時，人數顯示0，仍正常儲存（見清單第3列） -->
+
+      <div class="empty" id="rEmpty" style="display:none">
+        尚無估算成果<br>點擊「開始框選」在地圖上標示範圍
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<!-- ============ 規格檢視圖層（?spec=1） ============ -->
+<section class="spec-view">
+  <h2>📋 本畫面規格 — 人口估算（框選工具）v2</h2>
+  <p style="color:#5a6675;font-size:13px;margin:2px 0 4px">
+    唯一真實來源為本雛型的 SPEC 註解；下表由註解抽取。欄位細節以此為準，需求摘要只寫「做什麼」。
+  </p>
+
+  <h3>欄位／元素表</h3>
+  <table>
+    <thead><tr><th>元素</th><th>型別</th><th>必填</th><th>驗證／規則</th><th>資料來源</th><th>互動行為</th><th>F-編號</th></tr></thead>
+    <tbody>
+      <tr><td>框選按鈕（開始框選 ↔ 取消）</td><td>按鈕</td><td>—</td><td>任意多邊形；至少 3 個頂點才能圈選完成</td><td>使用者於地圖點選</td><td>初始「開始框選」→點擊進入繪製、按鈕變「取消」；**於地圖圈選完成（點回起點/雙擊）自動計算並新增一筆成果、按鈕回「開始框選」**（無獨立完成鈕）；繪製中點「取消」或 Esc→放棄、回初始態、不存成果〔v2 D-02〕</td><td class="fcode">F-01</td></tr>
+      <tr><td>人數</td><td>整數</td><td>是</td><td>範圍內 50m 網格中心點對應人口加總（原100m，先試跑）；<b>四捨五入至整數</b>【客戶確認 2026-08-24】；無點位時為 0</td><td>系統計算</td><td>唯讀顯示</td><td class="fcode">F-01</td></tr>
+      <tr><td>面積(km²)</td><td>數值</td><td>是</td><td>框選多邊形面積；<b>小數點後 2 位</b>【客戶確認 2026-08-24】</td><td>系統計算</td><td>唯讀顯示</td><td class="fcode">F-01</td></tr>
+      <!-- 密度欄位已於 v2（2026-08-20 客戶訪談）移除 -->
+      <tr><td>成果清單 列</td><td>清單項</td><td>—</td><td>每次完成計算新增一筆；不提供命名</td><td>估算結果</td><td>點整列→地圖對應範圍高亮；同時只有一列為選中態</td><td class="fcode">F-02</td></tr>
+      <tr><td>👁 顯示／隱藏</td><td>切換</td><td>—</td><td>切換該筆框選範圍在地圖上的顯示</td><td>—</td><td>點擊切換；隱藏時該列數值淡化</td><td class="fcode">F-02</td></tr>
+      <tr><td>🗑 刪除</td><td>按鈕</td><td>—</td><td>移除該筆估算成果</td><td>—</td><td>點擊跳二次確認「確定刪除此筆估算成果？」，確認後才移除該列與地圖範圍【PM決定 2026-08-04】</td><td class="fcode">F-02</td></tr>
+    </tbody>
+  </table>
+
+  <h3>業務規則</h3>
+  <ul>
+    <li><b>BR-01</b>（F-01）〔調整 v2〕人數加總邏輯：以本案人口密度分析產製之 <b>50m 網格</b>（原 100m，先試跑）為單位，<b>網格中心點落入框選多邊形範圍即計入</b>該筆（來源：memory/人口密度分析計算邏輯.md）。</li>
+    <li><b>BR-02</b>（F-01）框選範圍內無任何網格中心點（如山區、海域）→ 人數 0，仍正常完成計算並存成一筆。</li>
+    <li><b>BR-03</b>（F-02）每次完成計算「新增一筆」到清單，不取代既有；成果不命名，靠點選與地圖範圍連動辨識。</li>
+    <li><b>BR-04</b>（F-02）清單同時只有一列為選中（高亮）態；點另一列即切換。</li>
+    <li><b>BR-05</b>（F-03）估算成果隨專案存檔，重開專案仍在（與圖層套疊、地圖繪製一致的專案儲存機制）。</li>
+    <li><b>BR-06</b>（F-04）〔調整 2026-08-24〕角色權限：<b>情境設定員／維護助手／系統管理者</b>可框選估算與刪除（維護助手權限＝系統管理者）；<b>演練人員</b>僅檢視已存成果，不顯示「開始框選」與刪除。</li>
+    <li><b>BR-07</b>（F-05）〔調整 2026-08-04〕專案狀態＝「演練完成」→ 對所有角色僅可檢視，隱藏「開始框選」與各列刪除鈕；<b>不顯示唯讀橫幅</b>（呈現與演練人員檢視一致）；已存成果仍可點選檢視。</li>
+    <li><b>BR-08</b>（F-01）使用時機：演練前、演練中皆可框選估算。</li>
+    <li><b>BR-09</b>（F-01）〔v2 D-02〕框選採**單一按鈕＋圈選完成自動計算**：面板只有一顆按鈕，初始為「開始框選」，點擊後進入繪製、按鈕變為「取消」；使用者於地圖圈選完成（點回起點或雙擊封閉多邊形）即**自動計算**並新增一筆成果、按鈕回「開始框選」（不設獨立「完成計算」鈕）。繪製中點「取消」或按 **Esc**→放棄本次框選、清除已點頂點、回初始態、不產生成果。</li>
+  </ul>
+
+  <h3>例外流程與提示</h3>
+  <table>
+    <thead><tr><th>情境</th><th>系統行為</th><th>提示文字（暫定，待定稿）</th></tr></thead>
+    <tbody>
+      <tr><td>頂點少於 3 就想封閉多邊形</td><td>不完成、不自動計算，維持繪製中</td><td>「請至少標示 3 個點以圍成範圍」</td></tr>
+      <tr><td>繪製中按「取消」或 Esc〔v2 D-02〕</td><td>放棄本次框選、清除已點頂點、回初始態</td><td>（無提示，直接回「開始框選」）</td></tr>
+      <tr><td>框選範圍內無人口網格</td><td>正常完成、存一筆</td><td>人數欄顯示 0（不視為錯誤）</td></tr>
+      <tr><td>清單為空</td><td>顯示空狀態</td><td>「尚無估算成果，點擊『開始框選』在地圖上標示範圍」</td></tr>
+      <tr><td>演練人員／演練完成專案</td><td>隱藏整個「框選計算範圍」區塊（標題＋說明文字＋開始框選鈕）與各列刪除鈕；僅可檢視已存成果</td><td>無提示橫幅、不出現「點擊開始框選…」文字〔調整 2026-08-04〕</td></tr>
+      <tr><td>點刪除（🗑）</td><td>先跳二次確認，取消則不刪</td><td>「確定刪除此筆估算成果？」【PM決定 2026-08-04】</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 討論模式圖層（?notes=1 / 右下角按鈕） ============ -->
+<button class="notes-toggle" id="notesToggle">💬 討論模式</button>
+<div class="notes-panel" id="notesPanel">
+  <div class="notes-head">討論模式 — 今天要決定的事</div>
+
+  <div class="notes-sec">
+    <h4>情境切換（示範用，非規格）</h4>
+    <div class="scenario-switch" id="scenarioSwitch">
+      <button data-sc="pre" class="on">演練前</button>
+      <button data-sc="mid">演練中</button>
+      <button data-sc="done">演練完成（唯讀）</button>
+      <button data-sc="viewer">演練人員檢視</button>
+      <button data-sc="empty">空清單</button>
+    </div>
+  </div>
+
+  <div class="notes-sec">
+    <h4>① 今天要決定的事</h4>
+    <ul class="undecided">
+      <li style="color:#2e9b57">目前無待決事項 —— Q-01 顯示精度已由客戶確認（見下方已定案摘要）。</li>
+    </ul>
+  </div>
+
+  <div class="notes-sec">
+    <h4>② 已定案摘要（供對照）</h4>
+    <ul class="undecided">
+      <li>【客戶確認 8/24】顯示精度：<b>面積小數 2 位、人數四捨五入整數</b>。</li>
+      <li>【8/20】工具改名「人口估算」；只算<b>人數＋面積</b>，<b>移除密度</b>。</li>
+      <li>【8/20】網格改 <b>50m</b>（先試跑，效能不行再改回 100m）。</li>
+      <li>框選形狀＝任意多邊形；每次框選新增一筆、不命名、點選與地圖連動高亮；刪除二次確認。</li>
+      <li>無人口範圍→人數 0 正常儲存；成果隨專案存檔。</li>
+      <li>情境設定員／維護助手／系統管理者可框選（維護助手＝系統管理者權限）；演練人員僅檢視；演練完成專案唯讀（皆不加橫幅、不出現框選說明）。</li>
+      <li>【8/20】圖層「建物人口概況」客戶確認要做（分層設色，屬合約內），本次聚焦工具、圖層另行處理。</li>
+    </ul>
+  </div>
+</div>
+
+<span class="spec-badge" id="specBadge" style="display:none">📋 規格檢視模式（?spec=1）</span>
+
+<script>
+// ---- 討論模式開關 ----
+var notesPanel=document.getElementById('notesPanel');
+function openNotes(on){
+  document.body.classList.toggle('show-notes',on);
+  notesPanel.classList.toggle('open',on);
+}
+document.getElementById('notesToggle').addEventListener('click',function(){
+  openNotes(!notesPanel.classList.contains('open'));
+});
+
+// ---- 情境切換 ----
+var drawBtn=document.getElementById('drawBtn');
+function applyScenario(sc){
+  var empty=document.getElementById('rEmpty'), cnt=document.getElementById('rCnt');
+  // reset
+  document.getElementById('drawGuide').style.display='block';
+  document.getElementById('rTable').style.display='table'; empty.style.display='none';
+  document.querySelectorAll('.result-table .del,.result-table .eye').forEach(x=>x.style.visibility='visible');
+
+  // 演練完成 與 演練人員檢視 呈現一致：隱藏整個框選區塊（標題+說明+按鈕）與各列刪除鈕，皆不加唯讀橫幅
+  if(sc==='done' || sc==='viewer'){ document.getElementById('drawGuide').style.display='none';
+    document.querySelectorAll('.result-table .del').forEach(x=>x.style.visibility='hidden'); }
+  if(sc==='empty'){ document.getElementById('rTable').style.display='none'; empty.style.display='block'; cnt.textContent='共 0 筆'; }
+  else { cnt.textContent='共 3 筆'; }
+  // sync 討論模式按鈕高亮
+  document.querySelectorAll('#scenarioSwitch button').forEach(x=>x.classList.toggle('on',x.dataset.sc===sc));
+}
+document.getElementById('scenarioSwitch').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return;
+  applyScenario(b.dataset.sc);
+});
+
+// ---- 開始框選 ↔ 取消（單鈕切換；圈選完成自動計算，無「完成計算」鈕）----
+var drawing=false;
+function enterDraw(){ drawing=true; drawBtn.textContent='✕ 取消'; drawBtn.classList.add('drawing'); }
+function resetDraw(){ drawing=false; drawBtn.textContent='✛ 開始框選'; drawBtn.classList.remove('drawing'); }
+drawBtn.addEventListener('click',function(){
+  if(!drawing){ enterDraw(); }          // 進入繪製，按鈕變「取消」
+  else{ resetDraw(); }                    // 繪製中點「取消」→ 放棄本次框選、不存成果
+});
+// 實際系統：於地圖圈選完成（點回起點/雙擊）自動計算並新增成果，按鈕回「開始框選」。
+// 雛型示意：無真地圖繪製，此處以「模擬完成」示範自動計算結果。
+document.addEventListener('keydown',function(e){ if(e.key==='Escape' && drawing){ resetDraw(); } }); // Esc 取消
+
+// ---- 清單列點選 → 地圖範圍高亮連動 ----
+document.querySelectorAll('.result-table tr.row').forEach(function(tr){
+  tr.addEventListener('click',function(e){
+    if(e.target.closest('.ic-btn')) return;
+    document.querySelectorAll('.result-table tr.row').forEach(x=>x.classList.remove('sel'));
+    this.classList.add('sel');
+    var pid=this.dataset.poly;
+    document.querySelectorAll('.poly').forEach(p=>p.classList.remove('active'));
+    if(pid){ var p=document.getElementById(pid); if(p) p.classList.add('active'); }
+  });
+});
+// 眼睛：顯示/隱藏
+document.querySelectorAll('.result-table .eye').forEach(function(btn){
+  btn.addEventListener('click',function(e){e.stopPropagation();
+    this.classList.toggle('off'); this.closest('tr').classList.toggle('hidden-row');});
+});
+// 刪除（D-01 二次確認）
+document.querySelectorAll('.result-table .del').forEach(function(btn){
+  btn.addEventListener('click',function(e){e.stopPropagation();
+    if(!confirm('確定刪除此筆估算成果？')) return;
+    var tr=this.closest('tr'); tr.parentNode.removeChild(tr);
+    var n=document.querySelectorAll('.result-table tr.row').length;
+    document.getElementById('rCnt').textContent='共 '+n+' 筆';
+    if(n===0){document.getElementById('rTable').style.display='none';document.getElementById('rEmpty').style.display='block';}
+  });
+});
+
+// ---- 依查詢字串切換圖層／情境（放最後，確保元素、var 與函式都已就緒） ----
+(function(){
+  var qs = new URLSearchParams(location.search);
+  if(qs.get('spec')==='1'){ document.body.classList.add('show-spec'); document.getElementById('specBadge').style.display='block'; }
+  if(qs.get('notes')==='1'){ openNotes(true); }
+  if(qs.get('sc')){ applyScenario(qs.get('sc')); }  // sc=pre|mid|done|viewer|empty
+  if(qs.get('draw')==='1'){ enterDraw(); }           // 繪製中狀態（供截圖）
+})();
+</script>
+</body>
+</html>

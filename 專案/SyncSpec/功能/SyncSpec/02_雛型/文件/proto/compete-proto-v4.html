@@ -1,0 +1,996 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>競合分析管理 雛型 v4</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+/* 韋能 土地評估圖台系統 — 雛型共用樣式（全資料夾唯一一份，只追加不複製）
+   風格依 _共用素材/現有系統截圖：頂欄白底、左側深藍圖示列、白色側面板、青藍強調 */
+:root{
+  --navy:#1d2a5e; --navy-2:#27377a; --teal:#12a9c4; --teal-d:#0e8fa7;
+  --ink:#1f2937; --muted:#6b7280; --line:#d9dee7; --bg:#f4f6fa;
+  --warn:#d97706; --danger:#c62828; --ok:#2e7d32;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--ink);font-size:15px}
+button{font:inherit;cursor:pointer}
+.app{display:flex;flex-direction:column;height:100vh;min-height:640px}
+/* 頂欄 */
+.topbar{height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:linear-gradient(#fff,#eef0f4);border-bottom:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.08);z-index:5}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:40px;height:40px}
+.brand .en{font-size:11px;line-height:1.05;font-weight:700;color:var(--navy);letter-spacing:.5px}
+.brand h1{margin:0;font-size:25px;color:var(--navy);font-weight:700}
+.top-right{display:flex;align-items:center;gap:18px;font-weight:600;color:var(--navy)}
+.user-chip{background:var(--teal);color:#fff;padding:0 14px;height:62px;display:flex;align-items:center;gap:6px}
+.user-chip a{color:#fff;text-decoration:underline;margin-left:8px}
+.body{flex:1;display:flex;min-height:0;position:relative}
+/* 左側圖示列 */
+.rail{width:78px;flex:none;background:var(--navy);display:flex;flex-direction:column;align-items:center;padding-top:14px;gap:12px}
+.rail button{width:62px;height:58px;white-space:nowrap;border:0;border-radius:10px;background:var(--navy-2);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;font-size:10px}
+.rail button svg{width:26px;height:26px}
+.rail button.active{background:#fff;color:var(--navy)}
+.rail .spacer{flex:1}
+.rail .dot{position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:#ffb300;border:1.5px solid #fff}
+/* 側面板 */
+.panel{width:350px;min-width:350px;max-width:350px;flex:none;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:4;box-shadow:2px 0 8px rgba(0,0,0,.06);min-height:0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px}
+.panel-head h2{margin:0;font-size:22px;color:var(--navy)}
+.x{border:0;background:none;font-size:22px;color:var(--navy);line-height:1}
+.panel-body{flex:1;overflow:auto;padding:0 20px 12px;min-height:0}
+.panel-foot{flex:none;padding:12px 20px 18px;border-top:1px solid var(--line);display:flex;gap:12px;justify-content:center}
+.btn{height:42px;padding:0 22px;border-radius:6px;border:1.5px solid var(--navy);background:#fff;color:var(--navy);font-weight:600}
+.btn.primary{background:var(--navy);color:#fff}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.sm{height:34px;padding:0 12px;font-size:14px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:flex;border-bottom:1px solid var(--line);margin:0 -20px 12px;padding:0 20px}
+.tabs button{flex:1;border:0;background:none;padding:10px 0;color:var(--muted);font-weight:600;border-bottom:3px solid transparent}
+.tabs button.on{color:var(--teal);border-bottom-color:var(--teal)}
+/* 圖層套疊 */
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:0 10px;height:42px;margin-bottom:12px}
+.search input{border:0;outline:0;flex:1;font:inherit;background:none}
+.group{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff}
+.group>.gh{display:flex;align-items:center;gap:10px;padding:12px;font-weight:700;color:var(--navy);cursor:pointer}
+.group>.gh .gi{width:22px;text-align:center}
+.group>.gh .sp{flex:1}
+.group .gb{padding:2px 14px 12px;border-top:1px solid #eef0f4;display:none}
+.group.open .gb{display:block}
+.layer-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0}
+.layer-row input[type=checkbox]{width:19px;height:19px;accent-color:var(--teal);margin-top:2px}
+.layer-row .nm{flex:1}
+.layer-row .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.tag{display:inline-block;font-size:11.5px;border-radius:4px;padding:1px 7px;font-weight:600}
+.tag.fix{background:#e8eefc;color:#2b4aa6}
+.tag.edit{background:#e0f6fa;color:var(--teal-d)}
+.opacity{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);padding:2px 0 6px 29px}
+.opacity input{flex:1;accent-color:var(--teal)}
+.group.disabled .layer-row{opacity:.5}
+.callout{display:flex;gap:8px;background:#fff8e6;border:1px solid #f2d98f;color:#7a5a00;border-radius:6px;padding:9px 11px;font-size:13.5px;margin:6px 0 10px}
+.callout.info{background:#eaf6fb;border-color:#b9e0ee;color:#0b5d77}
+.callout.lock{background:#fff1f1;border-color:#f2b8b8;color:#8f1f1f}
+/* 管理清單 */
+.toolbar{display:flex;gap:8px;align-items:center;margin:2px 0 10px;flex-wrap:wrap}
+.toolbar .grow{flex:1}
+.stat{font-size:13px;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 12px;font-size:13px;color:var(--muted)}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.case{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#fff;cursor:pointer}
+.case:hover{border-color:var(--teal)}
+.case.sel{border-color:var(--teal);box-shadow:0 0 0 2px #bfeaf2}
+.case.locked{background:#fafafa}
+.case .r1{display:flex;align-items:center;gap:8px}
+.case .name{font-weight:700;flex:1;line-height:1.35}
+.case .r2{font-size:13px;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.case .r3{display:flex;align-items:center;gap:6px;margin-top:8px}
+.case .r3 .grow{flex:1}
+.ib{border:1px solid var(--line);background:#fff;border-radius:6px;width:34px;height:32px;color:var(--navy)}
+.ib:hover{border-color:var(--teal);color:var(--teal)}
+.ib:disabled{opacity:.4;cursor:not-allowed}
+.stage{font-size:12px;font-weight:700;border-radius:4px;padding:1px 7px}
+.stage.開發中{background:#fff1dc;color:#a65b00}
+.stage.籌設{background:#f1e4f7;color:#7b2d9b}
+.stage.施工{background:#e8f5d4;color:#4a7a10}
+.lockbadge{font-size:12px;color:#8f1f1f;background:#ffe3e3;border-radius:4px;padding:1px 7px;font-weight:600}
+.minebadge{font-size:12px;color:#0b5d77;background:#d9f1f7;border-radius:4px;padding:1px 7px;font-weight:600}
+.empty{text-align:center;color:var(--muted);padding:48px 10px}
+.empty b{display:block;color:var(--ink);font-size:17px;margin-bottom:6px}
+/* 編輯表單 */
+.back{border:0;background:none;color:var(--teal-d);font-weight:700;padding:0 0 6px}
+.fsec{margin:14px 0 4px;font-weight:700;color:var(--navy);font-size:15px;border-left:4px solid var(--teal);padding-left:8px}
+.fld{margin:10px 0}
+.fld label{display:block;font-size:13.5px;color:var(--muted);margin-bottom:4px}
+.fld label .req{color:var(--danger)}
+.fld input,.fld select,.fld textarea{width:100%;height:42px;border:1px solid #c5ccd8;border-radius:6px;padding:0 10px;font:inherit;background:#fff}
+.fld textarea{height:84px;padding:8px 10px;resize:vertical}
+.fld input.changed,.fld select.changed,.fld textarea.changed{background:#fffbe6;border-color:#e2c44a}
+.fld .hint{font-size:12px;color:var(--muted);margin-top:3px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.checks{display:flex;gap:14px;flex-wrap:wrap}
+.checks label{display:flex;align-items:center;gap:5px;font-size:14px;color:var(--ink);margin:0}
+.checks input{width:auto;height:auto;accent-color:var(--teal)}
+.inline-trace{border:1px solid var(--line);border-radius:8px;margin-top:16px}
+.inline-trace>.th{display:flex;align-items:center;padding:10px 12px;font-weight:700;color:var(--navy);cursor:pointer;gap:8px}
+.inline-trace>.th .sp{flex:1}
+.inline-trace .tb{display:none;padding:0 12px 10px}
+.inline-trace.open .tb{display:block}
+/* 軌跡 */
+.tl{border-left:3px solid #dbe3f0;margin:8px 0 0 8px;padding-left:14px}
+.ev{position:relative;margin-bottom:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.ev::before{content:"";position:absolute;left:-23px;top:14px;width:11px;height:11px;border-radius:50%;background:var(--teal);border:2px solid #fff;box-shadow:0 0 0 2px #dbe3f0}
+.ev.新增::before{background:var(--ok)}
+.ev.刪除::before{background:var(--danger)}
+.ev .eh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ev .act{font-size:12px;font-weight:700;border-radius:4px;padding:1px 8px;color:#fff;background:var(--teal)}
+.ev .act.新增{background:var(--ok)}
+.ev .act.刪除{background:var(--danger)}
+.ev .meta{font-size:12.5px;color:var(--muted)}
+.ev .cn{font-weight:700;margin:4px 0 2px;cursor:pointer;color:var(--navy)}
+.ev .cn:hover{text-decoration:underline}
+.diff{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.diff td,.diff th{border:1px solid #e5e9f0;padding:3px 6px;text-align:left}
+.diff th{background:#f4f6fa;font-weight:600;color:var(--muted)}
+.diff .old{color:var(--danger);text-decoration:line-through}
+.diff .new{color:var(--ok);font-weight:600}
+.filterbar{display:flex;gap:8px;margin-bottom:8px}
+.filterbar select,.filterbar input{height:36px;border:1px solid #c5ccd8;border-radius:6px;padding:0 8px;font:inherit;background:#fff}
+.filterbar select{flex:1;min-width:0}
+/* 地圖（離線示意） */
+.map{flex:1;position:relative;background:#f1ece6;overflow:hidden;min-width:0}
+.map svg.base{position:absolute;inset:0;width:100%;height:100%}
+.mk{position:absolute;transform:translate(-50%,-100%);cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+.mk svg{width:26px;height:34px;display:block}
+.mk.sel{z-index:3;transform:translate(-50%,-100%) scale(1.3)}
+.mk .lab{position:absolute;left:50%;top:-20px;transform:translateX(-50%);background:#fff;border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:12px;white-space:nowrap;display:none}
+.mk:hover .lab,.mk.sel .lab{display:block}
+.mk.lockedmk svg path{opacity:.55}
+.mk .lk{position:absolute;right:-6px;top:-2px;font-size:13px}
+.gov{position:absolute;opacity:.55;transition:opacity .2s}
+.map-tools{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;background:#fff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.map-tools button{width:36px;height:34px;border:0;background:none;font-size:20px}
+.legend-btn{position:absolute;left:14px;bottom:14px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 14px;color:var(--teal-d);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.legend{position:absolute;left:14px;bottom:62px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.2);display:none;min-width:200px}
+.legend.on{display:block}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.mapbadge{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(29,42,94,.92);color:#fff;border-radius:999px;padding:6px 16px;font-size:13.5px;display:none;white-space:nowrap}
+.mapbadge.on{display:block}
+.scale{position:absolute;left:150px;bottom:20px;font-size:12px;border:2px solid #444;border-top:0;padding:0 8px}
+/* 互動元件 */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#263238;color:#fff;padding:11px 20px;border-radius:8px;font-size:14px;max-width:640px;display:none;z-index:50;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.toast.on{display:block}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:40}
+.modal-bg.on{display:flex}
+.modal{background:#fff;border-radius:10px;width:440px;max-width:92vw;padding:20px 24px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.modal h3{margin:0 0 10px;color:var(--navy)}
+.modal .mf{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.modal .opt{display:flex;gap:8px;align-items:center;margin:8px 0}
+/* 討論模式 */
+.notes-fab{position:fixed;right:14px;bottom:14px;z-index:30;border:1px solid #bbb;background:rgba(255,255,255,.85);color:#555;border-radius:999px;font-size:12px;padding:5px 12px}
+.notes-panel{position:fixed;right:14px;bottom:50px;width:400px;max-height:70vh;overflow:auto;background:#fff;border:2px solid var(--warn);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.3);z-index:30;display:none}
+body.notes .notes-panel{display:block}
+.notes-panel h4{margin:0;padding:10px 14px;background:#fff4e0;color:#8a4b00;font-size:15px;border-bottom:1px solid #f1d9ae;position:sticky;top:0}
+.notes-panel .q{padding:9px 14px;border-bottom:1px solid #eee;font-size:13.5px}
+.notes-panel .q b{color:#8a4b00}
+.notes-panel .q .own{font-size:12px;color:var(--muted)}
+.notes-panel .sw{padding:10px 14px;background:#f7f7f7;font-size:13px}
+.notes-panel .sw label{display:block;margin:3px 0}
+.q-pin{display:none;position:absolute;z-index:6;background:var(--warn);color:#fff;border-radius:999px;font-size:11.5px;font-weight:700;padding:1px 8px}
+body.notes .q-pin{display:inline-block}
+/* 規格檢視 */
+#spec{display:none;padding:24px 32px 60px;background:#fff;border-top:6px solid var(--teal)}
+body.spec #spec{display:block}
+body.spec .app{height:100vh}
+#spec h2{color:var(--navy)}
+#spec table{border-collapse:collapse;width:100%;margin:8px 0 22px;font-size:13.5px}
+#spec th,#spec td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+#spec th{background:#f4f6fa}
+/* index */
+.idx{max-width:880px;margin:40px auto;padding:0 20px}
+.idx h1{color:var(--navy)}
+.idx .card{border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:14px 0;background:#fff}
+.idx a{color:var(--teal-d);font-weight:700}
+
+/* 可互動地圖 */
+.map{touch-action:none;user-select:none;cursor:grab}.map.grab{cursor:grabbing}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+.mk{transition:opacity .15s}
+.zoomtag{position:absolute;right:14px;bottom:44px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12.5px;color:var(--muted)}
+.scale{position:absolute;left:150px;bottom:20px;font-size:12px;border:2px solid #444;border-top:0;padding:0 4px;text-align:center;background:rgba(255,255,255,.7)}
+
+/* 位置設定：地圖點選 */
+.map.pick{cursor:crosshair}
+.pickbar{position:absolute;left:50%;top:56px;transform:translateX(-50%);background:#e91e63;color:#fff;border-radius:999px;padding:6px 18px;font-size:14px;font-weight:600;display:none;z-index:6}
+.pickbar.on{display:block}
+.mk.draft{z-index:5}
+.seg{display:inline-flex;border:1.5px solid var(--navy);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:#fff;color:var(--navy);padding:7px 16px;font-weight:600}
+.seg button.on{background:var(--navy);color:#fff}
+.fld input[readonly]{background:#f3f5f9;color:#555}
+
+
+/* 清單精簡、篩選收合 */
+.case.cp{padding:7px 10px;margin-bottom:6px}
+.case.cp .name{font-size:14.5px;line-height:1.3}
+.case.cp .r2{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:13px;color:var(--muted);flex-wrap:nowrap}
+.case.cp .r2 .grow{flex:1}
+.case.cp .rv{margin:0;padding:1px 7px;font-size:12.5px;white-space:nowrap}
+.case.cp .lockbadge,.case.cp .minebadge{white-space:nowrap}
+.case.cp .ib{width:28px;height:26px;font-size:13px;padding:0}
+.case.cp .btn.cf{height:26px;padding:0 10px;font-size:13px}
+.fbar{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;margin:2px 0 8px;cursor:pointer;background:#fafbfd;font-size:14px}
+.fbar .grow{flex:1}
+.fsum{color:var(--teal-d);font-weight:600;font-size:13px}
+.fbody{border:1px solid var(--line);border-radius:6px;padding:8px 10px 2px;margin:-4px 0 8px}
+.fbody .search{height:36px;margin-bottom:8px}
+.fbody .chips{align-items:center}
+
+
+/* 欄位分類收合、開發進度 */
+.sec{margin-top:10px}
+.fsec.acc{display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin:0;background:#f4f6fa;border-radius:6px;padding:7px 10px;border-left:4px solid var(--teal)}
+.fsec.acc .chev{color:var(--muted)}
+.sec .secbody{display:none;padding:0 2px 4px}
+.sec.open .secbody{display:block}
+.subh{margin:12px 0 0;font-size:13.5px;color:var(--navy);font-weight:700}
+.subh .hint{font-weight:400;color:var(--muted);font-size:12px}
+.autov{min-height:40px;display:flex;align-items:center;gap:8px;background:#f3f5f9;border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+.autov.changed{background:#fffbe6;border-color:#e2c44a}
+.ph{display:flex;align-items:center;gap:8px;margin:6px 0;padding:4px 8px;border:1px solid var(--line);border-radius:6px}
+.ph.on{background:#eef9fb;border-color:#b9e0ee}
+.ph .phl{display:flex;align-items:center;gap:6px;flex:1;margin:0;font-size:14px;color:var(--ink)}
+.ph input[type=checkbox]{width:18px;height:18px;accent-color:var(--teal)}
+.ph input[type=month]{width:140px;height:34px;border:1px solid #c5ccd8;border-radius:6px;padding:0 6px;font:inherit}
+.ph input[type=month]:disabled{background:#f3f5f9;color:#aaa}
+.ph .to{font-size:12px;color:var(--muted);white-space:nowrap}
+
+/* 圖示按鈕與懸停提示、篩選條件、資訊視窗 */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;z-index:70;background:#263238;color:#fff;font-size:12.5px;line-height:1.3;padding:4px 9px;border-radius:4px;white-space:nowrap;pointer-events:none;font-weight:400}
+.rail{position:relative;z-index:8}
+.rail button{height:52px}
+.rail [data-tip]:hover::after{left:calc(100% + 10px);top:50%;transform:translateY(-50%)}
+.toolbar [data-tip]:hover::after{top:calc(100% + 6px);left:0}
+.case [data-tip]:hover::after{bottom:calc(100% + 6px);right:0}
+.ibtn{width:38px;height:36px;border:1.5px solid var(--navy);border-radius:6px;background:#fff;color:var(--navy);display:inline-flex;align-items:center;justify-content:center;padding:0}
+.ibtn.primary{background:var(--navy);color:#fff}
+.case.cp .ib{display:inline-flex;align-items:center;justify-content:center}
+.case.cp .ib svg{width:18px;height:18px}
+.lockic{display:inline-flex;color:#8f1f1f}
+.lockic svg{width:17px;height:17px}
+.fl{font-size:12.5px;color:var(--muted);margin:6px 0 3px}
+.fsel{width:100%;height:36px;border:1px solid #c5ccd8;border-radius:6px;padding:0 8px;font:inherit;background:#fff}
+.coordhead{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.coordhead .lbl{font-size:13.5px;color:var(--navy);font-weight:700}
+.fld.inl{display:flex;gap:10px;align-items:baseline;margin:10px 0}
+.fld.inl label{margin:0}
+.fld.inl span{font-weight:700}
+.infowin{position:absolute;transform:translate(-50%,-100%);background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,.3);padding:10px 12px;min-width:240px;font-size:13px;z-index:7;display:none}
+.infowin .ttl{font-weight:700;color:var(--navy);margin-bottom:6px;padding-right:20px}
+.infowin .row{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
+.infowin .row span{color:var(--muted)}
+.infowin .x{position:absolute;right:6px;top:4px;font-size:16px}
+.infowin::after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%) rotate(45deg);width:12px;height:12px;background:#fff;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+
+.btn.withic{display:inline-flex;align-items:center;gap:4px}
+.btn.withic svg{width:18px;height:18px}
+.hbtns{display:flex;align-items:center;gap:10px}
+
+/* 篩選條件卡片（含依條件的動作列） */
+.fcard{border:1px solid var(--line);border-radius:8px;margin:2px 0 10px;background:#fff}
+.fcard .fbar{border:0;border-radius:8px 8px 0 0;margin:0;background:#fafbfd;border-bottom:1px solid var(--line)}
+.fcard .fbody{border:0;border-radius:0;margin:0;padding:8px 10px 2px}
+.factions{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--line);background:#fafbfd;border-radius:0 0 8px 8px;flex-wrap:wrap}
+.factions .grow{flex:1}
+
+/* 面板固定 350px：清單第二行排版 */
+.case.cp .r2 .stage{flex:none}
+.case.cp .r2 .loc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.case.cp .r2 .lockic:hover::after,.case.cp .r2 .lockic[data-tip]:hover::after{left:0;right:auto}
+.ph input[type=month]{width:118px}
+.ph{flex-wrap:wrap}
+.autov .stage{white-space:nowrap;flex:none}
+.callout a{white-space:nowrap}
+
+/* 清單：名稱 20 字 14px 剛好一行；鎖頭固定在行尾，對齊下方刪除按鈕 */
+.case.cp .name{font-size:14px}
+.case.cp .r1 .lockic{width:28px;flex:none;justify-content:center}
+/* 清單：左右留白縮小，讓 20 個全形字的名稱＋鎖頭（24px）仍可放在同一行 */
+.panel-body.tight{padding:0 12px 12px}
+.case.cp{padding:7px 8px}
+.case.cp .r1{gap:0}
+.case.cp .r1 .lockic{width:24px}
+/* 篩選條件卡片：比照圖層套疊群組卡片（淺底標題列、粗體深藍標題、右側粗箭頭、白底內容區） */
+.fcard{border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}
+.fcard .fbar{display:flex;align-items:center;gap:10px;padding:13px 14px;background:#f4f6fa;border:0;border-radius:0;margin:0;font-size:15px;font-weight:700;color:var(--navy);cursor:pointer}
+.fcard .fbar .gi{display:inline-flex}
+.fcard .fbar .chev{display:inline-flex}
+.fcard .fbar svg{width:22px;height:22px}
+.fcard .fbody{padding:10px 16px 6px}
+.fcard .factions{border-top:1px solid #eef0f4;background:#fff;border-radius:0;padding:10px 16px}
+.case.cp .name{font-size:13px}
+/* 篩選條件卡片：只借用圖層套疊卡片的「框、標題底色、展開圖示」；標題文字維持原樣式、不放前綴圖示 */
+.fcard .fbar{font-size:14px;font-weight:400;color:var(--ink)}
+/* 清單名稱 14px；鎖定且名稱過長時由程式把最後 3 字換成「...」，另以 ellipsis 當保險 */
+.case.cp .name{font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 篩選條件標題列高度 40px */
+.fcard .fbar{height:40px;padding:0 14px;box-sizing:border-box}
+.fcard .fbar svg{width:20px;height:20px}
+
+.inline-trace .th svg{width:20px;height:20px;flex:none}
+/* 編輯頁的展開／收合箭頭：與「篩選條件」相同的粗箭頭 */
+.fsec.acc .chev{display:inline-flex;color:var(--ink)}
+.fsec.acc .chev svg,.inline-trace .chevs svg{width:20px;height:20px}
+.inline-trace .chevs{display:inline-flex;color:var(--ink);transition:transform .15s}
+.inline-trace.open .chevs{transform:rotate(180deg)}
+/* 開發進度項目列：不換行（避免「開發階段註記」跑版） */
+.ph{flex-wrap:nowrap;gap:6px}
+.ph .phl{white-space:nowrap;flex:1;min-width:0}
+.ph input[type=month]{width:112px;flex:none}
+.ph .to{flex:none;min-width:42px;text-align:right}
+/* 開發進度項目：checkbox、項目名稱、年月、對應階段統一 14px，欄位對齊 */
+.ph{font-size:14px;gap:8px;padding:5px 10px;min-height:44px}
+.ph .phl{font-size:14px;gap:8px;line-height:1.2;color:var(--ink)}
+.ph input[type=checkbox]{width:18px;height:18px;margin:0;flex:none}
+.ph input[type=month]{font-size:14px;font-family:inherit;height:32px;width:112px;flex:none;color:var(--ink)}
+.ph .to{font-size:14px;color:var(--muted);width:48px;min-width:48px;text-align:right;flex:none}
+/* 開發進度項目：項目名稱不被年月欄位擋住（名稱不縮、年月欄位往右、對應階段貼右） */
+.ph .phl{flex:1 0 auto;min-width:max-content}
+.ph input[type=month]{width:100px;padding:0 4px}
+.ph .to{width:42px;min-width:42px}
+/* 左側圖示列：比照現有系統，窄版（70px），按鈕 50px 寬 */
+.rail{width:70px}
+.rail button{width:50px;height:52px}
+/* 頂部 banner 高度 50px；左側功能按鈕寬度 56px */
+.topbar{height:50px}
+.user-chip{height:50px}
+.logo{width:34px;height:34px}
+.rail button{width:56px;height:52px}
+/* 左側圖示列：整欄寬 50px、按鈕 40px 寬 × 51.44px 高（PM 指定） */
+.rail{width:50px}
+.rail button{width:40px;height:51.44px}
+.rail button svg{width:24px;height:24px}
+/* 編輯時間區間的日期輸入框：不超出卡片 */
+input[type=date].fsel{min-width:0;width:100%;font-size:13px;padding:0 6px;box-sizing:border-box}
+.drange{display:flex;align-items:center;gap:6px}
+.drange span{color:var(--muted)}
+.drange input[type=date].fsel{flex:1}
+.ev .cn.link{cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.ev .cn.link:hover{color:#0e8fa7}
+
+/* v3：5 種開發階段標籤色、篩選鈕可換行 */
+.stage.s1{background:#fff1dc;color:#a65b00}
+.stage.s2{background:#f1e4f7;color:#7b2d9b}
+.stage.s3{background:#fde4ee;color:#ad1457}
+.stage.s4{background:#e8f5d4;color:#4a7a10}
+.stage.s5{background:#e0e8ff;color:#2b4aa6}
+.fcard .chips{flex-wrap:wrap}
+/* v3：對應開發階段最長為「容許/變更中」（6 字），年月框縮窄、階段欄加寬並可靠右 */
+.ph .to{width:86px;min-width:86px;font-size:13px;white-space:nowrap}
+.ph input[type=month]{width:92px}
+.ph{gap:6px;padding:5px 8px}
+.ph .to{width:72px;min-width:72px;font-size:12.5px;text-align:right}
+.ph input[type=month]{width:90px;padding:0 3px;font-size:13px}
+.ph .phl{gap:6px}
+.ph{padding:5px 4px;gap:4px}
+.ph .phl{gap:5px}
+/* v3 配色（2026-11-12）：與客戶 Excel 原有的灰、深藍、棕、橄欖金協調的低飽和大地色；標籤底色＝Excel 開發進度表頭底色，文字深棕 #2B2118 */
+.stage.s1{background:#F2D78C;color:#2B2118}
+.stage.s2{background:#E2A06B;color:#2B2118}
+.stage.s3{background:#D98FA0;color:#2B2118}
+.stage.s4{background:#8FB996;color:#2B2118}
+.stage.s5{background:#7FA3CE;color:#2B2118}
+
+/* v3 配色（2026-11-12 重配）：低飽和、冷色系漸進，避開紅／粉／橘；標籤底色＝Excel 開發進度表頭底色 */
+.stage.s1{background:#E6DFC8;color:#2B2118}
+.stage.s2{background:#CFD8A8;color:#2B2118}
+.stage.s3{background:#9CC3A0;color:#2B2118}
+.stage.s4{background:#7FB5B5;color:#2B2118}
+.stage.s5{background:#8DA0CC;color:#2B2118}
+/* v3 配色（2026-11-13 重配）：科技感冷色漸進（青綠→青→天藍→靛→紫），飽和度提高、不含紅／粉／橘；標籤底色＝Excel 開發進度表頭底色，文字深海軍藍 */
+.stage.s1{background:#5CE1C6;color:#0B1B3A}
+.stage.s2{background:#38C6F4;color:#0B1B3A}
+.stage.s3{background:#4C9AFF;color:#0B1B3A}
+.stage.s4{background:#7B7CFF;color:#0B1B3A}
+.stage.s5{background:#B07CFF;color:#0B1B3A}
+/* v3 配色（2026-11-13 第二次）：上一版再刷白約 28%，仍為科技感冷色漸進、不含紅／粉／橘 */
+.stage.s1{background:#8AE9D6;color:#0B1B3A}
+.stage.s2{background:#70D6F7;color:#0B1B3A}
+.stage.s3{background:#7EB6FF;color:#0B1B3A}
+.stage.s4{background:#A0A1FF;color:#0B1B3A}
+.stage.s5{background:#C6A1FF;color:#0B1B3A}
+
+/* v4 圖層套疊（2026-11-13 客戶訪談）：貼近現有系統——群組卡片圖示為 Material Icons svg，右側為全開／全關圖示與展開箭頭 */
+.group>.gh{gap:12px;padding:11px 12px;color:var(--navy)}
+.group>.gh .gi{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.group>.gh .gt{font-size:15px}
+.group>.gh .gact{display:inline-flex;color:var(--navy)}
+.group>.gh .gact.off{color:#8a94a6}
+.group>.gh .gsep{width:1px;height:18px;background:#d5dae3}
+.group>.gh .chev{display:inline-flex;color:var(--navy)}
+.group>.gh .chev i{display:inline-flex;font-style:normal}
+.group>.gh .chev .less{display:none}
+.group.open>.gh .chev .more{display:none}
+.group.open>.gh .chev .less{display:inline-flex}
+.layer-row .lyg{color:#8a94a6;display:inline-flex;margin-top:1px}
+
+/* v4 點位資訊視窗：呈現管理內全部資訊（唯讀、可捲動；放不下時開在點位下方） */
+.infowin{min-width:300px;max-width:340px}
+.infowin .ibody{max-height:min(420px,52vh);overflow-y:auto;padding-right:4px}
+.infowin .isec{margin:8px 0 2px;padding:2px 6px;background:#eef2f8;border-left:3px solid var(--teal);font-weight:700;color:var(--navy);font-size:12.5px}
+.infowin .row b{text-align:right;font-weight:600;word-break:break-all}
+.infowin .na{color:#a0a8b6;font-weight:400}
+.infowin .ok{color:var(--teal-d);font-style:normal;font-weight:700}
+.infowin .rm{padding:2px 2px 0;color:#333;white-space:pre-wrap;word-break:break-all}
+.infowin .iupd{margin-top:8px;padding-top:6px;border-top:1px solid #eef0f4;color:var(--muted);font-size:12px}
+.infowin.below{transform:translate(-50%,0)}
+.infowin.below::after{display:none}
+
+/* v4 點位資訊視窗改為現有系統「公版」樣式（2026-11-13）：標題＋底線、灰色欄位名稱、左對齊值、無群組色塊 */
+.infowin{border:0;border-radius:2px;box-shadow:0 2px 10px rgba(0,0,0,.28);padding:14px 18px 14px;min-width:300px;max-width:340px;font-size:13px}
+.infowin .x{right:8px;top:4px;font-size:18px;color:#555;line-height:1}
+.infowin .ttl{font-size:12px;font-weight:700;color:#222;padding:0 0 4px;margin:0 0 8px;border-bottom:1px solid #d9dde4}
+.infowin .ibody{max-height:min(420px,52vh);overflow-y:auto}
+.infowin .row{display:grid;grid-template-columns:96px 1fr;gap:6px;padding:5px 0;line-height:1.35}
+.infowin .row span{color:#6b7280}
+.infowin .row b{font-weight:400;color:#222;text-align:left;word-break:break-all}
+.infowin .isec,.infowin .iupd,.infowin .rm{display:none}
+
+/* 規格檢視（正式規格文件）：?spec=1 的內容即 03_規格文件/01_需求規格_競合分析_v4.md */
+#spec{max-width:1280px;margin:0 auto}
+#spec .spscroll{overflow-x:auto}#spec table{font-size:12.5px}#spec td,#spec th{min-width:64px}
+#spec figure.spimg{margin:8px 0}#spec figure.spimg img{max-width:760px;width:100%;border:1px solid var(--line);border-radius:6px}
+#spec h3{margin-top:30px;color:var(--navy)}#spec h4{margin-top:22px}#spec blockquote{margin:8px 0;padding:6px 12px;border-left:4px solid var(--teal);background:#f4f8fb;color:#445}
+#spec .sptoc{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:8px 0;margin-bottom:10px;font-size:13px;z-index:5}#spec .sptoc a{margin-right:12px;white-space:nowrap}
+
+/* v4：欄位標題後字數提示、儲存鈕反灰、圖層透明度、資訊視窗階段列 */
+.fld label .lmax{color:#8a94a6;font-weight:400;font-size:12px;margin-left:6px}
+.btn:disabled,.btn.primary:disabled{opacity:.4;cursor:not-allowed}
+.layer-row+.op,.op{display:flex;align-items:center;gap:10px;padding:0 0 8px 29px;font-size:12.5px;color:var(--muted)}.op input{flex:1;accent-color:var(--teal)}
+.infowin .row b i.ok{color:var(--teal-d);font-style:normal;font-weight:700}.infowin .row b i.no{color:#8a94a6;font-style:normal}
+
+.popfull .infowin .ibody{max-height:none}
+
+/* 競合分析管理清單：篩選條件固定在上方，捲軸只出現在下方清單 */
+.fixedtop{flex:none;padding:0 12px 6px}.panel-body.listbody{padding-top:4px}
+
+/* 資訊視窗開發階段：v／- 為黑色一般文字（非 emoji、非彩色） */
+.infowin .row b i.ok,.infowin .row b i.no{color:#222;font-style:normal;font-weight:400}
+
+/* 資訊視窗開發階段：三欄對齊（v／- ｜ 階段 ｜ 年月） */
+.infowin .phg{display:grid;grid-template-columns:14px auto 1fr;column-gap:8px;row-gap:2px;align-items:baseline}.infowin .phg .ymc{color:#222;white-space:nowrap}
+
+/* v4 編輯表單調整：區塊左線、開發進度間距、字數註記達上限才顯示 */
+.sec.open .secbody{border-left:2px solid #cfe3ea;margin:6px 0 8px 6px;padding:2px 0 4px 12px}
+.fld label .lmax{display:none}
+.fld label .lmax.show{display:inline;color:#c0392b}
+.ph{gap:14px !important;padding:5px 12px 5px 16px !important}
+.ph .phl{gap:10px !important;flex:1 1 auto !important;min-width:0 !important}
+.ph input[type=month]{width:132px !important;padding:0 8px !important;font-size:13px !important;flex:none}
+.ph input[type=month]::-webkit-datetime-edit{padding:0}
+
+/* 輸入框內左側固定顯示「最多 N 字」，輸入文字從提示後方開始 */
+.iw{position:relative}
+.iw input,.iw textarea{width:100%}
+.iw input{padding-left:78px}
+.iw .ihint{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#8a94a6;pointer-events:none;white-space:nowrap}
+.iw.ta textarea{padding-bottom:26px}
+.iw.ta .ihint{top:auto;bottom:8px;transform:none}
+
+/* 坐標超出範圍：標題旁提示 */
+.fld label .cmsg{color:#c0392b;font-size:12px;font-weight:400;margin-left:8px}
+.cmsgrow{margin-top:8px}.cmsg{color:#c0392b;font-size:12px;line-height:1.4;margin-bottom:2px}.cmsg:empty{display:none}
+
+</style>
+
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40"><path d="M20 3C10 12 7 22 14 31c3 4 9 6 14 3 6-4 8-14-8-31z" fill="#1c6fb0"/><path d="M14 31c6-2 10-8 6-16-6 8-9 12-6 16z" fill="#8bc34a"/></svg>
+      <div><div class="en">VENA<br>ENERGY<br>韋能能源</div></div>
+      <h1>土地評估圖台系統</h1>
+    </div>
+    <div class="top-right"><span>後台管理</span><span class="user-chip" id="uc"></span></div>
+  </header>
+  <div class="body">
+    <nav class="rail" id="rail"></nav>
+    <aside class="panel" id="panel"></aside>
+    <main class="map" id="map">
+      <canvas id="cv"></canvas>
+      <div id="markers"></div>
+      <div class="infowin" id="infowin"></div>
+      <div class="mapbadge" id="mapbadge"></div>
+      <div class="pickbar" id="pickbar">請點擊地圖標記案場位置（Esc 取消）</div>
+      <div class="mk draft" id="draftpin" style="display:none"><svg viewBox="0 0 26 34"><path d="M13 0C6 0 1 5 1 12c0 9 12 22 12 22s12-13 12-22C25 5 20 0 13 0z" fill="#e91e63" stroke="#fff" stroke-width="1.5"/><circle cx="13" cy="12" r="4.5" fill="#fff"/></svg><span class="lab" style="display:block">案場位置（未儲存）</span></div>
+      <div class="map-tools"><button onclick="zoomBy(1)">＋</button><button onclick="zoomBy(-1)">－</button></div>
+      <button class="legend-btn" onclick="document.getElementById('legend').classList.toggle('on')">🗺 圖例</button>
+      <div class="legend" id="legend"></div>
+      <div class="zoomtag" id="zoomtag"></div>
+      <div class="scale" id="scale">500 m</div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modal"><div class="modal" id="modalbox"></div></div>
+
+<button class="notes-fab" onclick="toggleNotes()">討論模式</button>
+<div class="notes-panel" id="notes"></div>
+
+<section id="spec"></section>
+
+<script>
+/* ===== 假資料（形式仿韋能現有競合表；內容為示意） ===== */
+/* 欄位定義：依 2026-10-13 客戶訪談欄位表（原 Excel 分類／欄位 → 調整後名稱、格式、必填、規則） */
+const TOWNS={"基隆市":["仁愛區","信義區","中正區","中山區","安樂區","暖暖區","七堵區"],"臺北市":["中正區","大同區","中山區","松山區","大安區","萬華區","信義區","士林區","北投區","內湖區","南港區","文山區"],"新北市":["板橋區","三重區","中和區","永和區","新莊區","新店區","樹林區","鶯歌區","三峽區","淡水區","汐止區","瑞芳區","土城區","蘆洲區","五股區","泰山區","林口區","深坑區","石碇區","坪林區","三芝區","石門區","八里區","平溪區","雙溪區","貢寮區","金山區","萬里區","烏來區"],"桃園市":["桃園區","中壢區","平鎮區","八德區","楊梅區","蘆竹區","大溪區","龍潭區","龜山區","大園區","觀音區","新屋區","復興區"],"新竹市":["東區","北區","香山區"],"新竹縣":["竹北市","竹東鎮","新埔鎮","關西鎮","湖口鄉","新豐鄉","芎林鄉","橫山鄉","北埔鄉","寶山鄉","峨眉鄉","尖石鄉","五峰鄉"],"苗栗縣":["苗栗市","苑裡鎮","通霄鎮","竹南鎮","頭份市","後龍鎮","卓蘭鎮","大湖鄉","公館鄉","銅鑼鄉","南庄鄉","頭屋鄉","三義鄉","西湖鄉","造橋鄉","三灣鄉","獅潭鄉","泰安鄉"],"臺中市":["中區","東區","南區","西區","北區","北屯區","西屯區","南屯區","太平區","大里區","霧峰區","烏日區","豐原區","后里區","石岡區","東勢區","和平區","新社區","潭子區","大雅區","神岡區","大肚區","沙鹿區","龍井區","梧棲區","清水區","大甲區","外埔區","大安區"],"彰化縣":["彰化市","員林市","和美鎮","鹿港鎮","溪湖鎮","二林鎮","田中鎮","北斗鎮","花壇鄉","芬園鄉","大村鄉","永靖鄉","伸港鄉","線西鄉","福興鄉","秀水鄉","埔心鄉","埔鹽鄉","大城鄉","芳苑鄉","竹塘鄉","社頭鄉","二水鄉","田尾鄉","埤頭鄉","溪州鄉"],"南投縣":["南投市","埔里鎮","草屯鎮","竹山鎮","集集鎮","名間鄉","鹿谷鄉","中寮鄉","魚池鄉","國姓鄉","水里鄉","信義鄉","仁愛鄉"],"雲林縣":["斗六市","斗南鎮","虎尾鎮","西螺鎮","土庫鎮","北港鎮","古坑鄉","大埤鄉","莿桐鄉","林內鄉","二崙鄉","崙背鄉","麥寮鄉","東勢鄉","褒忠鄉","臺西鄉","元長鄉","四湖鄉","口湖鄉","水林鄉"],"嘉義市":["東區","西區"],"嘉義縣":["太保市","朴子市","布袋鎮","大林鎮","民雄鄉","溪口鄉","新港鄉","六腳鄉","東石鄉","義竹鄉","鹿草鄉","水上鄉","中埔鄉","竹崎鄉","梅山鄉","番路鄉","大埔鄉","阿里山鄉"],"臺南市":["新營區","鹽水區","白河區","柳營區","後壁區","東山區","麻豆區","下營區","六甲區","官田區","大內區","佳里區","學甲區","西港區","七股區","將軍區","北門區","新化區","善化區","新市區","安定區","山上區","玉井區","楠西區","南化區","左鎮區","仁德區","歸仁區","關廟區","龍崎區","永康區","東區","南區","北區","安南區","安平區","中西區"],"高雄市":["楠梓區","左營區","鼓山區","三民區","鹽埕區","前金區","新興區","苓雅區","前鎮區","旗津區","小港區","鳳山區","大寮區","鳥松區","林園區","仁武區","大樹區","大社區","岡山區","路竹區","橋頭區","梓官區","彌陀區","永安區","燕巢區","田寮區","阿蓮區","茄萣區","湖內區","旗山區","美濃區","內門區","杉林區","甲仙區","六龜區","茂林區","桃源區","那瑪夏區"],"屏東縣":["屏東市","潮州鎮","東港鎮","恆春鎮","萬丹鄉","長治鄉","麟洛鄉","九如鄉","里港鄉","鹽埔鄉","高樹鄉","萬巒鄉","內埔鄉","竹田鄉","新埤鄉","枋寮鄉","新園鄉","崁頂鄉","林邊鄉","南州鄉","佳冬鄉","琉球鄉","車城鄉","滿州鄉","枋山鄉","三地門鄉","霧台鄉","瑪家鄉","泰武鄉","來義鄉","春日鄉","獅子鄉","牡丹鄉"],"宜蘭縣":["宜蘭市","羅東鎮","蘇澳鎮","頭城鎮","礁溪鄉","壯圍鄉","員山鄉","冬山鄉","五結鄉","三星鄉","大同鄉","南澳鄉"],"花蓮縣":["花蓮市","鳳林鎮","玉里鎮","新城鄉","吉安鄉","壽豐鄉","光復鄉","豐濱鄉","瑞穗鄉","富里鄉","秀林鄉","萬榮鄉","卓溪鄉"],"臺東縣":["台東市","成功鎮","關山鎮","卑南鄉","鹿野鄉","池上鄉","東河鄉","長濱鄉","太麻里鄉","大武鄉","綠島鄉","海端鄉","延平鄉","金峰鄉","達仁鄉","蘭嶼鄉"],"澎湖縣":["馬公市","湖西鄉","白沙鄉","西嶼鄉","望安鄉","七美鄉"],"金門縣":["金城鎮","金湖鎮","金沙鎮","金寧鄉","烈嶼鄉","烏坵鄉"],"連江縣":["南竿鄉","北竿鄉","莒光鄉","東引鄉"]}; /* 22 縣市、368 個鄉鎮市區 */ /* 示意：正式版為全台縣市鄉鎮市區清單 */
+const TYPE_ZH={'Ground Mounted':'地面型','Outdoor Fishery Solar':'漁電共生(室外)','Indoor Fishery Solar':'漁電共生(室內)','Rooftop':'屋頂型','Floating':'水面型','Agri-solar':'農電共生'}; /* 以 Excel 範本「下拉選單」分頁為準（2026-11-12） */
+const CNTY_ORDER=['基隆市','臺北市','新北市','桃園市','新竹市','新竹縣','苗栗縣','臺中市','彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','臺南市','高雄市','屏東縣','宜蘭縣','花蓮縣','臺東縣','澎湖縣','金門縣','連江縣'];
+const CNTY=CNTY_ORDER.filter(c=>c in TOWNS).concat(Object.keys(TOWNS).filter(c=>!CNTY_ORDER.includes(c)));
+const OWNER_ZH={'Private':'私人','Taisugar':'台糖','Public':'地方政府'};
+const FIELDS=[
+ {sec:'',k:'pic',l:'案場編號',orig:'PIC No.',f:'數值',t:'auto',rule:'系統自動編號，不提供編輯；全系統 5 碼流水號（00001、00002⋯），不含縣市代碼，建立後不變、刪除後不重用；Excel 此欄需為文字格式以保留前導 0'},
+ {sec:'',k:'name',l:'案場名稱',orig:'案場名稱',f:'文字',t:'text',req:1,max:20,rule:'字數上限 20 字'},
+ {sec:'土地基礎資訊',k:'county',l:'縣市',orig:'County',f:'選單',t:'select',o:CNTY,req:1,rule:'自選，不以坐標自動判斷'},
+ {sec:'土地基礎資訊',k:'town',l:'鄉鎮市區',orig:'Township',f:'選單',t:'select',req:1,rule:'自選（依縣市連動選單），不以坐標自動判斷'},
+ {sec:'土地基礎資訊',k:'csys',l:'坐標系統',orig:'坐標',f:'選單',t:'select',o:['WGS84 經緯度','TWD97 TM2 121分帶'],rule:'坐標必填；可於地圖上點選或輸入坐標設定，需支援 WGS84、TWD97'},
+ {sec:'土地基礎資訊',k:'lat',l:'緯度',orig:'坐標',f:'數值',t:'coord',req:1,hint:'十進位度，如 23.1557',rule:'同上'},
+ {sec:'土地基礎資訊',k:'lng',l:'經度',orig:'坐標',f:'數值',t:'coord',req:1,hint:'十進位度，如 120.0982',rule:'同上'},
+ {sec:'土地基礎資訊',k:'type',l:'光電類型',orig:'Type',f:'選單',t:'select',o:Object.values(TYPE_ZH),rule:'選填；選項以 Excel 範本為準（水面型、農電共生、漁電共生(室外)、地面型、漁電共生(室內)、屋頂型）'},
+ {sec:'土地基礎資訊',k:'landuse',l:'專區/分區/編訂',orig:'土地類型',f:'文字',t:'text',max:10,rule:'選填；文字輸入，最多 10 字'},
+ {sec:'土地基礎資訊',k:'owner',l:'土地權屬',orig:'土地權屬',f:'選單',t:'select',o:['私人','國產署','台糖','工業局','地方政府'],rule:'選填；選項以 Excel 範本為準（私人、國產署、台糖、工業局、地方政府）'},
+ {sec:'投資市場',k:'major',l:'集團',orig:'Major Fund/ Player',f:'文字',t:'text',max:100,rule:'選填；字數上限 100 字'},
+ {sec:'投資市場',k:'partner',l:'公司名稱',orig:'Partnering Fund/ Player2',f:'文字',t:'text',max:100,rule:'選填；字數上限 100 字（舊資料常有多家公司並列）'},
+ {sec:'投資市場',k:'start',l:'開始日期',orig:'START',f:'日期',t:'month',rule:'選填；只記錄到年月，不需要日'},
+ {sec:'裝置容量',k:'cap',l:'裝置容量（MW）',orig:'Capacity',f:'數值',t:'num',rule:'選填；單位 MW'},
+ {sec:'裝置容量',k:'tcap',l:'目標裝置容量（MW）',orig:'Target capacity',f:'數值',t:'num',rule:'選填；單位 MW'},
+ {sec:'裝置容量',k:'area',l:'面積（公頃）',orig:'Area(Ha)',f:'數值',t:'num',rule:'選填'},
+ {sec:'開發進度',k:'stage',l:'開發階段',orig:'Stage',f:'文字',t:'auto',rule:'系統自動判斷帶入：依已達成的開發進度項目對應；開發進度至少須勾選一項'},
+ {sec:'',k:'remarks',l:'備註',orig:'Remarks',f:'文字輸入',t:'area',max:500,rule:'選填；字數上限 500 字'}
+];
+/* 開發進度項目（原 Excel 16–21 列）：勾選＝已達成，各附年月（選填、不作為狀態判斷依據）。map＝對應狀態（暫定，待韋能提供對照） */
+const PH=[
+ {k:'dev',l:'開發中',orig:'Developing',map:'開發中'},
+ {k:'ep',l:'籌設中',orig:'EP',map:'籌設中'},
+ {k:'ap',l:'容許/變更中',orig:'AP/ Rezoned',map:'容許/變更中'},
+ {k:'cp',l:'施工中',orig:'CP',map:'施工中'},
+ {k:'cod',l:'已併網',orig:'COD',map:'已併網'}
+];
+function calcStage(d){for(let i=PH.length-1;i>=0;i--)if(d['ph_'+PH[i].k]==='1')return PH[i].map;return '';}
+const ALLK=[...FIELDS.map(F=>[F.k,F.l]),...PH.flatMap(p=>[['ph_'+p.k,p.l+'（已達成）'],['ym_'+p.k,p.l+'（年月）']])];
+let cases=[
+ {id:1,name:'麗升四方（下山子寮段漁電共生）',pic:'',county:'臺南市',town:'七股區',lat:'23.1557',lng:'120.0982',type:'Indoor Fishery Solar',landuse:'',owner:'Private',major:'麗升能源(華鎂鑫)',partner:'',cap:'',tcap:'',area:'',stage:'開發中',permit:'[1]Developing',cod:'',remarks:'七股區鹽埕里下山子寮段 76-1、76-3、77-1 等 23 筆地號，室內屋頂型漁電共生。',src:'2024/7/8 Julia',x:18,y:44,upd:'Ian 2025/12/31',lock:null},
+ {id:2,name:'(華美鑫)屏東高樹溫室光電',pic:'',county:'屏東縣',town:'高樹鄉',lat:'22.8231',lng:'120.6048',type:'Agri-solar',landuse:'農地',owner:'Private',major:'華美鑫',partner:'',cap:'0.4998',tcap:'',area:'',stage:'開發中',permit:'[1]Developing',cod:'',remarks:'結構型溫室農電共生，499.8 瓩。',src:'2025/4/23 Betty',x:48,y:60,upd:'Ian 2025/11/21',lock:null},
+ {id:3,name:'向陽義竹1-1期溫室科技養殖結合太陽光電',pic:'',county:'嘉義縣',town:'義竹鄉',lat:'23.3362',lng:'120.2034',type:'Outdoor Fishery Solar',landuse:'',owner:'Private',major:'Sunny Rich(向陽優能)',partner:'',cap:'7.7452',tcap:'',area:'',stage:'施工中',permit:'[4]CP',cod:'2026/Q4',remarks:'',src:'',x:32,y:30,upd:'Betty 2025/11/22',lock:null},
+ {id:4,name:'雲林古坑台糖標案（康德）',pic:'',county:'雲林縣',town:'古坑鄉',lat:'23.6103',lng:'120.5987',type:'Ground Mounted',landuse:'一般農業區',owner:'Taisugar',major:'HDRE',partner:'AcBel Polytech',cap:'29.36',tcap:'',area:'',stage:'開發中',permit:'[3]AP/Rezone',cod:'',remarks:'',src:'2024/10/29 Betty',x:70,y:38,upd:'Betty 2024/10/29',lock:{by:'王小明',since:'14:32'}},
+ {id:5,name:'嘉義布袋鹽灘地光電',pic:'',county:'嘉義縣',town:'布袋鎮',csys:'WGS84 經緯度',lat:'23.3781',lng:'120.1688',type:'Floating',landuse:'水利用地',owner:'Public',major:'台灣農林公司標案',partner:'',cap:'12',tcap:'20',area:'26',stage:'籌設中',permit:'[2]EP',cod:'',remarks:'',src:'',x:26,y:60,upd:'Ian 2025/11/23',lock:null},
+ {id:6,name:'彰化大城地面型光電',pic:'',county:'彰化縣',town:'大城鄉',lat:'23.8564',lng:'120.3212',type:'Ground Mounted',landuse:'38區不利耕作區',owner:'Private',major:'向陽優能',partner:'',cap:'18',tcap:'',area:'20',stage:'容許/變更中',permit:'[4]CP',cod:'2027/Q1',remarks:'',src:'',x:60,y:18,upd:'Betty 2025/11/21',lock:null},
+ {id:7,name:'高雄岡山屋頂型光電',pic:'',county:'高雄市',town:'岡山區',lat:'22.7951',lng:'120.2961',type:'Rooftop',landuse:'工業用地',owner:'Private',major:'城市發展',partner:'',cap:'3.2',tcap:'',area:'',stage:'已併網',permit:'[5]COD',cod:'2025/06',remarks:'',src:'',x:84,y:70,upd:'Ian 2025/11/21',lock:null}
+];
+cases.forEach(c=>c.csys='WGS84 經緯度');
+const c4=cases.find(c=>c.id===4);c4.csys='TWD97 TM2 121分帶';c4.lat='201459.0';c4.lng='2613047.1';
+const GEO={1:[23.1557,120.0982],2:[22.8231,120.6048],3:[23.3362,120.2034],4:[23.6103,120.5987],5:[23.3781,120.1688],6:[23.8564,120.3212],7:[22.7951,120.2961]};
+cases.forEach(c=>{c.gl=GEO[c.id][0];c.gn=GEO[c.id][1];});
+/* 示意用：依縣市鄉鎮分布補足案場（真實競合表約 520 筆，集中在台南、嘉義、屏東、雲林） */
+(function(){let sd=7;const rnd=()=>(sd=(sd*9301+49297)%233280)/233280;
+ const T=[['七股區','臺南市',23.14,120.10,5],['北門區','臺南市',23.27,120.12,3],['學甲區','臺南市',23.23,120.18,3],['將軍區','臺南市',23.20,120.12,3],['佳里區','臺南市',23.17,120.18,2],['官田區','臺南市',23.19,120.32,2],['義竹鄉','嘉義縣',23.34,120.25,4],['布袋鎮','嘉義縣',23.38,120.17,3],['東石鄉','嘉義縣',23.45,120.15,3],['六腳鄉','嘉義縣',23.49,120.29,2],['高樹鄉','屏東縣',22.83,120.60,3],['內埔鄉','屏東縣',22.61,120.57,2],['新園鄉','屏東縣',22.54,120.46,3],['林邊鄉','屏東縣',22.43,120.51,3],['佳冬鄉','屏東縣',22.42,120.55,2],['古坑鄉','雲林縣',23.64,120.56,2],['四湖鄉','雲林縣',23.63,120.22,3],['口湖鄉','雲林縣',23.58,120.18,3],['麥寮鄉','雲林縣',23.75,120.25,2],['大城鄉','彰化縣',23.85,120.32,2],['芳苑鄉','彰化縣',23.92,120.32,2],['路竹區','高雄市',22.86,120.26,2],['茄萣區','高雄市',22.90,120.18,2],['永安區','高雄市',22.82,120.20,2],['吉安鄉','花蓮縣',23.97,121.57,1]];
+ const DEV=['麗升','向陽','城市發展','華美鑫','力暘','三地','寶島','怡華'],SUF=['漁電共生','地面型光電','屋頂型光電','水面型光電','農電共生'],TY=['Outdoor Fishery Solar','Ground Mounted','Rooftop','Floating','Agri-solar'],ST=['開發中','開發中','開發中','籌設中','籌設中','容許/變更中','施工中','施工中','已併網'];
+ let id=8;T.forEach(t=>{for(let i=0;i<t[4];i++){const k=Math.floor(rnd()*SUF.length),d=DEV[Math.floor(rnd()*DEV.length)];
+  cases.push({id:id++,name:d+t[0].replace(/[區鄉鎮]$/,'')+SUF[k],pic:'',county:t[1],town:t[0],csys:'WGS84 經緯度',lat:(t[2]+(rnd()-.5)*.06).toFixed(4),lng:(t[3]+(rnd()-.5)*.06).toFixed(4),type:TY[k],landuse:'',owner:'Private',major:d,partner:'',cap:(1+rnd()*35).toFixed(1),tcap:'',area:'',stage:ST[Math.floor(rnd()*ST.length)],permit:'[1]Developing',cod:'',remarks:'',src:'',upd:'Ian 2025/11/2'+Math.floor(rnd()*4),lock:null});
+  const c=cases[cases.length-1];c.gl=+c.lat;c.gn=+c.lng;}});})();
+let nextId=cases.length+1;
+/* 依訪談欄位表整理資料：類型／權屬改中文、案場編號、開發進度項目（由原狀態反推）、狀態由項目計算 */
+cases.forEach(c=>{c.type=TYPE_ZH[c.type]||c.type;c.owner=OWNER_ZH[c.owner]||c.owner||'';c.pic=String(c.id).padStart(5,"0");c.start='';
+ const lv={'開發中':1,'籌設中':2,'容許/變更中':3,'施工中':4,'已併網':5}[c.stage]||1;
+ c.ph_dev='1';if(lv>=2)c.ph_ep='1';if(lv>=3)c.ph_ap='1';if(lv>=4)c.ph_cp='1';if(lv>=5)c.ph_cod='1';
+ PH.forEach(p=>{c['ph_'+p.k]=c['ph_'+p.k]||'';c['ym_'+p.k]=c['ym_'+p.k]||'';});
+ if(c.id===3){c.ym_dev='2025-03';c.ym_ep='2025-06';c.ym_ap='2025-11';c.ym_cp='2026-03';}if(c.id===5){c.ym_ep='2026-05';}
+ c.landuse=String(c.landuse||'').slice(0,10);c.stage=calcStage(c);delete c.permit;delete c.cod;delete c.src;});
+let traces=[
+ {id:1,t:'2026/10/05 16:40',u:'Ian',a:'編輯',cid:2,cn:'(華美鑫)屏東高樹溫室光電',diff:[['裝置容量（MW）','0.499','0.4998'],['開發階段','—','開發中']]},
+ {id:2,t:'2026/10/05 11:12',u:'王小明',a:'編輯',cid:4,cn:'雲林古坑台糖標案（康德）',diff:[['開發階段','籌設中','容許/變更中']]},
+ {id:3,t:'2026/10/03 09:05',u:'Betty',a:'新增',cid:7,cn:'高雄岡山屋頂型光電',diff:[]},
+ {id:4,t:'2026/10/02 15:48',u:'Ian',a:'刪除',cid:99,cn:'（重複）台南七股麗升五福',diff:[]},
+ {id:5,t:'2026/09/30 10:21',u:'Betty',a:'編輯',cid:3,cn:'向陽義竹1-1期溫室科技養殖結合太陽光電',diff:[['併聯發電日（年月）','2026/09','2026/12'],['備註','（空）','施工進度落後約一季']]}
+];
+let traceSeq=6;
+const ME='測試使用者';
+const STG=['開發中','籌設中','容許/變更中','施工中','已併網'];
+function defRange(){const t=new Date(),f=new Date(t);f.setFullYear(t.getFullYear()-1);const z=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');return{from:z(f),to:z(t)};}
+const S={closed_lf:true,secClosed:{},prev:null,view:'layers',manage:false,sel:null,editId:null,draft:null,orig:null,gov:true,vena:true,lf:{stage:[...STG],county:'',town:'',q:''},popup:null,tf:Object.assign({stage:[...STG],county:'',town:'',q:'',act:'all'},defRange()),empty:false,traceBack:'list',traceOpen:false,spatialOpen:false};
+
+/* ===== 左側圖示列 ===== */
+const IC={
+ layers:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16zm0-11.47L17.74 9 12 13.47 6.26 9 12 4.53z"/></svg>',
+ spatial:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="11" r="3"/><path d="M12 14v4"/></svg>',
+ locate:'<svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"/><circle cx="12" cy="9" r="2.5"/></svg>',
+ manage:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
+};
+function renderRail(){
+ const b=(v,t,svg)=>`<button class="${S.view===v||(v==='manage'&&['list','medit','mtrace'].includes(S.view))?'active':''}" onclick="goRail('${v}')" data-tip="${t}" aria-label="${t}">${svg}${v==='manage'&&S.editId&&S.view!=='medit'?'<i class="dot"></i>':''}</button>`;
+ /* SPEC: F-02 競合分析管理入口 位置:左側圖示列「定位工具」下方；圖示用 Material Icons Outlined「article」，懸停顯示「競合分析管理」 */
+ document.getElementById('rail').innerHTML=b('layers','圖層套疊',IC.layers)+b('spatial','空間分析',IC.spatial)+b('locate','定位工具',IC.locate)+b('manage','競合分析管理',MI.article);
+}
+function goRail(v){
+ if(v==='manage'){enterManage();return;}
+ if(S.view==='medit'&&v!=='manage'){/* 編輯中仍可切去看其他圖層，鎖定保留 */}
+ S.view=v;render();
+}
+/* ===== 進出管理（F-07 圖層：管理中不鎖定） ===== */
+function enterManage(){
+ if(!S.manage){
+  S.manage=true;S.vena=true;/* 管理中兩個圖層皆不鎖定、可自由切換；點圖層未勾時進入管理自動勾上 */
+ }
+ S.view=S.editId?'medit':'list';render();
+}
+function closeManage(){
+ if(S.editId){modal(`<h3>尚有編輯中的案場</h3><p>離開管理將放棄未儲存的變更，並解除「${esc(curName())}」的鎖定。</p><div class="mf"><button class="btn" onclick="closeModal()">繼續編輯</button><button class="btn danger" onclick="releaseEdit();closeModal();doClose()">放棄並離開</button></div>`);return;}
+ doClose();
+}
+function doClose(){S.manage=false;S.sel=null;S.popup=null;S.view='layers';render();toast('已離開競合分析管理');}
+function curName(){return S.editId==='new'?'新案場':(cases.find(c=>c.id===S.editId)||{}).name||'';}
+
+/* ===== 面板 ===== */
+function render(){renderUser();renderRail();renderPanel();renderMap();renderNotes();}
+function renderPanel(){
+ const p=document.getElementById('panel');
+ if(S.view==='layers')p.innerHTML=viewLayers();
+ else if(S.view==='spatial'||S.view==='locate')p.innerHTML=viewStub();
+ else if(S.view==='list')p.innerHTML=viewList();
+ else if(S.view==='medit')p.innerHTML=viewEdit();
+ else if(S.view==='mtrace')p.innerHTML=viewTrace();
+ if(S.view==='medit')wireEdit();
+}
+function viewStub(){const n=S.view==='spatial'?'空間分析':'定位工具';return `<div class="panel-head"><h2>${n}</h2><button class="x" onclick="S.view=S.manage?(S.editId?'medit':'list'):'layers';render()">✕</button></div><div class="panel-body"><div class="empty"><b>（沿用現有畫面，本次不變動）</b>${S.manage?'目前仍在競合分析管理中，按 ✕ 回到管理面板。':''}</div></div>`;}
+
+/* 圖層套疊群組卡片：圖示一律為 Material Icons svg（Filled，單色 currentColor），不使用 emoji；右側依序為「全開」「全關」圖示與展開箭頭，比照現有系統 */
+const GP={
+ layers:'M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z',
+ vis_off:'M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z',
+ more:'M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z',
+ less:'M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z',
+ map:'M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z',
+ air:'M14.5 17c0 1.65-1.35 3-3 3s-3-1.35-3-3h2c0 .55.45 1 1 1s1-.45 1-1-.45-1-1-1H2v-2h9.5c1.65 0 3 1.35 3 3zM19 6.5C19 4.57 17.43 3 15.5 3S12 4.57 12 6.5h2c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S16.33 8 15.5 8H2v2h13.5c1.93 0 3.5-1.57 3.5-3.5zm-.5 4.5H2v2h16.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5v2c1.93 0 3.5-1.57 3.5-3.5S20.43 11 18.5 11z',
+ bolt:'M7 2v11h3v9l7-12h-4l4-8z',
+ bank:'M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z',
+ plug:'M16.01 7L16 3h-2v4h-4V3H8v4h-.01C7 6.99 6 7.99 6 8.99v5.49L9.5 18v3h5v-3l3.5-3.51v-5.5c0-1-1-2-1.99-1.99z',
+ clip:'M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z',
+ waves:'M17 16.99c-1.35 0-2.2.42-2.95.8-.65.33-1.18.6-2.05.6-.9 0-1.4-.25-2.05-.6-.75-.38-1.57-.8-2.95-.8s-2.2.42-2.95.8c-.65.33-1.17.6-2.05.6v1.9c1.35 0 2.2-.42 2.95-.8.65-.33 1.17-.6 2.05-.6s1.4.25 2.05.6c.75.38 1.57.8 2.95.8s2.2-.42 2.95-.8c.65-.33 1.18-.6 2.05-.6.9 0 1.4.25 2.05.6.75.38 1.58.8 2.95.8v-1.9c-.9 0-1.4-.25-2.05-.6-.75-.38-1.6-.8-2.95-.8zm0-4.45c-1.35 0-2.2.43-2.95.8-.65.32-1.18.6-2.05.6-.9 0-1.4-.25-2.05-.6-.75-.38-1.57-.8-2.95-.8s-2.2.43-2.95.8c-.65.32-1.17.6-2.05.6v1.9c1.35 0 2.2-.43 2.95-.8.65-.35 1.15-.6 2.05-.6s1.4.25 2.05.6c.75.38 1.57.8 2.95.8s2.2-.43 2.95-.8c.65-.35 1.15-.6 2.05-.6s1.4.25 2.05.6c.75.38 1.57.8 2.95.8v-1.9c-.9 0-1.4-.25-2.05-.6-.75-.38-1.6-.8-2.95-.8zm2.95-8.08c-.75-.38-1.58-.8-2.95-.8s-2.2.42-2.95.8c-.65.32-1.18.6-2.05.6-.9 0-1.4-.25-2.05-.6-.75-.37-1.57-.8-2.95-.8s-2.2.42-2.95.8c-.65.33-1.17.6-2.05.6v1.9c1.35 0 2.2-.42 2.95-.8.65-.33 1.17-.6 2.05-.6s1.4.25 2.05.6c.75.38 1.57.8 2.95.8s2.2-.42 2.95-.8c.65-.33 1.18-.6 2.05-.6.9 0 1.4.25 2.05.6.75.38 1.58.8 2.95.8v-1.9c-.9 0-1.4-.25-2.05-.6z',
+ warn:'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
+ land:'M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z',
+ sun:'M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z',
+ pin:'M18 8c0-3.31-2.69-6-6-6S6 4.69 6 8c0 4.5 6 11 6 11s6-6.5 6-11zm-8 0c0-1.1.9-2 2-2s2 .9 2 2-.89 2-2 2c-1.1 0-2-.9-2-2zM5 20v2h14v-2H5z',
+ place:'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+ article:'M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z',
+ poly:'M12 3l9 6.5-3.4 11H6.4L3 9.5z'
+};
+const gi=(k,s=22)=>'<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="currentColor" aria-hidden="true"><path d="'+GP[k]+'"/></svg>';
+const giOut=(k,s=18)=>'<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="'+GP[k]+'"/></svg>';
+function grp(ic,t,open=false,body=''){return '<div class="group '+(open?'open':'')+'"><div class="gh" onclick="this.parentNode.classList.toggle(\'open\')"><span class="gi">'+gi(ic)+'</span><span class="gt">'+t+'</span><span class="sp"></span><span class="gact" data-tip="全部開啟">'+gi('layers',20)+'</span><span class="gsep"></span><span class="gact off" data-tip="全部關閉">'+gi('vis_off',20)+'</span><span class="chev"><i class="more">'+gi('more',24)+'</i><i class="less">'+gi('less',24)+'</i></span></div><div class="gb">'+body+'</div></div>';}
+function viewLayers(){
+ const dis=false;/* 管理使用中，光電能源案場兩個圖層不鎖定（客戶訪談後 PM 2026-11-13） */
+ /* SPEC: F-01 圖層套疊分類「光電能源案場」（原「競合分析」，客戶訪談 2026-11-12 更名）；底下兩個圖層：面圖層（施工/已併網案件）、點圖層（開發/許可中案件）；F-07 管理模式中本分類停用 */
+ const body=(dis?'<div class="callout info">競合分析管理使用中，此分類由管理功能提供地圖顯示，暫時無法勾選。其他分類的圖層仍可自由疊加。</div>':'')+
+ '<div class="layer-row"><input type="checkbox" '+(S.gov?'checked':'')+' '+(dis?'disabled':'')+' onchange="S.gov=this.checked;renderMap()"><div class="nm">施工/已併網案件</div></div>'+(S.gov?'<div class="op"><span>透明度</span><input type="range" min="0" max="100" value="'+Math.round(S.govOp*100)+'" oninput="S.govOp=this.value/100;this.nextElementSibling.textContent=this.value+\'%\';drawMap()"><span>'+Math.round(S.govOp*100)+'%</span></div>':'')+
+ '<div class="layer-row"><input type="checkbox" '+(S.vena?'checked':'')+' '+(dis?'disabled':'')+' onchange="S.vena=this.checked;renderMap()"><div class="nm">開發/許可中案件</div></div>'+(S.vena?'<div class="op"><span>透明度</span><input type="range" min="0" max="100" value="'+Math.round(S.venaOp*100)+'" oninput="S.venaOp=this.value/100;this.nextElementSibling.textContent=this.value+\'%\';drawMap()"><span>'+Math.round(S.venaOp*100)+'%</span></div>':'');
+ const comp='<div class="group open '+(dis?'disabled':'')+'"><div class="gh" onclick="this.parentNode.classList.toggle(\'open\')"><span class="gi">'+gi('article')+'</span><span class="gt">光電能源案場</span><span class="sp"></span><span class="gact" data-tip="全部開啟">'+gi('layers',20)+'</span><span class="gsep"></span><span class="gact off" data-tip="全部關閉">'+gi('vis_off',20)+'</span><span class="chev"><i class="more">'+gi('more',24)+'</i><i class="less">'+gi('less',24)+'</i></span></div><div class="gb">'+body+'</div></div>';
+ return '<div class="panel-head"><h2>圖層套疊</h2><button class="x" onclick="S.view=S.manage?(S.editId?\'medit\':\'list\'):\'layers\';render()">✕</button></div><div class="panel-body">'+
+ '<div class="search">'+'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="color:#8a94a6"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>'+'<input placeholder="搜尋圖層名稱"></div>'+
+ grp('map','基本圖資')+grp('air','日照與風力條件')+grp('bolt','光電特定區位')+grp('bank','公有及台糖土地')+grp('plug','電路基礎設施')+grp('clip','環境影響評估法')+grp('waves','海岸特定區位')+grp('warn','環境敏感地區一級')+grp('warn','環境敏感地區二級')+grp('land','農業與國土利用')+grp('sun','再生能源分布')+comp+
+ '</div>';
+}
+
+/* Material Icons（Outlined）24px，單色 currentColor */
+const SV=p=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="${p}"/></svg>`;
+const MI={
+ article:SV('M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z'),
+ add:SV('M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'),
+ download:SV('M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3h-2zm-1-4l-1.41-1.41L13 11.17V4h-2v7.17L8.41 9.59 7 11l5 5 5-5z'),
+ history:SV('M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'),
+ edit:SV('M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z'),
+ del:SV('M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z'),
+ lock:SV('M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM8.9 6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H8.9V6zM18 20H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z')
+};
+const KWF=c=>[c.name,c.pic,c.type,c.landuse,c.owner,c.major,c.partner,c.remarks].join('\u0001').toLowerCase();
+function caseMatch(c,o){const kw=(o.q||'').trim().toLowerCase();return (o.stage.includes(c.stage))&&(!o.county||c.county===o.county)&&(!o.town||c.town===o.town)&&(!kw||KWF(c).includes(kw));}
+function filtered(){return cases.filter(c=>caseMatch(c,S.lf));}
+const FO=k=>k==='tf'?S.tf:S.lf;
+function setF(k,f,v,keep){const o=FO(k);if(f==='stage'){const i=o.stage.indexOf(v);if(i>=0)o.stage.splice(i,1);else o.stage.push(v);}else{o[f]=v;if(f==='county')o.town='';}
+ if(keep){const el=document.activeElement,pos=el&&el.selectionStart;renderPanel();renderMap();const n=document.querySelector('.fbody .search input');if(n){n.focus();if(pos!=null)n.setSelectionRange(pos,pos);}}else render();}
+/* 篩選條件卡片：清單與編輯軌跡共用同一組條件控制項（開發階段多選、縣市＋鄉鎮市區、關鍵字）；footer 放該頁依條件提供的動作 */
+function filterCard(o,k,count,footer){
+ const chips=STG.map(x=>`<button class="chip ${o.stage.includes(x)?'on':''}" onclick="setF('${k}','stage','${x}')">${x}</button>`).join('');
+ const cOpts=`<option value="">全部</option>`+CNTY.map(c=>`<option ${c===o.county?'selected':''}>${c}</option>`).join('');
+ const tOpts=`<option value="">全部</option>`+(TOWNS[o.county]||[]).map(c=>`<option ${c===o.town?'selected':''}>${c}</option>`).join('');
+ const ck='closed_'+k,closed=S[ck]===true;
+ return `<div class="fcard"><div class="fbar" onclick="S['${ck}']=${!closed};render()"><span>篩選條件</span><span class="grow"></span><span class="chev">${closed?SV('M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z'):SV('M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z')}</span></div>
+  ${closed?'':`<div class="fbody">
+   <div class="fl">開發階段</div><div class="chips">${chips}</div>
+   <div class="fgrid"><div><div class="fl">縣市</div><select class="fsel" onchange="setF('${k}','county',this.value)">${cOpts}</select></div><div><div class="fl">鄉鎮市區</div><select class="fsel" onchange="setF('${k}','town',this.value)">${tOpts}</select></div></div>
+   <div class="fl">關鍵字查詢</div><div class="search"><input placeholder="輸入關鍵字" value="${esc(o.q)}" oninput="setF('${k}','q',this.value,true)"></div></div>`}
+  <div class="factions"><span class="stat">${count}</span><span class="grow"></span>${footer}</div></div>`;
+}
+function viewList(){
+ const L=S.empty?[]:filtered();
+ /* SPEC: F-02 案場清單（精簡版）— 每筆兩行：第一行為案場名稱（預留 20 字），被鎖定時鎖頭圖示固定在行尾、位於刪除按鈕正上方；第二行為開發階段、縣市 鄉鎮市區、圖示操作鈕。篩選條件卡片（預設展開、可收合），卡片底部列出符合筆數與依條件提供的「匯出」「編輯軌跡」；「新增案場」放標題列 */
+ const rows=L.map(c=>{
+  const lockedOther=c.lock&&c.lock.by!==ME, mine=c.lock&&c.lock.by===ME;
+  const btns=`<button class="ib" data-tip="編輯軌跡" onclick="event.stopPropagation();openTrace(${c.id},'list')">${MI.history}</button><button class="ib" data-tip="編輯" ${lockedOther?'disabled':''} onclick="event.stopPropagation();startEdit(${c.id})">${MI.edit}</button><button class="ib" data-tip="刪除" ${lockedOther?'disabled':''} onclick="event.stopPropagation();askDelete(${c.id})">${MI.del}</button>`;
+  return `<div class="case cp ${S.sel===c.id?'sel':''} ${lockedOther?'locked':''}" onclick="selCase(${c.id})">
+  <div class="r1"><span class="name" title="${esc(c.name)}">${esc(lockedOther&&[...c.name].length>18?[...c.name].slice(0,-3).join('')+'...':c.name)}</span>${lockedOther?`<span class="lockic" data-tip="編輯中，暫時無法編輯與刪除">${MI.lock}</span>`:''}</div>
+  <div class="r2"><span class="stage ${SCLS[c.stage]}">${c.stage}</span><span class="loc">${c.county} ${c.town}</span>${mine?'<span class="minebadge">編輯中</span>':''}<span class="grow"></span>${btns}</div></div>`;}).join('');
+ const foot=`<button class="btn sm withic" onclick="askExport()">${MI.download}匯出</button><button class="btn sm withic" onclick="openTrace('all','list')">${MI.history}編輯軌跡</button>`;
+ return `<div class="panel-head"><h2>競合分析管理</h2><div class="hbtns"><button class="btn sm primary withic" onclick="startEdit('new')">${MI.add}新增案場</button><button class="x" onclick="closeManage()">✕</button></div></div>
+ <div class="fixedtop">${filterCard(S.lf,'lf',`共 <b>${L.length}</b> 筆`,foot)}</div>
+ <div class="panel-body tight listbody">
+  ${rows||`<div class="empty"><b>${S.empty?'目前沒有案場資料':'無符合查詢結果'}</b>${S.empty?'':'請調整查詢條件後再試。'}</div>`}
+ </div>`;
+}
+function selCase(id){S.sel=id;if(!S.editId)S.popup=id;render();const c=cases.find(x=>x.id===id);if(c)flyTo(c.gl,c.gn,Math.max(M.z,12.2));}
+
+/* ===== 編輯（F-03、F-04） ===== */
+function startEdit(id){
+ if(id!=='new'){
+  const c=cases.find(x=>x.id===id);
+  if(c.lock&&c.lock.by!==ME){toast(`🔒 ${c.lock.by} 於 ${c.lock.since} 起正在編輯「${c.name}」，請待對方儲存或取消後再編輯`);return;}
+  if(S.editId&&S.editId!==id){toast('您正在編輯另一筆案場，請先儲存或取消');return;}
+  c.lock={by:ME,since:'現在'};
+  S.orig=JSON.parse(JSON.stringify(c));S.draft=JSON.parse(JSON.stringify(c));S.draft.posMode='coord';S.secClosed={};S.sel=id;flyTo(c.gl,c.gn,Math.max(M.z,12.2));
+ }else{
+  if(S.editId){toast('您正在編輯另一筆案場，請先儲存或取消');return;}
+  S.orig=null;S.draft={csys:'WGS84 經緯度',name:'',pic:'',county:'',town:'',lat:'',lng:'',type:'',landuse:'',owner:'',major:'',partner:'',start:'',cap:'',tcap:'',area:'',stage:'',remarks:'',posMode:'map'};PH.forEach(p=>{S.draft['ph_'+p.k]='';S.draft['ym_'+p.k]='';});
+ }
+ S.editId=id;S.popup=null;S.view='medit';S.traceOpen=false;S.pick=false;syncDraftPos();render();
+}
+function toggleSec(s){S.secClosed[s]=S.secClosed[s]===false?true:(S.secClosed[s]===true?false:true);rerenderEdit();}
+function phaseHtml(d){return `<div class="fld"><label>開發進度項目 <span class="req">*</span></label>`+PH.map(p=>{const on=d['ph_'+p.k]==='1';return `<div class="ph ${on?'on':''}"><label class="phl"><input type="checkbox" data-k="ph_${p.k}" ${on?'checked':''}> ${p.l}</label><input type="month" data-k="ym_${p.k}" value="${esc(d['ym_'+p.k]||'')}" ${on?'':'disabled'} title="達成年月（選填）"></div>`;}).join('')+`</div>`;}
+function fieldHtml(F,d){
+ const tw=isTW(d),v=d[F.k]??'';let inp;
+ if(F.k==='pic')return `<div class="fld inl"><label>案場編號</label><span>${esc(v)||'儲存後由系統自動編號'}</span></div>`;
+ const lbl=F.k==='lat'?(tw?'Y（N，公尺）':F.l):F.k==='lng'?(tw?'X（E，公尺）':F.l):F.l;
+ const hnt=F.k==='lat'?(tw?'TWD97 TM2，如 2613047.1':F.hint):F.k==='lng'?(tw?'TWD97 TM2，如 201459.0':F.hint):(F.hint||'');
+ if(F.t==='auto'){
+  if(F.k==='pic')inp=`<input readonly value="${esc(v)}" placeholder="儲存後由系統自動編號">`;
+  else{const ch=S.orig&&S.orig.stage!==v;inp=`<div class="autov ${ch?'changed':''}">${v?`<span class="stage ${SCLS[v]}">${v}</span>`:'<span class="hint">—</span>'} <span class="hint">依已達成開發進度項目自動判斷</span></div>`;}
+ }else if(F.t==='select'){
+  const opts=F.k==='town'?(TOWNS[d.county]||[]):F.o;
+  inp=`<select data-k="${F.k}">${F.req||F.k==='town'?'':''}<option value="">${F.k==='town'&&!d.county?'請先選縣市':'請選擇'}</option>${opts.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+  if(F.k==='csys')inp=`<select data-k="${F.k}">${F.o.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+ }else if(F.t==='area')inp=`<div class="iw ta"><textarea data-k="${F.k}" maxlength="${F.max}">${esc(v)}</textarea><span class="ihint">最多 ${F.max} 字</span></div>`;
+ else if(F.t==='num')inp=`<input type="number" step="any" min="0" data-k="${F.k}" value="${esc(v)}">`;
+ else if(F.t==='month')inp=`<input type="month" data-k="${F.k}" value="${esc(v)}">`;
+ else{inp=`<input data-k="${F.k}" value="${esc(v)}" ${F.max?`maxlength="${F.max}"`:''} ${F.t==='coord'&&d.posMode==='map'?'readonly':''}>`;if(F.max)inp=`<div class="iw">${inp}<span class="ihint">最多 ${F.max} 字</span></div>`;}
+ return (F.k==='csys'?'<div class="subh">坐標 <span class="req">*</span><span class="hint">　可於地圖上點選或輸入坐標，支援 WGS84、TWD97</span></div>':'')+`<div class="fld"><label>${lbl}${F.req?' <span class="req">*</span>':''}${F.max?`<span class="lmax${String(v).length>=F.max?' show':''}">最多 ${F.max} 字</span>`:''}</label>${inp}${hnt?`<div class="hint">${hnt}</div>`:''}</div>`;
+}
+function viewEdit(){
+ const isNew=S.editId==='new',d=S.draft;
+ /* SPEC: F-03 編輯欄位依分類呈現，分類可收合（土地基礎資訊／投資市場／裝置容量／開發進度）；案場名稱、案場編號、備註無分類、不收合 */
+ const secs=secs0();
+ const top=FIELDS.filter(F=>!F.sec&&F.k!=='remarks').map(F=>fieldHtml(F,d)).join(''),bottom=FIELDS.filter(F=>!F.sec&&F.k==='remarks').map(F=>fieldHtml(F,d)).join('');
+ const f=secs.map(sec=>{const open=S.secClosed[sec]!==true;
+  let inner=FIELDS.filter(F=>F.sec===sec).map(F=>F.k==='county'?`<div class="fgrid">${fieldHtml(F,d)}${fieldHtml(FIELDS.find(x=>x.k==='town'),d)}</div>`:(F.k==='town'||F.k==='lat'||F.k==='lng')?'':F.k==='csys'?coordBlock(d):fieldHtml(F,d)).join('');
+  if(sec==='開發進度')inner+=phaseHtml(d);
+  return `<div class="sec ${open?'open':''}"><div class="fsec acc" onclick="toggleSec('${sec}')"><span>${sec}</span><span class="chev">${open?SV('M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z'):SV('M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z')}</span></div><div class="secbody">${inner}</div></div>`;}).join('');
+ const ev=isNew?[]:traces.filter(t=>t.cid===S.editId).slice(0,3);
+ /* SPEC: F-04 共編鎖定提示；F-05 編輯畫面內嵌「此案場編輯軌跡」 */
+ return `<div class="panel-head"><h2>${isNew?'新增案場':'編輯案場'}</h2><button class="x" onclick="closeManage()">✕</button></div>
+ <div class="panel-body"><button class="back" onclick="backList()">‹ 返回</button>
+  ${isNew?'':'<div class="callout lock">編輯中：其他人暫時無法編輯此案場；閒置 30 分鐘將自動解除鎖定。</div>'}
+  ${top}${f}${bottom}
+  ${isNew?'':`<div class="inline-trace ${S.traceOpen?'open':''}"><div class="th" onclick="S.traceOpen=!S.traceOpen;this.parentNode.classList.toggle('open')">${MI.history} 此案場編輯軌跡（${traces.filter(t=>t.cid===S.editId).length}）<span class="sp"></span><span class="chevs">${SV('M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z')}</span></div><div class="tb">${ev.map(evHtml).join('')||'<div class="stat">尚無紀錄</div>'}</div></div>`}
+ </div>
+ <div class="panel-foot"><button class="btn" onclick="backList()">取消</button><button class="btn primary" id="btnSave" onclick="saveEdit()" ${reqOk(S.draft)?'':'disabled'}>儲存</button></div>`;
+}
+function secs0(){return [...new Set(FIELDS.filter(F=>F.sec).map(F=>F.sec))];}
+function reqOk(d){return !!(String(d.name||'').trim()&&d.county&&d.town&&String(d.lat||'').trim()&&String(d.lng||'').trim()&&PH.some(p=>d['ph_'+p.k]==='1'));}
+function updSave(){const b=document.getElementById('btnSave');if(b)b.disabled=!reqOk(S.draft);}
+function wireEdit(){
+ document.querySelectorAll('#panel [data-k]').forEach(el=>{
+  const k=el.dataset.k;
+  const h=(ev)=>{const oldCs=S.draft.csys;S.draft[k]=el.type==='checkbox'?(el.checked?'1':''):el.value;updSave();
+   /* SPEC: 「最多 N 字」註記預設隱藏，輸入達上限時才顯示 */
+   if(el.maxLength>0){const lm=el.closest('.fld')&&el.closest('.fld').querySelector('.lmax');if(lm)lm.classList.toggle('show',el.value.length>=el.maxLength);}
+   if(k==='csys'){convertCs(oldCs,el.value);rerenderEdit();syncDraftPos();drawMap();return;}
+   if(k==='county'){S.draft.town='';rerenderEdit();return;}
+   if(k.startsWith('ph_')){S.draft.stage=calcStage(S.draft);rerenderEdit();return;}
+   if(k==='lat'||k==='lng'){const rg=coordRange(S.draft,k),n=parseFloat(el.value);let msg='';
+    if(!isNaN(n)){let nv=null;if(n>rg[1])nv=rg[1];else if(n<rg[0]&&ev&&ev.type==='change')nv=rg[0];
+     if(nv!==null){el.value=nv;S.draft[k]=String(nv);msg=rg[2]+'需介於 '+rg[0]+'～'+rg[1];}}
+    coordMsg(k,msg);syncDraftPos();drawMap();}
+   const o=S.orig?S.orig[k]:'';el.classList.toggle('changed',el.value!==(o??'')&&(S.orig||el.value!==''));};
+  el.addEventListener('input',h);el.addEventListener('change',h);
+  if(el.type!=='checkbox'){const o0=S.orig?S.orig[k]:'';el.classList.toggle('changed',el.value!==(o0??'')&&(S.orig||el.tagName!=='SELECT'&&el.value!==''));}
+ });
+}
+/* ===== 位置設定：輸入坐標 或 地圖點選（F-03） ===== */
+function toTWD97(lat,lng){const a=6378137,e2=0.00669438002290,k0=0.9999,lon0=121*Math.PI/180,phi=lat*Math.PI/180,lam=lng*Math.PI/180;
+ const ep2=e2/(1-e2),N=a/Math.sqrt(1-e2*Math.sin(phi)**2),T=Math.tan(phi)**2,C=ep2*Math.cos(phi)**2,A=(lam-lon0)*Math.cos(phi),e4=e2*e2,e6=e4*e2;
+ const Mr=a*((1-e2/4-3*e4/64-5*e6/256)*phi-(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)+(15*e4/256+45*e6/1024)*Math.sin(4*phi)-(35*e6/3072)*Math.sin(6*phi));
+ return [k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120)+250000,k0*(Mr+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720))];}
+function fromTWD97(x,y){let la=y/110950,ln=121+(x-250000)/102000;for(let i=0;i<8;i++){const p=toTWD97(la,ln);la+=(y-p[1])/110950;ln+=(x-p[0])/(111320*Math.cos(la*Math.PI/180));}return [la,ln];}
+const isTW=d=>(d.csys||'').startsWith('TWD97');
+function parsePos(d){const a=parseFloat(d.lat),b=parseFloat(d.lng);if(isNaN(a)||isNaN(b))return null;return isTW(d)?fromTWD97(b,a):[a,b];}
+function fmtPos(la,ln,tw){if(tw){const p=toTWD97(la,ln);return {lat:p[1].toFixed(1),lng:p[0].toFixed(1)};}return {lat:la.toFixed(5),lng:ln.toFixed(5)};}
+function syncDraftPos(){S.draftPos=S.draft?parsePos(S.draft):null;}
+function convertCs(oldCs,newCs){if(oldCs===newCs)return;const p=parsePos({lat:S.draft.lat,lng:S.draft.lng,csys:oldCs});if(p)Object.assign(S.draft,fmtPos(p[0],p[1],newCs.startsWith('TWD97')));}
+function rerenderEdit(){const b=document.querySelector('#panel .panel-body'),y=b?b.scrollTop:0;renderPanel();const b2=document.querySelector('#panel .panel-body');if(b2)b2.scrollTop=y;}
+function setPosFromWgs(la,ln){Object.assign(S.draft,fmtPos(la,ln,isTW(S.draft)));S.pick=false;syncDraftPos();rerenderEdit();drawMap();toast('已帶入坐標：'+S.draft.lat+', '+S.draft.lng+'（可再點選修正）');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.pick){S.pick=false;rerenderEdit();drawMap();}});
+function renderUser(){const u=document.getElementById('uc');if(u)u.innerHTML='👤 '+ME+' <a href="#">登出</a>';}
+/* ===== 坐標設定：輸入坐標（預設）／地圖點選（標記完自動切回輸入坐標）（F-03） ===== */
+const CSYS=['WGS84 經緯度','TWD97 TM2 121分帶'];
+function coordBlock(d){const tw=isTW(d),pk=!!S.pick;
+ const head=`<div class="coordhead"><span class="lbl">坐標 <span class="req">*</span></span><div class="seg"><button class="${pk?'':'on'}" onclick="setPosMode('coord')">輸入坐標</button><button class="${pk?'on':''}" onclick="setPosMode('map')">地圖點選</button></div></div>`;
+ if(pk)return `<div class="fld">${head}<div class="hint" style="margin-top:6px">請在地圖上點一下標記位置（Esc 取消）；標記完成後會自動切回「輸入坐標」。</div></div>`;
+ const ph=(k)=>({lat:tw?'例：2613047.1':'例：23.1557',lng:tw?'例：201459.0':'例：120.0982'})[k];
+ return `<div class="fld">${head}<div class="fld"><label>坐標系統</label><select data-k="csys">${CSYS.map(o=>`<option ${o===d.csys?'selected':''}>${o}</option>`).join('')}</select></div>
+  <div class="cmsgrow"><div class="cmsg" data-m="lat"></div><div class="cmsg" data-m="lng"></div></div><div class="fgrid"><div class="fld"><label>${tw?'Y 坐標':'緯度'}</label><input data-k="lat" inputmode="decimal" placeholder="${ph('lat')}" value="${esc(d.lat||'')}"></div><div class="fld"><label>${tw?'X 坐標':'經度'}</label><input data-k="lng" inputmode="decimal" placeholder="${ph('lng')}" value="${esc(d.lng||'')}"></div></div></div>`;}
+/* SPEC: F-03 坐標範圍即時判斷——輸入超過上限當下改為上限值；低於下限於離開欄位時改為下限；皆在標題旁顯示提示 */
+function coordRange(d,k){const tw=isTW(d);return k==='lat'?(tw?[2400000,2900000,'Y 坐標']:[21.7,26.4,'緯度']):(tw?[100000,400000,'X 坐標']:[118.1,122.1,'經度']);}
+function coordMsg(k,msg){const e=document.querySelector('#panel .cmsg[data-m="'+k+'"]');if(e)e.textContent=msg;}
+function coordCheck(d){const a=parseFloat(d.lat),b=parseFloat(d.lng);if(isNaN(a)||isNaN(b))return '請輸入完整的坐標（'+(isTW(d)?'Y、X 坐標':'緯度、經度')+'）';
+ if(isTW(d)){if(b<100000||b>400000)return 'X 坐標需介於 100000～400000';if(a<2400000||a>2900000)return 'Y 坐標需介於 2400000～2900000';}
+ else{if(a<21.7||a>26.4)return '緯度需介於 21.7～26.4';if(b<118.1||b>122.1)return '經度需介於 118.1～122.1';}return '';}
+function setPosMode(m){if(m==='map'){S.pick=true;if(M.z<12)flyTo(M.lat,M.lng,12);}else S.pick=false;rerenderEdit();drawMap();}
+function pickToggle(){setPosMode(S.pick?'coord':'map');}
+function showPop(id){if(S.editId)return;S.popup=id;S.sel=id;if(S.view==='list')renderPanel();drawMap();}
+/* SPEC: F-01/F-02 點位資訊視窗——版型以現有系統圖層資訊視窗「公版」為準（標題＋逐列「欄位名稱／值」，不分群組色塊）；內容為競合分析管理內的全部資訊；唯讀；不含編輯軌跡、無編輯／刪除／軌跡按鈕 */
+function infoHtml(c){
+ const v=x=>x?esc(x):'-',ym=s=>s?esc(String(s).replace('-','/')):'-';
+ const row=(l,val)=>'<div class="row"><span>'+l+'</span><b>'+(val||'-')+'</b></div>';
+ const ph='<div class="phg">'+PH.map(p=>{const on=c['ph_'+p.k]==='1';return '<i class="'+(on?'ok':'no')+'">'+(on?'v':'-')+'</i><span>'+esc(p.l)+'</span><span class="ymc">'+(on&&c['ym_'+p.k]?ym(c['ym_'+p.k]):'')+'</span>';}).join('')+'</div>';
+ const dm=String(c.upd||'').match(/\d{4}\/\d{2}\/\d{2}/);
+ return '<button class="x" onclick="S.popup=null;drawMap()" aria-label="關閉">×</button><div class="ttl">開發/許可中案件</div><div class="ibody">'+
+  row('案場名稱',v(c.name))+row('案場編號',v(c.pic))+row('縣市',v(c.county))+row('鄉鎮市區',v(c.town))+row('坐標',(+c.gl).toFixed(4)+', '+(+c.gn).toFixed(4))+
+  row('光電類型',v(c.type))+row('專區/分區/編訂',v(c.landuse))+row('土地權屬',v(c.owner))+
+  row('集團',v(c.major))+row('公司名稱',v(c.partner))+row('開始日期',ym(c.start))+
+  row('裝置容量（MW）',v(c.cap))+row('目標裝置容量（MW）',v(c.tcap))+row('面積（公頃）',v(c.area))+
+  row('開發階段',ph)+
+  row('備註',v(c.remarks))+row('最後異動日期',dm?dm[0]:'-')+'</div>';
+}
+function showIdleWarn(){modal(`<h3>即將解除編輯鎖定</h3><p>您已閒置將近 30 分鐘，約 5 分鐘後將自動解除此案場的鎖定，讓其他人可以編輯。</p><p style="font-size:13px;color:#666">系統不會自動儲存您目前的修改，請先儲存，或繼續編輯。</p><div class="mf"><button class="btn" onclick="closeModal();backList()">放棄並離開</button><button class="btn primary" onclick="closeModal()">繼續編輯</button></div>`);}
+function releaseEdit(){if(S.editId&&S.editId!=='new'){const c=cases.find(x=>x.id===S.editId);if(c)c.lock=null;}S.editId=null;S.draft=null;S.orig=null;S.pick=false;S.draftPos=null;drawMap();}
+function backList(){releaseEdit();S.view='list';render();}
+function saveEdit(){
+ const d=Object.assign({},S.draft);delete d.posMode;d.stage=calcStage(d);
+ for(const F of FIELDS){if(F.req&&F.t!=='coord'&&!String(d[F.k]||'').trim()){toast(`請填寫「${F.l}」`);return;}}
+ for(const F of FIELDS){if(F.t==='num'&&d[F.k]&&isNaN(+d[F.k])){toast(`「${F.l}」需為數字`);return;}}
+ {const ce=coordCheck(d);if(ce){toast(ce);return;}}
+ if(!PH.some(p=>d['ph_'+p.k]==='1')){S.secClosed['開發進度']=false;rerenderEdit();toast('請至少勾選一項開發進度項目');return;}
+ if(!S.draftPos){toast('請設定案場位置：輸入坐標，或在地圖上點選');return;}
+ const now='2026/10/13 '+new Date().toTimeString().slice(0,5);
+ if(S.editId==='new'){
+  const c=Object.assign({id:nextId++,gl:S.draftPos[0],gn:S.draftPos[1],upd:ME+' '+now.slice(0,10),lock:null},d);c.pic=String(c.id).padStart(5,"0");cases.push(c);
+  traces.unshift({id:traceSeq++,t:now,u:ME,a:'新增',cid:c.id,cn:c.name,diff:[]});S.sel=c.id;toast('已新增案場並寫入編輯軌跡');
+ }else{
+  const fm=(k,v)=>k.startsWith('ph_')?(v==='1'?'已達成':'未達成'):(v||'（空）');
+  const diff=[];ALLK.forEach(([k,l])=>{const a=S.orig[k]||'',b=d[k]||'';if(a!==b)diff.push([l,fm(k,a),fm(k,b)]);});
+  if(!diff.length){toast('沒有任何變更，已解除鎖定');backList();return;}
+  const c=cases.find(x=>x.id===S.editId);Object.assign(c,d,{upd:ME+' '+now.slice(0,10),gl:S.draftPos[0],gn:S.draftPos[1]});
+  traces.unshift({id:traceSeq++,t:now,u:ME,a:'編輯',cid:c.id,cn:c.name,diff});toast(`已儲存 ${diff.length} 項變更並寫入編輯軌跡`);
+ }
+ document.getElementById('infowin').dataset.id='';releaseEdit();S.view='list';render();
+}
+/* ===== 刪除 ===== */
+function askDelete(id){const c=cases.find(x=>x.id===id);modal(`<h3>刪除案場</h3><p>確定刪除「${esc(c.name)}」？</p><p style="font-size:13px;color:#666">案場會從清單與地圖移除；刪除動作會留在編輯軌跡中。刪除後不可復原。</p><div class="mf"><button class="btn" onclick="closeModal()">取消</button><button class="btn danger" onclick="doDelete(${id})">確定刪除</button></div>`);}
+function doDelete(id){const c=cases.find(x=>x.id===id);traces.unshift({id:traceSeq++,t:'2026/10/13 '+new Date().toTimeString().slice(0,5),u:ME,a:'刪除',cid:c.id,cn:c.name,diff:[]});cases=cases.filter(x=>x.id!==id);if(S.sel===id)S.sel=null;closeModal();render();toast('已刪除，並寫入編輯軌跡');}
+/* ===== 匯出（F-06） ===== */
+/* SPEC: F-06 匯出 — 點擊後直接產出 Excel（.xlsx），不再跳出選項視窗；檔名「競合分析管理_yyyymmdd.xlsx」；範圍＝清單目前篩選條件的結果 */
+function askExport(){const d=new Date(),ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');toast(`已匯出「競合分析管理_${ymd}.xlsx」（共 ${filtered().length} 筆，依目前篩選條件）`);}
+/* ===== 編輯軌跡（F-05） ===== */
+function openTrace(cid,back){if(cid==='all'){const o=S.lf;S.tf=Object.assign({stage:[...o.stage],county:o.county,town:o.town,q:o.q,act:'all'},defRange());}else{const c=cases.find(x=>x.id===cid),t=traces.find(x=>x.cid===cid);S.tf=Object.assign({stage:[...STG],county:'',town:'',q:c?c.name:(t?t.cn:''),act:'all'},defRange());}S.traceBack=back;S.view='mtrace';if(!S.manage)S.manage=true;render();}
+function evHtml(e){
+ return `<div class="ev ${e.a}"><div class="eh"><span class="act ${e.a}">${e.a}</span><span class="meta">${e.t}・${e.u}</span></div>
+ ${cases.some(c=>c.id===e.cid)?`<div class="cn link" onclick="startEdit(${e.cid})" title="前往編輯此案場">${esc(e.cn)}</div>`:`<div class="cn">${esc(e.cn)}</div>`}
+ ${e.a==='編輯'&&e.diff.length?`<table class="diff"><tr><th>欄位</th><th>修改前</th><th>修改後</th></tr>${e.diff.map(d=>`<tr><td>${d[0]}</td><td class="old">${esc(d[1])}</td><td class="new">${esc(d[2])}</td></tr>`).join('')}</table>`:''}
+ ${e.a==='新增'?'<div class="meta">建立案場資料</div>':''}${e.a==='刪除'?'<div class="meta">案場已刪除</div>':''}</div>`;
+}
+function filterSummary(o){o=o||S.lf;const p=[];if(o.stage.length)p.push('開發階段：'+o.stage.join('、'));if(o.county)p.push('縣市：'+o.county);if(o.town)p.push('鄉鎮市區：'+o.town);if((o.q||'').trim())p.push('關鍵字：'+esc(o.q.trim()));return p.join('｜')||'無（全部案場）';}
+function traceByName(cid){const t=traces.find(x=>x.cid===cid);S.tf={stage:[],county:'',town:'',q:t?t.cn:'',act:S.tf.act};render();}
+function viewTrace(){
+ const kw=(S.tf.q||'').trim().toLowerCase();
+ const L=traces.filter(t=>{const c=cases.find(x=>x.id===t.cid);const ok=c?caseMatch(c,S.tf):(S.tf.stage.length===STG.length&&!S.tf.county&&!S.tf.town&&(!kw||t.cn.toLowerCase().includes(kw)));const dd=t.t.slice(0,10).split('/').join('-');return ok&&(!S.tf.from||dd>=S.tf.from)&&(!S.tf.to||dd<=S.tf.to)&&(S.tf.act==='all'||t.a===S.tf.act);});
+ /* SPEC: F-05 編輯軌跡查詢 — 頁面顯示完整的篩選條件（開發階段／縣市／鄉鎮市區／關鍵字）＋動作篩選。從清單進入時預帶清單目前的篩選條件；從單一案場進入時，案場名稱帶入關鍵字查詢（其餘條件清空）；軌跡頁的「異動時間區間」（兩個日期欄位，中間以「~」連接，不標示「起」「迄」文字）與「動作」篩選放在同一區塊（卡片下半部，不在案場篩選條件內）；點軌跡中的案場名稱＝以該名稱查詢。軌跡頁的條件獨立於清單，可再調整 */
+ const acts=['all','新增','編輯','刪除'].map(a=>`<button class="chip ${S.tf.act===a?'on':''}" onclick="S.tf.act='${a}';render()">${a==='all'?'全部':a}</button>`).join('');
+ const foot=`<div style="width:100%"><div class="fl" style="margin-top:4px">動作</div><div class="chips">${acts}</div><div class="fl">異動時間區間</div><div class="drange"><input type="date" class="fsel" value="${S.tf.from||''}" onchange="setF('tf','from',this.value)"><span>~</span><input type="date" class="fsel" value="${S.tf.to||''}" onchange="setF('tf','to',this.value)"></div></div>`;
+ return `<div class="panel-head"><h2>編輯軌跡</h2><button class="x" onclick="closeManage()">✕</button></div>
+ <div class="panel-body"><button class="back" onclick="S.view='${S.traceBack}';render()">‹ 返回</button>
+  ${filterCard(S.tf,'tf',`共 <b>${L.length}</b> 筆紀錄`,foot)}
+  <div class="tl">${L.map(evHtml).join('')||'<div class="empty"><b>沒有符合條件的紀錄</b></div>'}</div></div>`;
+}
+/* ===== 地圖 ===== */
+const PIN=(c)=>`<svg viewBox="0 0 26 34"><path d="M13 0C6 0 1 5 1 12c0 9 12 22 12 22s12-13 12-22C25 5 20 0 13 0z" fill="${c}" stroke="#fff" stroke-width="1.5"/><circle cx="13" cy="12" r="4.5" fill="#fff"/></svg>`;
+const SC={開發中:'#30C0B1',籌設中:'#2BB0EC',"容許/變更中":'#3F76ED',施工中:'#645CE8',已併網:'#8C52EF'}; /* 科技感冷色漸進，底色再刷白約 28%；點位色＝同色系略深（2026-11-13 第二次調整） */
+const SCLS={'開發中':'s1','籌設中':'s2','容許/變更中':'s3','施工中':'s4','已併網':'s5'};
+/* 底圖為離線示意（簡化台灣輪廓）；正式版改用 Mapbox GL，熱區用其 heatmap layer，點位用 circle/symbol layer（規格 F-08） */
+const TW=[[121.6,25.3],[121.95,25.05],[121.85,24.6],[121.85,24.1],[121.62,23.5],[121.35,22.95],[120.9,22.35],[120.85,21.9],[120.7,22.05],[120.3,22.45],[120.2,22.8],[120.08,23.05],[120.1,23.5],[120.2,23.9],[120.45,24.2],[120.65,24.5],[120.85,24.95],[121.2,25.2]];
+const CITY=[['台北',25.04,121.52],['台中',24.15,120.67],['台南',22.99,120.2],['高雄',22.63,120.3],['花蓮',23.98,121.6]];
+const GOV=[[23.20,120.28,23.30,120.40],[23.58,120.10,23.68,120.20],[22.45,120.44,22.57,120.58],[23.95,120.28,24.05,120.38]];
+const M={lat:23.6,lng:120.95,z:8.4,w:0,h:0};S.govOp=.7;S.venaOp=1;
+const HEAT_END=11.8,HEAT_START=10.6;
+function proj(lat,lng,z){const s=256*Math.pow(2,z??M.z),sn=Math.sin(lat*Math.PI/180);return [(lng+180)/360*s,(0.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*s];}
+function unproj(x,y){const s=256*Math.pow(2,M.z);return [Math.atan(Math.sinh(Math.PI*(1-2*y/s)))*180/Math.PI,x/s*360-180];}
+function toScr(lat,lng){const p=proj(lat,lng),c=proj(M.lat,M.lng);return [M.w/2+p[0]-c[0],M.h/2+p[1]-c[1]];}
+function setCenterFromScr(lat,lng,mx,my){const p=proj(lat,lng);const c=unproj(p[0]-(mx-M.w/2),p[1]-(my-M.h/2));M.lat=c[0];M.lng=c[1];}
+const LUT=(function(){/* 熱區色溫：冷（疏）藍 → 淡藍 → 暖黃 → 橘 → 深橘紅（密） */const st=[[0,[59,91,219]],[.22,[77,171,247]],[.45,[255,224,102]],[.7,[255,146,43]],[1,[217,72,15]]],L=[];for(let i=0;i<256;i++){const t=i/255;let a=st[0],b=st[st.length-1];for(let j=0;j<st.length-1;j++)if(t>=st[j][0]&&t<=st[j+1][0]){a=st[j];b=st[j+1];break;}const f=(t-a[0])/((b[0]-a[0])||1);L.push(a[1].map((v,k)=>Math.round(v+(b[1][k]-v)*f)));}return L;})();
+const hc=document.createElement('canvas');
+let raf=0;function drawMap(){if(!raf)raf=requestAnimationFrame(()=>{raf=0;drawNow();});}
+function heatOp(){return Math.min(1,Math.max(0,(HEAT_END-M.z)/(HEAT_END-HEAT_START)));}
+function visibleCases(){if(S.empty)return[];if(!S.vena)return[];return S.manage?filtered():cases;}
+function drawNow(){
+ const mp=document.getElementById('map'),r=mp.getBoundingClientRect();M.w=Math.round(r.width);M.h=Math.round(r.height);
+ const cv=document.getElementById('cv');if(cv.width!==M.w||cv.height!==M.h){cv.width=M.w;cv.height=M.h;hc.width=M.w;hc.height=M.h;}
+ const g=cv.getContext('2d');g.fillStyle='#a9c7ec';g.fillRect(0,0,M.w,M.h);
+ g.beginPath();TW.forEach((p,i)=>{const q=toScr(p[1],p[0]);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);});g.closePath();g.fillStyle='#f2ede8';g.fill();g.strokeStyle='#8fa6c6';g.lineWidth=1.5;g.stroke();
+ g.strokeStyle='rgba(120,140,170,.18)';g.lineWidth=1;for(let la=21;la<=26;la+=.5){const a=toScr(la,119),b=toScr(la,123);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}for(let ln=119;ln<=123;ln+=.5){const a=toScr(26,ln),b=toScr(21,ln);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}
+ g.fillStyle='#8a8f98';g.font='15px sans-serif';g.textAlign='center';CITY.forEach(c=>{const q=toScr(c[1],c[2]);g.fillRect(q[0]-2,q[1]-2,4,4);g.fillText(c[0],q[0],q[1]-8);});
+ const showG=S.gov;
+ if(showG){g.fillStyle='rgba(230,91,91,'+S.govOp+')';g.strokeStyle='rgba(183,28,28,'+Math.min(1,S.govOp+.3)+')';g.lineWidth=2;GOV.forEach(b=>{const a=toScr(b[0],b[1]),c=toScr(b[2],b[3]);g.fillRect(a[0],c[1],c[0]-a[0],a[1]-c[1]);g.strokeRect(a[0],c[1],c[0]-a[0],a[1]-c[1]);});}
+ const V=visibleCases(),ho=heatOp();
+ if(ho>0&&V.length){
+  const h2=hc.getContext('2d');h2.clearRect(0,0,M.w,M.h);const R=Math.max(16,46-(M.z-8)*9);
+  V.forEach(c=>{const q=toScr(c.gl,c.gn);if(q[0]<-R||q[1]<-R||q[0]>M.w+R||q[1]>M.h+R)return;const gr=h2.createRadialGradient(q[0],q[1],0,q[0],q[1],R);gr.addColorStop(0,'rgba(0,0,0,.14)');gr.addColorStop(1,'rgba(0,0,0,0)');h2.fillStyle=gr;h2.beginPath();h2.arc(q[0],q[1],R,0,7);h2.fill();});
+  const im=h2.getImageData(0,0,M.w,M.h),d=im.data;for(let i=0;i<d.length;i+=4){const a=d[i+3];if(a){const c=LUT[Math.min(255,Math.round(a*1.15))];d[i]=c[0];d[i+1]=c[1];d[i+2]=c[2];d[i+3]=Math.min(255,a*3)*ho*.9*S.venaOp;}}
+  h2.putImageData(im,0,0);g.drawImage(hc,0,0);
+ }
+ const po=1-ho;document.querySelectorAll('#markers .mk').forEach(m=>{const c=cases.find(x=>x.id===+m.dataset.id);if(!c)return;const q=toScr(c.gl,c.gn);m.style.left=q[0]+'px';m.style.top=q[1]+'px';const sel=m.classList.contains('sel');m.style.opacity=sel?1:po*S.venaOp;m.style.pointerEvents=(sel||po>.3)?'auto':'none';m.style.display=(q[0]<-40||q[1]<-60||q[0]>M.w+40||q[1]>M.h+40)?'none':'block';});
+ const iw=document.getElementById('infowin'),pc=(S.popup&&!S.editId)?cases.find(x=>x.id===S.popup):null;
+ if(pc&&visibleCases().includes(pc)){if(iw.dataset.id!==String(pc.id)){iw.innerHTML=infoHtml(pc);iw.dataset.id=String(pc.id);}const pq=toScr(pc.gl,pc.gn);iw.style.display='block';{const w=iw.offsetWidth;iw.style.left=Math.min(Math.max(pq[0],w/2+8),M.w-w/2-8)+'px';}const up=pq[1]-40-iw.offsetHeight>8;iw.classList.toggle('below',!up);iw.style.top=(up?pq[1]-40:Math.max(8,Math.min(pq[1]+10,M.h-iw.offsetHeight-8)))+'px';}else iw.style.display='none';
+ const dp=document.getElementById('draftpin');if(S.draftPos&&S.editId){const q=toScr(S.draftPos[0],S.draftPos[1]);dp.style.display='block';dp.style.left=q[0]+'px';dp.style.top=q[1]+'px';}else dp.style.display='none';
+ mp.classList.toggle('pick',!!S.pick);document.getElementById('pickbar').classList.toggle('on',!!S.pick);
+ document.getElementById('zoomtag').textContent='縮放 '+M.z.toFixed(1)+'｜'+(ho>.5?'熱區模式（案場密度）':ho>0?'熱區↔點位切換中':'點位模式');
+ const mpp=156543.03*Math.cos(M.lat*Math.PI/180)/Math.pow(2,M.z),steps=[100,200,500,1000,2000,5000,10000,20000,50000,100000];let dist=steps[0];for(const s of steps){if(s/mpp<=140)dist=s;}
+ const sc=document.getElementById('scale');sc.style.width=Math.round(dist/mpp)+'px';sc.textContent=dist>=1000?dist/1000+' km':dist+' m';
+}
+function renderMap(){
+ const V=visibleCases(),showG=S.gov;
+ document.getElementById('markers').innerHTML=V.map(c=>`<div class="mk ${S.sel===c.id?'sel':''} ${c.lock&&c.lock.by!==ME?'lockedmk':''}" data-id="${c.id}" onclick="${S.manage&&S.view==='list'?`selCase(${c.id})`:`showPop(${c.id})`}">${PIN(SC[c.stage])}<span class="lab">${esc(c.name)}</span>${c.lock?'<span class="lk">🔒</span>':''}</div>`).join('');
+ const b=document.getElementById('mapbadge');
+ b.className='mapbadge'+(S.manage?' on':'');b.textContent=S.vena?`競合分析管理中：地圖顯示光電能源案場・點圖層（全部開發階段，${V.length} 筆）；可於「圖層套疊」疊加其他圖層`:'競合分析管理中：點圖層已隱藏（於「圖層套疊」勾選「開發/許可中案件」可再顯示）';
+ /* SPEC: F-07 管理中隱藏能源署面圖層；F-08 縮小呈熱區、放大呈點位 */
+ const heatBar='<span style="display:inline-block;width:120px;height:10px;vertical-align:middle;background:linear-gradient(90deg,#3b5bdb,#4dabf7,#ffe066,#ff922b,#d9480f)"></span>';
+ document.getElementById('legend').innerHTML='<b>光電能源案場</b><br>'+(showG?'<i style="background:#e65b5b"></i>施工/已併網案件（面）<br>':'')+'<span style="color:#555">開發/許可中案件（點）</span><br>熱區（色溫）：疏 '+heatBar+' 密<br><span style="color:#888">冷色＝案場稀疏、暖色＝案場密集；放大到約 1:15 萬（z11.8）以上轉為個別點位</span><br>'+Object.keys(SC).map(k=>`<i style="background:${SC[k]}"></i>${k}`).join('<br>');
+ drawMap();
+}
+function zoomBy(d){flyTo(M.lat,M.lng,Math.min(16,Math.max(6.5,M.z+d)));}
+let anim=0;function flyTo(lat,lng,z){const a=[M.lat,M.lng,M.z],t0=performance.now(),D=450;cancelAnimationFrame(anim);const step=t=>{const f=Math.min(1,(t-t0)/D),e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2;M.lat=a[0]+(lat-a[0])*e;M.lng=a[1]+(lng-a[1])*e;M.z=a[2]+(z-a[2])*e;drawNow();if(f<1)anim=requestAnimationFrame(step);};anim=requestAnimationFrame(step);}
+(function(){const mp=document.getElementById('map');let drag=null;
+ mp.addEventListener('pointerdown',e=>{if(e.target.closest('.mk,.map-tools,.legend-btn,.legend'))return;cancelAnimationFrame(anim);drag={x:e.clientX,y:e.clientY,moved:0};mp.setPointerCapture(e.pointerId);mp.classList.add('grab');});
+ mp.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);drag.x=e.clientX;drag.y=e.clientY;const c=proj(M.lat,M.lng),n=unproj(c[0]-dx,c[1]-dy);M.lat=n[0];M.lng=n[1];drawMap();});
+ const up=e=>{const d0=drag;drag=null;mp.classList.remove('grab');if(d0&&e.type==='pointerup'&&d0.moved<4&&S.pick){const r=mp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,c=proj(M.lat,M.lng),p=unproj(c[0]+mx-M.w/2,c[1]+my-M.h/2);setPosFromWgs(p[0],p[1]);}};mp.addEventListener('pointerup',up);mp.addEventListener('pointercancel',up);
+ mp.addEventListener('wheel',e=>{e.preventDefault();cancelAnimationFrame(anim);const r=mp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,c=proj(M.lat,M.lng),cur=unproj(c[0]+mx-M.w/2,c[1]+my-M.h/2);M.z=Math.min(16,Math.max(6.5,M.z-e.deltaY*.0025));setCenterFromScr(cur[0],cur[1],mx,my);drawMap();},{passive:false});
+ mp.addEventListener('dblclick',e=>{if(e.target.closest('.mk,.map-tools,.legend-btn,.legend'))return;zoomBy(1);});
+ window.addEventListener('resize',drawMap);})();
+/* ===== 共用 ===== */
+function esc(s){return String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),4200);}
+function modal(h){document.getElementById('modalbox').innerHTML=h;document.getElementById('modal').classList.add('on');}
+function closeModal(){document.getElementById('modal').classList.remove('on');}
+/* ===== 討論模式：只放未決 ===== */
+const QS=[
+ ['Q-19','點位圖徵與點位顏色（雛型暫定，先依此實作）；客戶看過後如有意見再調整','客戶'],
+ ['Q-09','⚠️ 待技術確認：共編鎖定如何即時同步（他人鎖定的狀態多快反映在清單）？','技術主管']
+];
+function renderNotes(){
+ document.getElementById('notes').innerHTML=`<h4>① 今天要決定的（${QS.length} 項）</h4>`+QS.map(q=>`<div class="q"><b>${q[0]}</b> ${q[1]}<div class="own">決策者：${q[2]}</div></div>`).join('')+
+ `<div class="sw"><b>情境切換</b><label><input type="checkbox" ${S.empty?'checked':''} onchange="S.empty=this.checked;S.view=S.manage?'list':S.view;render()"> 清單為空（尚無案場）</label><label>他人鎖定：「雲林古坑台糖標案」目前被鎖定（清單以鎖頭圖示標示，編輯與刪除不可用）</label><label><button class="btn sm" onclick="if(!S.editId)startEdit(2);showIdleWarn()">預覽閒置解鎖提醒</button></label></div>`;
+}
+function toggleNotes(){document.body.classList.toggle('notes');}
+/* ===== 規格檢視 ===== */
+document.getElementById('spec').innerHTML="<nav class=\"sptoc\"><b>快速跳到</b> <a href=\"#sp-版本紀錄\">版本紀錄</a><a href=\"#sp-一-功能概述\">一、功能概述</a><a href=\"#sp-二-畫面清單\">二、畫面清單</a><a href=\"#sp-三-畫面規格\">三、畫面規格</a><a href=\"#sp-3-1-圖層套疊-光電能源案場-F-01-\">3.1 圖層套疊：光電能源案場（F-01）</a><a href=\"#sp-3-2-入口與案場清單-F-02-\">3.2 入口與案場清單（F-02）</a><a href=\"#sp-3-3-篩選條件-F-02-\">3.3 篩選條件（F-02）</a><a href=\"#sp-3-4-地圖-熱區與點位-F-08-\">3.4 地圖：熱區與點位（F-08）</a><a href=\"#sp-3-5-點位資訊視窗-F-01-F-02-\">3.5 點位資訊視窗（F-01／F-02）</a><a href=\"#sp-3-6-新增案場-設定位置-F-03-\">3.6 新增案場：設定位置（F-03）</a><a href=\"#sp-3-7-編輯案場-F-03-\">3.7 編輯案場（F-03）</a><a href=\"#sp-3-8-共編鎖定與閒置提醒-F-04-\">3.8 共編鎖定與閒置提醒（F-04）</a><a href=\"#sp-3-9-編輯軌跡-F-05-\">3.9 編輯軌跡（F-05）</a><a href=\"#sp-3-10-匯出-F-06-\">3.10 匯出（F-06）</a><a href=\"#sp-3-11-管理中的圖層套疊-F-07-\">3.11 管理中的圖層套疊（F-07）</a><a href=\"#sp-四-權限與資料範圍\">四、權限與資料範圍</a><a href=\"#sp-五-非功能需求\">五、非功能需求</a><a href=\"#sp-六-驗收條件-AC-PG-自測與-PM-驗收共用\">六、驗收條件（AC）— PG 自測與 PM 驗收共用</a><a href=\"#sp-七-追溯表\">七、追溯表</a><a href=\"#sp-附錄\">附錄</a><a href=\"#sp-A-一致性檢查結果-2026-11-13-\">A. 一致性檢查結果（2026-11-13）</a><a href=\"#sp-B-待定清單\">B. 待定清單</a><a href=\"#sp-C-圖示清單-Material-Icons-Outlined-競合分析管理使用-\">C. 圖示清單（Material Icons Outlined，競合分析管理使用）</a></nav><h2 id=\"sp-競合分析-需求規格-v4\">競合分析 需求規格 v4</h2>\n<blockquote>依據雛型：02_雛型/雛型_v4_競合分析管理.html（2026-11-13）｜上游：01_需求整理/（需求摘要、確認紀錄）｜對應合約項次 2.4<br>狀態：草稿（待 PM 審閱）｜客戶：台灣韋能能源「土地評估圖台系統」</blockquote>\n<h3 id=\"sp-版本紀錄\">版本紀錄</h3>\n<div class=\"spscroll\"><table><tr><th>版本</th><th>日期</th><th>依據雛型</th><th>主要異動</th></tr><tr><td>v4</td><td>2026-11-13</td><td>v4</td><td>首次產出規格。v1～v3 為討論用雛型（v1：2026-10-13 訪談；v3：2026-11-12 客戶訪談），規格以 v4 定稿內容為準。</td></tr></table></div>\n<h3 id=\"sp-一-功能概述\">一、功能概述</h3>\n<p>韋能目前以 Excel 手工維護光電市場競合表（約 520 筆、多人編輯、坐標格式混雜、缺漏多、無編輯歷程）。本功能在土地評估圖台上提供：</p>\n<ul><li>圖層套疊新增「光電能源案場」分類，展繪競合案場；</li><li>「競合分析管理」面板，讓韋能同仁新增、編輯、刪除案場，並可共編（單一案場鎖定）；</li><li>編輯軌跡（欄位前後值）與依篩選條件匯出 Excel。</li></ul>\n<p><b>User Story</b></p>\n<ul><li>US-01：身為韋能同仁，我要在圖層套疊看到面（施工/已併網）與點（開發/許可中）的競合案場，以便評估土地競合。</li><li>US-02：身為韋能同仁，我要在清單中新增、編輯、刪除案場，以便維持競合資料最新。</li><li>US-03：身為共編者，我要在別人編輯某案場時看到它被鎖定，以便避免覆蓋彼此的修改。</li><li>US-04：身為韋能同仁，我要查看全部或單一案場的編輯軌跡，以便追溯誰改了什麼。</li></ul>\n<p><b>不在本次範圍</b>：能源署面資料（面圖層）不可共編；審核確認功能已取消；Excel 匯入功能（資料由客戶依我方提供的清單整理好，匯入方式見附錄 B）。</p>\n<h3 id=\"sp-二-畫面清單\">二、畫面清單</h3>\n<div class=\"spscroll\"><table><tr><th>#</th><th>畫面</th><th>雛型入口（<code>02_雛型/雛型_v4_競合分析管理.html</code>）</th><th>截圖</th><th>用途</th></tr><tr><td>3.1</td><td>圖層套疊：光電能源案場</td><td>預設畫面</td><td>v4_圖層套疊_光電能源案場.png</td><td>勾選面／點圖層</td></tr><tr><td>3.2</td><td>入口與案場清單</td><td><code>?state=list</code></td><td>v4_管理_案場清單.png</td><td>清單、新增、刪除</td></tr><tr><td>3.3</td><td>篩選條件</td><td><code>?state=list&amp;fopen=1</code></td><td>v4_管理_案場清單_篩選展開.png</td><td>依階段／縣市／關鍵字篩選</td></tr><tr><td>3.4</td><td>地圖：熱區與點位</td><td><code>?state=list&amp;z=8.4…</code>／<code>z=12…</code></td><td>v4_管理_案場清單_熱區.png、_點位.png</td><td>小比例尺熱區、大比例尺點位</td></tr><tr><td>3.5</td><td>點位資訊視窗</td><td><code>?state=popup</code></td><td>v4_管理_案場清單_點位資訊視窗.png</td><td>唯讀檢視案場全部資訊</td></tr><tr><td>3.6</td><td>新增案場：設定位置</td><td><code>?state=pick</code>、<code>picked</code></td><td>v4_新增案場_地圖點選中.png、_已標記位置.png</td><td>輸入坐標或地圖點選</td></tr><tr><td>3.7</td><td>編輯案場</td><td><code>?state=edit</code></td><td>v4_管理_編輯案場.png、_開發進度.png</td><td>欄位編輯、開發進度</td></tr><tr><td>3.8</td><td>共編鎖定與閒置提醒</td><td><code>?state=idle</code></td><td>v4_管理_閒置解鎖提醒.png</td><td>鎖定與逾時解除</td></tr><tr><td>3.9</td><td>編輯軌跡</td><td><code>?state=trace</code>、<code>trace1</code></td><td>v4_管理_編輯軌跡.png、_單一案場.png</td><td>追溯異動</td></tr><tr><td>3.10</td><td>匯出</td><td><code>?state=export</code></td><td>v4_管理_匯出.png</td><td>依篩選匯出 Excel</td></tr><tr><td>3.11</td><td>管理中的圖層套疊</td><td><code>?state=managelayers</code>、<code>editlayers</code></td><td>v4_管理_圖層套疊_點位與面圖層.png、v4_編輯中切換至圖層套疊_有橘點.png</td><td>管理中不鎖定圖層</td></tr><tr><td>—</td><td>空狀態</td><td><code>?state=list&amp;empty=1</code>、篩選無結果</td><td>v4_管理_案場清單_空清單.png、_無符合條件.png</td><td>非理想狀態</td></tr></table></div>\n<hr>\n<h3 id=\"sp-三-畫面規格\">三、畫面規格</h3>\n<h4 id=\"sp-3-1-圖層套疊-光電能源案場-F-01-\">3.1 圖層套疊：光電能源案場（F-01）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_圖層套疊_光電能源案場.png\" alt=\"圖層套疊\"></figure>\n<p><b>欄位表</b></p>\n<div class=\"spscroll\"><table><tr><th>元素</th><th>欄位名</th><th>型別</th><th>必填</th><th>驗證規則</th><th>預設值</th><th>資料來源</th><th>互動行為</th><th>F</th></tr><tr><td>分類卡片</td><td>光電能源案場</td><td>圖層分類</td><td>—</td><td>—</td><td>展開</td><td>系統設定</td><td>位於圖層套疊分類清單<b>最後一項</b>；圖示 <code>article</code>；右側為「全部開啟／全部關閉」圖示與展開箭頭（版型比照現有系統）；可展開／收合</td><td>F-01</td></tr><tr><td>圖層</td><td>施工/已併網案件（面圖層）</td><td>核取方塊＋透明度滑桿</td><td>—</td><td>—</td><td>勾選（雛型）</td><td>固定面資料（原能源署核准案場）</td><td>勾選／取消即時顯示／隱藏於地圖；勾選後顯示「透明度」滑桿（沿用既有圖層機制）；唯讀、顏色不調整，待圖資部門確認後上架</td><td>F-01</td></tr><tr><td>圖層</td><td>開發/許可中案件（點圖層）</td><td>核取方塊＋透明度滑桿</td><td>—</td><td>—</td><td>勾選（雛型）</td><td>競合分析管理的全部案場（不分開發階段）</td><td>勾選／取消即時顯示／隱藏；縮小為熱區、放大為點位（見 3.4）；點擊點位開啟資訊視窗（見 3.5）</td><td>F-01</td></tr></table></div>\n<p><b>業務規則</b></p>\n<ul><li>BR-01：點圖層顯示管理清單內<b>所有</b>案場，不依開發階段篩選；案場若已併網，由客戶自行在管理清單決定是否刪除。</li><li>BR-02：圖層列不標示多邊形／點的圖示、不標示資料來源；勾選的圖層下方提供「透明度」調整（沿用既有圖層機制）；入口只有左側圖示列。</li><li>BR-03：本分類圖示為 Material Icons Outlined <code>article</code>，與左側「競合分析管理」入口相同。</li><li>BR-04：各分類圖示一律為 Material Icons svg，不使用 emoji（圖示清單見附錄 C）。</li></ul>\n<p><b>例外流程</b>：無（純勾選操作）。</p>\n<h4 id=\"sp-3-2-入口與案場清單-F-02-\">3.2 入口與案場清單（F-02）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_案場清單.png\" alt=\"案場清單\"></figure>\n<p><b>欄位表</b></p>\n<div class=\"spscroll\"><table><tr><th>元素</th><th>欄位名</th><th>型別</th><th>必填</th><th>驗證規則</th><th>預設值</th><th>資料來源</th><th>互動行為</th><th>F</th></tr><tr><td>左側按鈕</td><td>競合分析管理</td><td>圖示按鈕</td><td>—</td><td>—</td><td>未點擊：白色圖示</td><td>—</td><td>位於圖示列最後一顆（定位工具下方）；懸停顯示「競合分析管理」；點擊進入管理，按鈕呈白底深色圖示</td><td>F-02</td></tr><tr><td>面板</td><td>標題列</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>標題「競合分析管理」、「新增案場」按鈕（圖示 <code>add</code>＋文字）、✕ 離開管理</td><td>F-02</td></tr><tr><td>卡片</td><td>篩選條件</td><td>可收合卡片</td><td>—</td><td>—</td><td><b>收合</b></td><td>—</td><td>點標題列展開／收合；收合時仍顯示「共 N 筆」「匯出」「編輯軌跡」</td><td>F-02</td></tr><tr><td>清單項目</td><td>案場名稱</td><td>文字</td><td>—</td><td>—</td><td>—</td><td>案場資料</td><td>粗體 14px；名稱過長時<b>最後 3 字以「...」取代</b>，懸停顯示完整名稱</td><td>F-02</td></tr><tr><td>清單項目</td><td>開發階段標籤</td><td>標籤</td><td>—</td><td>—</td><td>—</td><td>案場資料</td><td>5 種配色：開發中 #8AE9D6、籌設中 #70D6F7、容許/變更中 #7EB6FF、施工中 #A0A1FF、已併網 #C6A1FF；不顯示 [1]～[5]</td><td>F-02</td></tr><tr><td>清單項目</td><td>縣市 鄉鎮市區</td><td>文字</td><td>—</td><td>—</td><td>—</td><td>案場資料</td><td>與開發階段同一行</td><td>F-02</td></tr><tr><td>清單項目</td><td>鎖頭</td><td>圖示 <code>lock</code></td><td>—</td><td>—</td><td>隱藏</td><td>鎖定狀態</td><td>案場被他人鎖定時，顯示於行尾、刪除鈕正上方；不顯示是誰鎖定</td><td>F-04</td></tr><tr><td>清單項目</td><td>操作鈕</td><td>圖示按鈕×3</td><td>—</td><td>—</td><td>—</td><td>—</td><td>編輯軌跡（<code>history</code>）、編輯（<code>edit</code>）、刪除（<code>delete</code>）；懸停顯示名稱；被他人鎖定時編輯、刪除不可用</td><td>F-02／F-05</td></tr></table></div>\n<p><b>業務規則</b></p>\n<ul><li>BR-05：點擊清單項目 → 地圖飛到該案場並放大到點位層級，同時開啟資訊視窗（3.5）。</li><li>BR-06：點「刪除」跳出確認視窗，確認後案場從清單與地圖移除、<b>不可復原</b>，僅在編輯軌跡留紀錄。</li><li>BR-07：所有登入且可進入管理的使用者皆可新增、編輯、刪除案場。</li><li>BR-08a：<b>篩選條件卡片固定在面板上方，捲軸只出現在下方的案場清單</b>（捲動清單時標題列與篩選條件不動）。</li><li>BR-08：清單排序／分頁：雛型未定義，<b>【需 PG 確認】</b>（資料量約 500 筆）。</li></ul>\n<p><b>例外流程與錯誤訊息</b></p>\n<div class=\"spscroll\"><table><tr><th>情境</th><th>系統行為</th><th>訊息文字（實際文案）</th></tr><tr><td>刪除確認</td><td>跳出視窗，按「取消」關閉、按「確定刪除」刪除</td><td>標題「刪除案場」；內文「確定刪除「{案場名稱}」？」；說明「案場會從清單與地圖移除；刪除動作會留在編輯軌跡中。刪除後不可復原。」</td></tr><tr><td>刪除完成</td><td>清單移除、寫入軌跡</td><td>「已刪除，並寫入編輯軌跡」</td></tr><tr><td>他人鎖定案場按編輯</td><td>不進入編輯</td><td>「🔒 {鎖定者} 於 {起始時間} 起正在編輯「{案場名稱}」，請待對方儲存或取消後再編輯」</td></tr><tr><td>已在編輯另一筆時再按編輯</td><td>不切換</td><td>「您正在編輯另一筆案場，請先儲存或取消」</td></tr><tr><td>清單完全沒有案場</td><td>顯示空狀態</td><td>粗體「目前沒有案場資料」</td></tr><tr><td>篩選後無結果</td><td>顯示空狀態</td><td>粗體「無符合查詢結果」＋灰字「請調整查詢條件後再試。」</td></tr></table></div>\n<h4 id=\"sp-3-3-篩選條件-F-02-\">3.3 篩選條件（F-02）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_案場清單_篩選展開.png\" alt=\"篩選展開\"></figure>\n<p><b>欄位表</b></p>\n<div class=\"spscroll\"><table><tr><th>元素</th><th>欄位名</th><th>型別</th><th>必填</th><th>驗證規則</th><th>預設值</th><th>資料來源</th><th>互動行為</th><th>F</th></tr><tr><td>按鈕組</td><td>開發階段</td><td>按鈕式多選</td><td>否</td><td>—</td><td><b>5 種全部選取（on）</b></td><td>5 種階段</td><td>點按切換選取／取消；選中為深色底；取消的階段不顯示，全部取消則無結果</td><td>F-02</td></tr><tr><td>下拉</td><td>縣市</td><td>單選</td><td>否</td><td>—</td><td>全部</td><td>22 縣市，由北到南排序：基隆市、臺北市、新北市、桃園市、新竹市、新竹縣、苗栗縣、臺中市、彰化縣、南投縣、雲林縣、嘉義市、嘉義縣、臺南市、高雄市、屏東縣、宜蘭縣、花蓮縣、臺東縣、澎湖縣、金門縣、連江縣</td><td>選擇後更新鄉鎮市區選項</td><td>F-02</td></tr><tr><td>下拉</td><td>鄉鎮市區</td><td>單選</td><td>否</td><td>—</td><td>全部</td><td>依縣市連動</td><td>縣市為「全部」時僅「全部」</td><td>F-02</td></tr><tr><td>輸入框</td><td>關鍵字查詢</td><td>文字</td><td>否</td><td>—</td><td>空</td><td>—</td><td>輸入即時篩選；比對案場名稱、案場編號、光電類型、專區/分區/編訂、土地權屬、集團、公司名稱、備註</td><td>F-02</td></tr><tr><td>文字</td><td>共 N 筆</td><td>唯讀</td><td>—</td><td>—</td><td>—</td><td>篩選結果</td><td>隨條件即時更新</td><td>F-02</td></tr></table></div>\n<p><b>業務規則</b></p>\n<ul><li>BR-09：篩選結果同時決定：清單內容、地圖上的點位（管理中）、「匯出」內容、「編輯軌跡」預帶條件。</li><li>BR-10：各條件之間為「且」；開發階段為多選（符合任一已選取階段即顯示）。</li></ul>\n<h4 id=\"sp-3-4-地圖-熱區與點位-F-08-\">3.4 地圖：熱區與點位（F-08）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_案場清單_熱區.png\" alt=\"熱區\"></figure>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_案場清單_點位.png\" alt=\"點位\"></figure>\n<p><b>業務規則</b></p>\n<ul><li>BR-12：<b>熱區（色溫）</b>：以案場密度呈現，冷色＝稀疏、暖色＝密集，色階 #3B5BDB → #4DABF7 → #FFE066 → #FF922B → #D9480F；權重為案場筆數；熱區半徑隨縮放縮小。</li><li>BR-13：<b>切換</b>：縮放 &lt; z10.6（比例尺約 1:35 萬以上）全熱區；z10.6～11.8 熱區與點位淡入淡出；≥ z11.8（約 1:15 萬以下）全點位。畫面右下角顯示目前縮放與模式。切換級數與效果由我方設計，開發可依 Mapbox 實作調整。</li><li>BR-14：<b>點位顏色</b>依開發階段：開發中 #30C0B1、籌設中 #2BB0EC、容許/變更中 #3F76ED、施工中 #645CE8、已併網 #8C52EF（與標籤同色系、略深）。點位圖徵與顏色為暫定，客戶看過後如有意見再調整。</li><li>BR-15：點位上顯示案場名稱標籤；被他人鎖定的點位以淡化＋鎖頭標示。</li></ul>\n<h4 id=\"sp-3-5-點位資訊視窗-F-01-F-02-\">3.5 點位資訊視窗（F-01／F-02）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_案場清單_點位資訊視窗.png\" alt=\"資訊視窗\"></figure>\n<p><b>欄位表（唯讀）</b></p>\n<div class=\"spscroll\"><table><tr><th>元素</th><th>欄位名</th><th>型別</th><th>必填</th><th>驗證規則</th><th>預設值</th><th>資料來源</th><th>互動行為</th><th>F</th></tr><tr><td>標題</td><td>開發/許可中案件</td><td>文字</td><td>—</td><td>—</td><td>—</td><td>圖層名稱</td><td>—</td><td>F-01</td></tr><tr><td>列</td><td>案場名稱、案場編號、縣市、鄉鎮市區、坐標、光電類型、專區/分區/編訂、土地權屬</td><td>文字</td><td>—</td><td>—</td><td>無值顯示「-」</td><td>案場資料</td><td>唯讀</td><td>F-02</td></tr><tr><td>列</td><td>集團、公司名稱、開始日期（yyyy/mm）</td><td>文字</td><td>—</td><td>—</td><td>無值顯示「-」</td><td>案場資料</td><td>唯讀</td><td>F-02</td></tr><tr><td>列</td><td>裝置容量（MW）、目標裝置容量（MW）、面積（公頃）</td><td>數值</td><td>—</td><td>—</td><td>無值顯示「-」</td><td>案場資料</td><td>唯讀</td><td>F-02</td></tr><tr><td>列</td><td>開發階段</td><td>文字（5 行）</td><td>—</td><td>—</td><td>依序列出開發中、籌設中、容許/變更中、施工中、已併網：<b>已達成的前方顯示「v」，未達成顯示「-」（皆為黑色文字，非 emoji）；後方有年月資訊就標上（yyyy/mm）</b>；版面以三欄對齊（符號｜階段名稱｜年月），年月上下對齊</td><td>案場資料</td><td>唯讀</td><td>F-02</td></tr><tr><td>列</td><td>備註</td><td>文字</td><td>—</td><td>—</td><td>無值顯示「-」</td><td>案場資料</td><td>唯讀</td><td>F-02</td></tr><tr><td>列</td><td>最後異動日期</td><td>日期</td><td>—</td><td>—</td><td>只顯示日期（如 2025/01/08），<b>不標人員</b></td><td>案場資料</td><td>唯讀</td><td>F-02</td></tr><tr><td>按鈕</td><td>✕</td><td>關閉</td><td>—</td><td>—</td><td>—</td><td>—</td><td>關閉視窗</td><td>F-02</td></tr></table></div>\n<p><b>業務規則</b></p>\n<ul><li>BR-16：版型<b>以現有系統圖層資訊視窗「公版」為準</b>（標題＋逐列「欄位名稱／值」），技術開發照公版實作；雛型僅示意。</li><li>BR-17：視窗呈現競合分析管理內的<b>全部資訊</b>（案場名稱、開發階段五項、最後異動日期等），坐標不另標坐標系統；<b>不納入編輯軌跡</b>，也沒有編輯／刪除／軌跡按鈕。</li><li>BR-18：內容過長時視窗內可捲動；視窗放不下時開在點位下方。</li></ul>\n<h4 id=\"sp-3-6-新增案場-設定位置-F-03-\">3.6 新增案場：設定位置（F-03）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_新增案場_地圖點選中.png\" alt=\"地圖點選中\"></figure>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_新增案場_已標記位置.png\" alt=\"已標記位置\"></figure>\n<p><b>欄位表</b></p>\n<div class=\"spscroll\"><table><tr><th>元素</th><th>欄位名</th><th>型別</th><th>必填</th><th>驗證規則</th><th>預設值</th><th>資料來源</th><th>互動行為</th><th>F</th></tr><tr><td>切換鈕</td><td>輸入坐標／地圖點選</td><td>二選一</td><td>是</td><td>—</td><td>輸入坐標</td><td>—</td><td>選「地圖點選」→ 地圖上方出現提示列「請點擊地圖標記案場位置（Esc 取消）」；點擊地圖自動帶入坐標，坐標欄位唯讀，可重新點選修正</td><td>F-03</td></tr><tr><td>下拉</td><td>坐標系統</td><td>單選</td><td>是</td><td>—</td><td>WGS84 經緯度</td><td>WGS84 經緯度／TWD97 TM2 121 分帶</td><td>切換為 TWD97 時欄位標籤改為 X／Y；兩者互相換算</td><td>F-03</td></tr><tr><td>輸入</td><td>緯度（或 Y）</td><td>數值</td><td>是</td><td>WGS84：21.7～26.4；TWD97 Y：2400000～2900000</td><td>空</td><td>使用者輸入／地圖點選</td><td>輸入時地圖同步顯示粉紅暫存點</td><td>F-03</td></tr><tr><td>輸入</td><td>經度（或 X）</td><td>數值</td><td>是</td><td>WGS84：118.1～122.1；TWD97 X：100000～400000</td><td>空</td><td>使用者輸入／地圖點選</td><td>同上</td><td>F-03</td></tr><tr><td>地圖</td><td>暫存點</td><td>粉紅標記</td><td>—</td><td>—</td><td>—</td><td>—</td><td>標籤「案場位置（未儲存）」</td><td>F-03</td></tr></table></div>\n<p><b>業務規則</b></p>\n<ul><li>BR-19：沒有位置時「儲存」按鈕反灰、不可按。</li><li>BR-20：地圖點選後顯示「已帶入坐標：{緯度}, {經度}（可再點選修正）」，並自動切回「輸入坐標」模式。</li><li>BR-21：坐標限定範圍（WGS84）：緯度須介於 21.7 與 26.4、經度須介於 118.1 與 122.1；TWD97 範圍沿用現有「坐標定位」功能（見附錄 B）。</li><li>BR-21a：<b>坐標範圍於輸入當下即時判斷</b>：數值超過上限時，立即自動改為上限值；數值低於下限時，於離開欄位（或按 Enter）時自動改為下限值（輸入中途的未完成數字，如先打「2」再打「23.1」，不會被提早改掉）。自動調整後，在緯度／經度欄位的上一列以紅字提示「{欄位}需介於 {下限}～{上限}」，該欄改回範圍內數值後提示消失；調整後的值同步更新地圖暫存點。</li></ul>\n<p><b>例外流程與錯誤訊息</b></p>\n<div class=\"spscroll\"><table><tr><th>情境</th><th>系統行為</th><th>訊息文字（實際文案）</th></tr><tr><td>坐標未填完整</td><td>「儲存」按鈕反灰、不可按</td><td>—（防呆備援文案：「請輸入完整的坐標（緯度、經度）」；TWD97：「請輸入完整的坐標（Y、X 坐標）」）</td></tr><tr><td>緯度超出範圍</td><td>超過上限立即改為 26.4、低於下限於離開欄位時改為 21.7</td><td>緯度／經度欄位的上一列：「緯度需介於 21.7～26.4」</td></tr><tr><td>經度超出範圍</td><td>超過上限立即改為 122.1、低於下限於離開欄位時改為 118.1</td><td>「經度需介於 118.1～122.1」</td></tr><tr><td>TWD97 X 超出範圍</td><td>同上（上限 400000／下限 100000）</td><td>「X 坐標需介於 100000～400000」</td></tr><tr><td>TWD97 Y 超出範圍</td><td>同上（上限 2900000／下限 2400000）</td><td>「Y 坐標需介於 2400000～2900000」</td></tr><tr><td>沒有設定位置</td><td>「儲存」按鈕反灰、不可按</td><td>—（防呆備援文案：「請設定案場位置：輸入坐標，或在地圖上點選」）</td></tr></table></div>\n<h4 id=\"sp-3-7-編輯案場-F-03-\">3.7 編輯案場（F-03）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_編輯案場.png\" alt=\"編輯案場\"></figure>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_編輯案場_開發進度.png\" alt=\"開發進度\"></figure>\n<p><b>欄位表</b>（分類可收合；案場編號、案場名稱、備註不屬任何分類、不收合）</p>\n<div class=\"spscroll\"><table><tr><th>元素</th><th>欄位名</th><th>型別</th><th>必填</th><th>驗證規則</th><th>預設值</th><th>資料來源</th><th>互動行為</th><th>F</th></tr><tr><td>唯讀</td><td>案場編號</td><td>文字</td><td>—</td><td>系統產生：5 碼流水號（00001 起）；建立後不變、刪除後不重用</td><td>新增時顯示「儲存後由系統自動編號」</td><td>系統</td><td>不可編輯</td><td>F-03</td></tr><tr><td>輸入</td><td>案場名稱</td><td>文字</td><td>是</td><td>最多 20 字</td><td>空</td><td>使用者輸入</td><td>輸入框內左側固定顯示「最多 20 字」；輸入達 20 字時，標題後才另外出現「最多 20 字」註記；超過上限無法再輸入</td><td>F-03</td></tr><tr><td>下拉</td><td>縣市</td><td>單選</td><td>是</td><td>22 縣市：基隆市、臺北市、新北市、桃園市、新竹市、新竹縣、苗栗縣、臺中市、彰化縣、南投縣、雲林縣、嘉義市、嘉義縣、臺南市、高雄市、屏東縣、宜蘭縣、花蓮縣、臺東縣、澎湖縣、金門縣、連江縣</td><td>請選擇</td><td>選單</td><td>自選，不以坐標自動判斷</td><td>F-03</td></tr><tr><td>下拉</td><td>鄉鎮市區</td><td>單選</td><td>是</td><td>依縣市連動</td><td>請先選縣市</td><td>選單</td><td>自選，不以坐標自動判斷</td><td>F-03</td></tr><tr><td>坐標組</td><td>坐標</td><td>見 3.6</td><td>是</td><td>見 3.6</td><td>—</td><td>—</td><td>見 3.6</td><td>F-03</td></tr><tr><td>下拉</td><td>光電類型</td><td>單選</td><td>否</td><td>水面型、農電共生、漁電共生(室外)、地面型、漁電共生(室內)、屋頂型</td><td>請選擇</td><td>選單</td><td>—</td><td>F-03</td></tr><tr><td>輸入</td><td>專區/分區/編訂</td><td>文字</td><td>否</td><td>最多 10 字</td><td>空</td><td>使用者輸入</td><td>輸入框內左側固定顯示「最多 10 字」；輸入達 10 字時，標題後才另外出現「最多 10 字」註記；超過上限無法再輸入</td><td>F-03</td></tr><tr><td>下拉</td><td>土地權屬</td><td>單選</td><td>否</td><td>私人、國產署、台糖、工業局、地方政府</td><td>請選擇</td><td>選單</td><td>—</td><td>F-03</td></tr><tr><td>輸入</td><td>集團</td><td>文字</td><td>否</td><td>最多 100 字</td><td>空</td><td>使用者輸入</td><td>輸入框內左側固定顯示「最多 100 字」；輸入達 100 字時，標題後才另外出現「最多 100 字」註記；超過上限無法再輸入</td><td>F-03</td></tr><tr><td>輸入</td><td>公司名稱</td><td>文字</td><td>否</td><td>最多 100 字</td><td>空</td><td>使用者輸入</td><td>輸入框內左側固定顯示「最多 100 字」；輸入達 100 字時，標題後才另外出現「最多 100 字」註記；超過上限無法再輸入</td><td>F-03</td></tr><tr><td>年月</td><td>開始日期</td><td>年月</td><td>否</td><td>只記到年月（yyyy/mm）</td><td>空</td><td>使用者輸入</td><td>—</td><td>F-03</td></tr><tr><td>輸入</td><td>裝置容量（MW）</td><td>數值</td><td>否</td><td>數值、不小於 0；單位統一為 MW</td><td>空</td><td>使用者輸入</td><td>—</td><td>F-03</td></tr><tr><td>輸入</td><td>目標裝置容量（MW）</td><td>數值</td><td>否</td><td>數值、不小於 0；單位 MW</td><td>空</td><td>使用者輸入</td><td>—</td><td>F-03</td></tr><tr><td>輸入</td><td>面積（公頃）</td><td>數值</td><td>否</td><td>數值、不小於 0</td><td>空</td><td>使用者輸入</td><td>—</td><td>F-03</td></tr><tr><td>唯讀</td><td>開發階段</td><td>標籤</td><td>—</td><td>由開發進度項目自動判斷，不可手動修改</td><td>依已勾選項目</td><td>系統</td><td>取已勾選項目中最後一項；未勾選顯示「—」</td><td>F-03</td></tr><tr><td>勾選＋年月</td><td>開發進度項目（5 項）</td><td>核取方塊＋年月</td><td><b>至少勾選 1 項</b></td><td>開發中、籌設中、容許/變更中、施工中、已併網；各項年月只記到年月、選填</td><td>全不勾</td><td>使用者輸入</td><td>勾選後該項年月可填；取消勾選年月停用</td><td>F-03</td></tr><tr><td>輸入</td><td>備註</td><td>多行文字</td><td>否</td><td>最多 500 字</td><td>空</td><td>使用者輸入</td><td>輸入框內左側固定顯示「最多 500 字」；輸入達 500 字時，標題後才另外出現「最多 500 字」註記；超過上限無法再輸入</td><td>F-03</td></tr><tr><td>按鈕</td><td>取消／儲存</td><td>—</td><td>—</td><td><b>必填欄位未全部填妥時，「儲存」按鈕反灰、不可按</b></td><td>新增時反灰</td><td>—</td><td>必填：案場名稱、縣市、鄉鎮市區、坐標、至少勾選一項開發進度；全部填妥後「儲存」可按</td><td>F-03</td></tr></table></div>\n<p><b>業務規則</b></p>\n<ul><li>BR-22：所有文字輸入框的標題後與輸入框內（placeholder）都預設顯示「最多 X 字」提示，超過上限無法再輸入。</li><li>BR-22a：必填欄位（案場名稱、縣市、鄉鎮市區、坐標、至少一項開發進度）未全部填妥時，「儲存」按鈕反灰不可按；填妥後才可按。</li><li>BR-23：開發階段取「已勾選開發進度項目中最後一項」（依順序：開發中 &lt; 籌設中 &lt; 容許/變更中 &lt; 施工中 &lt; 已併網）。</li><li>BR-24：儲存時若與原資料無差異：不寫入軌跡、解除鎖定。</li><li>BR-25：新增儲存成功 → 寫入軌跡「新增」；編輯儲存成功 → 寫入軌跡「編輯」（欄位前後值）。</li><li>BR-26：未儲存離開（取消／離開管理）→ 放棄變更並解除鎖定。</li></ul>\n<p><b>例外流程與錯誤訊息</b></p>\n<div class=\"spscroll\"><table><tr><th>情境</th><th>系統行為</th><th>訊息文字（實際文案）</th></tr><tr><td>必填欄位留空</td><td>「儲存」按鈕反灰、不可按；補齊後才可按</td><td>—（防呆備援文案：「請填寫「案場名稱」」「請填寫「縣市」」「請填寫「鄉鎮市區」」）</td></tr><tr><td>數值欄位填入非數字</td><td>不儲存</td><td>「「裝置容量（MW）」需為數字」（目標裝置容量、面積同）</td></tr><tr><td>坐標／位置問題</td><td>不儲存</td><td>見 3.6</td></tr><tr><td>一項開發進度都沒勾</td><td>「儲存」按鈕反灰、不可按</td><td>—（防呆備援文案：「請至少勾選一項開發進度項目」）</td></tr><tr><td>無變更儲存</td><td>解除鎖定、不寫軌跡</td><td>「沒有任何變更，已解除鎖定」</td></tr><tr><td>新增成功</td><td>回清單、寫入軌跡</td><td>「已新增案場並寫入編輯軌跡」</td></tr><tr><td>編輯成功</td><td>回清單、寫入軌跡</td><td>「已儲存 {N} 項變更並寫入編輯軌跡」</td></tr><tr><td>編輯中離開管理</td><td>跳出確認</td><td>標題「尚有編輯中的案場」；「離開管理將放棄未儲存的變更，並解除「{案場名稱}」的鎖定。」；按鈕「繼續編輯」「放棄並離開」</td></tr></table></div>\n<h4 id=\"sp-3-8-共編鎖定與閒置提醒-F-04-\">3.8 共編鎖定與閒置提醒（F-04）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_閒置解鎖提醒.png\" alt=\"閒置提醒\"></figure>\n<p><b>業務規則</b></p>\n<ul><li>BR-27：鎖定單位為「單一案場」：A 編輯某案場時，該案場對他人唯讀（編輯、刪除不可用，清單顯示鎖頭，不顯示是誰鎖定）；其他案場不受影響。</li><li>BR-28：釋放條件：儲存、取消、離開管理（放棄）、閒置逾時自動解除。<b>不提供管理者強制解鎖。</b></li><li>BR-29：閒置 30 分鐘自動解除；解除前 5 分鐘跳出提醒；<b>不自動存檔</b>。</li><li>BR-30：編輯畫面頂端顯示提示「編輯中：其他人暫時無法編輯此案場；閒置 30 分鐘將自動解除鎖定。」</li><li>BR-31：鎖定狀態如何即時同步（他人鎖定多快反映在清單）：<b>【待技術確認】</b>（Q-09）。</li></ul>\n<p><b>例外流程與錯誤訊息</b></p>\n<div class=\"spscroll\"><table><tr><th>情境</th><th>系統行為</th><th>訊息文字（實際文案）</th></tr><tr><td>閒置剩 5 分鐘</td><td>跳出視窗</td><td>標題「即將解除編輯鎖定」；「您已閒置將近 30 分鐘，約 5 分鐘後將自動解除此案場的鎖定，讓其他人可以編輯。」；「系統不會自動儲存您目前的修改，請先儲存，或繼續編輯。」；按鈕「放棄並離開」「繼續編輯」</td></tr></table></div>\n<h4 id=\"sp-3-9-編輯軌跡-F-05-\">3.9 編輯軌跡（F-05）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_編輯軌跡.png\" alt=\"編輯軌跡\"></figure>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_編輯軌跡_刪除紀錄.png\" alt=\"刪除紀錄\"></figure>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_編輯軌跡_單一案場.png\" alt=\"單一案場軌跡\"></figure>\n<p><b>欄位表</b></p>\n<div class=\"spscroll\"><table><tr><th>元素</th><th>欄位名</th><th>型別</th><th>必填</th><th>驗證規則</th><th>預設值</th><th>資料來源</th><th>互動行為</th><th>F</th></tr><tr><td>篩選卡片</td><td>開發階段／縣市／鄉鎮市區／關鍵字</td><td>同 3.3（開發階段預設 5 種全選）</td><td>否</td><td>—</td><td>從清單進入：預帶清單條件；從單一案場進入：以案場名稱帶入關鍵字</td><td>—</td><td>卡片預設展開</td><td>F-05</td></tr><tr><td>按鈕組</td><td>動作</td><td>單選</td><td>否</td><td>全部／新增／編輯／刪除</td><td>全部</td><td>—</td><td>篩選紀錄的動作類型</td><td>F-05</td></tr><tr><td>日期</td><td>異動時間區間（起～迄）</td><td>日期</td><td>否</td><td>起不得晚於迄</td><td><b>近 1 年</b>（起＝今日往前一年、迄＝今日）</td><td>—</td><td>可自行調整</td><td>F-05</td></tr><tr><td>時間軸</td><td>紀錄</td><td>清單</td><td>—</td><td>—</td><td>新到舊</td><td>軌跡資料</td><td>每筆顯示動作、時間、操作者、案場名稱；編輯時顯示「欄位／修改前／修改後」</td><td>F-05</td></tr><tr><td>連結</td><td>案場名稱</td><td>連結</td><td>—</td><td>—</td><td>—</td><td>—</td><td>點擊進入該案場編輯頁（案場仍存在時）</td><td>F-05</td></tr></table></div>\n<p><b>業務規則</b></p>\n<ul><li>BR-32：新增、儲存編輯、刪除時產生軌跡；編輯紀錄<b>欄位修改前後值</b>。</li><li>BR-33：<b>所有軌跡全部保留</b>，不自動刪除。</li><li>BR-34：已刪除案場的軌跡保留，<b>不保留當時的縣市／開發階段快照</b>（客戶已確認）：這類軌跡可用關鍵字（案場名稱）、時間、動作查到；選了縣市、鄉鎮市區，或取消任一開發階段的選取時，不會列出。</li><li>BR-34a：「刪除」紀錄顯示動作標籤「刪除」、時間、操作者、案場名稱與「案場已刪除」（見截圖，動作選「刪除」）。</li><li>BR-35：進入方式：清單單筆 ⏱、編輯畫面內嵌「此案場編輯軌跡」、篩選卡片底部「編輯軌跡」。</li></ul>\n<p><b>例外流程</b></p>\n<div class=\"spscroll\"><table><tr><th>情境</th><th>系統行為</th><th>訊息文字（實際文案）</th></tr><tr><td>篩選後沒有紀錄</td><td>顯示空狀態</td><td>「沒有符合條件的紀錄」</td></tr></table></div>\n<h4 id=\"sp-3-10-匯出-F-06-\">3.10 匯出（F-06）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_匯出.png\" alt=\"匯出\"></figure>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_匯出Excel_欄位1.png\" alt=\"匯出 Excel 欄位（左）\"></figure>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_匯出Excel_欄位2.png\" alt=\"匯出 Excel 欄位（右）\"></figure>\n<p><b>業務規則</b></p>\n<ul><li>BR-36：點「匯出」直接產出 Excel，檔名「競合分析管理_yyyymmdd.xlsx」；範圍為清單目前篩選條件的結果；<b>匯出動作不需紀錄</b>。</li><li>BR-37：匯出欄位與格式如範本檔 <code>03_規格文件/競合分析管理_YYMMDD.xlsx</code>（18 欄，依序）：案場名稱、案場編號、縣市、鄉鎮市區、坐標、光電類型、專區/分區/編訂、土地權屬、集團、公司名稱、開始日期、裝置容量(MW)、目標裝置容量(MW)、面積(公頃)、開發階段、開發年月、備註、最後異動日期。</li><li>BR-38：<b>坐標只匯出 WGS84</b>，單欄「緯度, 經度」。</li><li>BR-39：<b>開發階段在 Excel 加 [1]～[5] 標示</b>（[1]開發中、[2]籌設中、[3]容許/變更中、[4]施工中、[5]已併網）；系統畫面不加。</li><li>BR-40：<b>開發年月</b>以「最後階段」（＝目前開發階段）的年月顯示；若前面階段有年月、但目前階段沒有，則開發年月留白。</li><li>BR-41：日期欄（開始日期、開發年月、最後異動日期）顯示 yyyy/mm；案場編號為文字格式（保留前導 0）；列高依文字長度自動換行。</li></ul>\n<p><b>例外流程與錯誤訊息</b></p>\n<div class=\"spscroll\"><table><tr><th>情境</th><th>系統行為</th><th>訊息文字（實際文案）</th></tr><tr><td>匯出成功</td><td>下載檔案、顯示提示</td><td>「已匯出「競合分析管理_yyyymmdd.xlsx」（共 {N} 筆，依目前篩選條件）」</td></tr></table></div>\n<h4 id=\"sp-3-11-管理中的圖層套疊-F-07-\">3.11 管理中的圖層套疊（F-07）</h4>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_管理_圖層套疊_點位與面圖層.png\" alt=\"管理中圖層\"></figure>\n<figure class=\"spimg\"><img src=\"../03_規格文件/畫面截圖/v4_編輯中切換至圖層套疊_有橘點.png\" alt=\"編輯中切換頁籤的橘點\"></figure>\n<p><b>業務規則</b></p>\n<ul><li>BR-42：競合分析管理使用中，「光電能源案場」兩個圖層<b>不鎖定</b>，可自由勾選切換；進入管理不自動取消勾選，離開管理也不還原。</li><li>BR-43：管理中：點圖層勾選＝地圖顯示管理清單點位（受清單篩選影響），取消＝隱藏點位；面圖層勾選＝顯示施工/已併網多邊形。</li><li>BR-44：進入管理時若點圖層未勾，自動勾上。</li><li>BR-45：管理中仍可從圖層套疊疊其他分類，供編輯時對照。</li><li>BR-46：進入管理後離開（✕）顯示「已離開競合分析管理」。</li><li>BR-47：<b>編輯狀態下切換到其他頁籤</b>（如圖層套疊）時，左側「競合分析管理」按鈕右上角顯示<b>橘色圓點</b>，提示仍有編輯中的案場（鎖定保留）；回到管理後圓點消失。</li></ul>\n<hr>\n<h3 id=\"sp-四-權限與資料範圍\">四、權限與資料範圍</h3>\n<div class=\"spscroll\"><table><tr><th>角色</th><th>可用操作</th><th>資料範圍</th></tr><tr><td>登入且可進入管理的使用者（韋能同仁）</td><td>檢視圖層、新增／編輯／刪除案場、查看編輯軌跡、匯出</td><td>全部案場；面圖層（施工/已併網）為唯讀固定資料</td></tr><tr><td>未登入或無管理權限者</td><td>無法進入競合分析管理</td><td>僅依既有圖層套疊權限看到圖層（<b>【需 PG 確認】</b>：無權限者是否看得到「光電能源案場」分類）</td></tr></table></div>\n<blockquote>審核確認功能已取消；不區分角色（所有可進入管理者皆可新增、編輯、刪除）。</blockquote>\n<h3 id=\"sp-五-非功能需求\">五、非功能需求</h3>\n<ul><li>資料量級：約 520 筆案場（舊資料），共編者多人；熱區與點位需順暢縮放（正式版 Mapbox GL）。</li><li>鎖定：單一案場鎖定、閒置 30 分鐘解除（即時同步方式待技術確認）。</li><li>編輯軌跡：全部保留，不設保存期限。</li><li>匯出：範圍為篩選結果；大量資料匯出行為（逾時、筆數上限）<b>【需 PG 確認】</b>。</li><li>雛型為離線示意（簡化底圖、假資料），不代表正式效能。</li></ul>\n<h3 id=\"sp-六-驗收條件-AC-PG-自測與-PM-驗收共用\">六、驗收條件（AC）— PG 自測與 PM 驗收共用</h3>\n<blockquote>PG 交付前逐項自測勾「PG自測」，全勾才交 PM；PM 驗收勾「PM驗收」。<br>不通過的在備註寫清楚現象：是 bug → PG 修復後複測；是需求認知差異或客戶改需求 → 回 /req-intake 從雛型改起。</blockquote>\n<div class=\"spscroll\"><table><tr><th>AC</th><th>類別</th><th>對應 F</th><th>Given（前置）</th><th>When（操作）</th><th>Then（預期結果）</th><th>PG自測</th><th>PM驗收</th><th>備註</th></tr><tr><td>AC-01</td><td>主流程</td><td>F-01</td><td>已登入，開啟圖層套疊</td><td>檢視分類清單</td><td>「光電能源案場」為最後一項，圖示為 article，底下有「施工/已併網案件」「開發/許可中案件」兩個圖層，圖層列沒有多邊形／點圖示</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-02</td><td>主流程</td><td>F-01</td><td>兩個圖層皆未勾</td><td>勾選「開發/許可中案件」</td><td>地圖顯示管理清單內全部案場（含施工中、已併網階段）；取消勾選即隱藏</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-03</td><td>主流程</td><td>F-01</td><td>兩個圖層皆未勾</td><td>勾選「施工/已併網案件」</td><td>地圖顯示面資料多邊形，且無法編輯</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-04</td><td>主流程</td><td>F-02</td><td>已登入</td><td>點左側圖示列「競合分析管理」按鈕</td><td>按鈕位於定位工具下方，進入後呈白底深色圖示，篩選條件為收合狀態</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-05</td><td>主流程</td><td>F-02</td><td>左側選單</td><td>滑鼠移到「競合分析管理」按鈕</td><td>顯示提示「競合分析管理」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-06</td><td>主流程</td><td>F-02</td><td>清單有案場，其中一筆名稱超過可顯示寬度</td><td>檢視清單</td><td>該筆名稱最後 3 字以「...」取代；滑鼠懸停顯示完整名稱</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-06a</td><td>主流程</td><td>F-02</td><td>清單有案場（各開發階段至少一筆）</td><td>檢視清單每筆的開發階段標籤</td><td>標籤只顯示階段名稱（如「開發中」「施工中」），不含 [1]～[5] 編號；編號僅 Excel 匯出才加（如「[1]開發中」）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-07</td><td>主流程</td><td>F-02</td><td>清單有案場</td><td>點擊清單中一筆</td><td>地圖飛到該案場、放大到點位層級並開啟資訊視窗</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-08</td><td>主流程</td><td>F-02</td><td>篩選條件收合</td><td>查看卡片</td><td>仍顯示「共 N 筆」「匯出」「編輯軌跡」；點標題列可展開</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-08a</td><td>主流程</td><td>F-02</td><td>篩選條件展開</td><td>檢視開發階段按鈕與縣市下拉</td><td>5 個開發階段按鈕預設全為選取（on）；縣市選單由北到南依序為基隆市、臺北市、新北市、桃園市、新竹市、新竹縣、苗栗縣、臺中市、彰化縣、南投縣、雲林縣、嘉義市、嘉義縣、臺南市、高雄市、屏東縣、宜蘭縣、花蓮縣、臺東縣、澎湖縣、金門縣、連江縣</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-08b</td><td>主流程</td><td>F-02</td><td>清單案場多到超出面板高度</td><td>向下捲動清單</td><td>標題列與篩選條件卡片固定在上方不動，捲軸只在下方清單區出現，整個面板不隨之捲動</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-09</td><td>主流程</td><td>F-02</td><td>篩選條件展開，5 個階段全選</td><td>取消「開發中」「籌設中」「容許/變更中」，只留「施工中」「已併網」</td><td>清單與地圖只顯示這兩階段的案場，「共 N 筆」同步更新；全部取消則無結果</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-10</td><td>主流程</td><td>F-02</td><td>篩選條件展開</td><td>縣市選「臺南市」</td><td>鄉鎮市區選項變為臺南市所屬；清單只剩臺南市案場</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-11</td><td>主流程</td><td>F-02</td><td>篩選條件展開</td><td>關鍵字輸入某案場的備註片段</td><td>清單即時只顯示備註含該片段的案場</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-12</td><td>例外</td><td>F-02</td><td>篩選條件展開</td><td>縣市選「連江縣」、開發階段選「已併網」且無符合案場</td><td>清單顯示粗體「無符合查詢結果」與灰字「請調整查詢條件後再試。」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-13</td><td>例外</td><td>F-02</td><td>尚無任何案場</td><td>進入競合分析管理</td><td>顯示粗體「目前沒有案場資料」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-14</td><td>主流程</td><td>F-08</td><td>縮放小於 z10.6</td><td>檢視地圖</td><td>顯示色溫熱區（稀疏冷色、密集暖色），不顯示個別點位</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-15</td><td>主流程</td><td>F-08</td><td>縮放大於 z11.8</td><td>檢視地圖</td><td>顯示個別點位，顏色依開發階段（開發中 #30C0B1 … 已併網 #8C52EF）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-16</td><td>主流程</td><td>F-08</td><td>縮放介於 z10.6～11.8</td><td>縮放地圖</td><td>熱區與點位淡入淡出過渡，無閃爍</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-17</td><td>主流程</td><td>F-08</td><td>地圖顯示中</td><td>拖曳、滾輪、＋－、雙擊</td><td>地圖可平移與縮放</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-18</td><td>主流程</td><td>F-01</td><td>大比例尺，地圖顯示點位</td><td>點擊一個點位</td><td>開啟公版樣式資訊視窗，標題「開發/許可中案件」，逐列顯示名稱、案場編號、縣市、鄉鎮市區、坐標、光電類型、專區/分區/編訂、土地權屬、集團、公司名稱、開始日期、裝置容量、目標裝置容量、面積、開發階段、五項進度、備註、最後異動</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-19</td><td>驗證</td><td>F-01</td><td>開啟某案場資訊視窗（該案場公司名稱未填）</td><td>檢視「公司名稱」</td><td>顯示「-」；坐標列不出現「WGS84」字樣；第一列標題為「案場名稱」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-19a</td><td>主流程</td><td>F-01</td><td>案場開發中已勾選（年月 2025/06）、籌設中未勾</td><td>開啟資訊視窗檢視「開發階段」</td><td>依序列出五項：「v 開發中 2025/06」「- 籌設中」「- 容許/變更中」「- 施工中」「- 已併網」；已達成者前方為黑色文字「v」、未達成為黑色文字「-」，均非 emoji，有年月者後方標年月</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-19b</td><td>主流程</td><td>F-01</td><td>案場最後異動為 2025/01/08</td><td>檢視「最後異動日期」</td><td>只顯示「2025/01/08」，不顯示人員</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-19c</td><td>主流程</td><td>F-01</td><td>勾選「開發/許可中案件」</td><td>檢視圖層列下方</td><td>出現「透明度」滑桿；拖曳後地圖上的熱區／點位透明度隨之改變（沿用既有圖層機制）；「施工/已併網案件」勾選後亦有透明度滑桿</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-20</td><td>權限</td><td>F-01</td><td>開啟資訊視窗</td><td>檢視視窗按鈕</td><td>只有 ✕，沒有編輯、刪除、編輯軌跡按鈕，視窗內也沒有軌跡資料</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-21</td><td>主流程</td><td>F-03</td><td>在競合分析管理</td><td>按「新增案場」</td><td>進入新增頁，案場編號顯示「儲存後由系統自動編號」，開發階段顯示「—」，所有文字輸入框內左側固定顯示「最多 X 字」（標題後此時不顯示註記），「儲存」按鈕反灰</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-22</td><td>主流程</td><td>F-03</td><td>新增頁</td><td>填案場名稱「測試案場」、縣市臺南市、鄉鎮市區七股區，切「地圖點選」並點地圖，勾「開發中」，按儲存</td><td>提示「已帶入坐標：…（可再點選修正）」，儲存後提示「已新增案場並寫入編輯軌跡」，清單出現該案場，編號為下一個 5 碼流水號（如 00072）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-23</td><td>主流程</td><td>F-03</td><td>新增頁</td><td>選「輸入坐標」，緯度 23.1557、經度 120.0982</td><td>地圖出現粉紅暫存點，標籤「案場位置（未儲存）」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-24</td><td>主流程</td><td>F-03</td><td>新增頁，坐標系統 WGS84</td><td>切換為 TWD97</td><td>坐標欄位標籤改為 X／Y</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-25</td><td>驗證</td><td>F-03</td><td>新增頁，其他必填已填</td><td>案場名稱留空</td><td>「儲存」按鈕反灰、不可按；填入名稱後可按</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-26</td><td>驗證</td><td>F-03</td><td>新增頁，其他必填已填</td><td>縣市留空</td><td>「儲存」按鈕反灰、不可按</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-27</td><td>驗證</td><td>F-03</td><td>新增頁，其他必填已填</td><td>鄉鎮市區留空</td><td>「儲存」按鈕反灰、不可按</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-28</td><td>驗證</td><td>F-03</td><td>新增頁，其他必填已填、未設定位置（坐標空白）</td><td>檢視儲存按鈕</td><td>「儲存」按鈕反灰、不可按</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-29</td><td>驗證</td><td>F-03</td><td>新增頁，輸入坐標模式</td><td>緯度輸入 21.6 後離開欄位</td><td>欄位自動改為 21.7，緯度／經度欄位上一列以紅字提示「緯度需介於 21.7～26.4」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-30</td><td>驗證</td><td>F-03</td><td>新增頁，輸入坐標模式</td><td>緯度輸入 26.5（尚未離開欄位）</td><td>輸入當下立即改為 26.4，緯度／經度欄位上一列以紅字提示「緯度需介於 21.7～26.4」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-31</td><td>驗證</td><td>F-03</td><td>新增頁，輸入坐標模式</td><td>經度輸入 118.0 後離開欄位</td><td>欄位自動改為 118.1，緯度／經度欄位上一列以紅字提示「經度需介於 118.1～122.1」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-32</td><td>驗證</td><td>F-03</td><td>新增頁，輸入坐標模式</td><td>經度輸入 122.2</td><td>輸入當下立即改為 122.1，緯度／經度欄位上一列以紅字提示「經度需介於 118.1～122.1」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-33</td><td>驗證</td><td>F-03</td><td>新增頁，緯度 21.7、經度 118.1（邊界值）</td><td>離開欄位並按儲存</td><td>數值不被調整、無紅字提示，通過坐標檢核（可儲存）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-34</td><td>驗證</td><td>F-03</td><td>新增頁，坐標系統 TWD97</td><td>X 輸入 99999 後離開欄位</td><td>自動改為 100000，緯度／經度欄位上一列以紅字提示「X 坐標需介於 100000～400000」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-35</td><td>驗證</td><td>F-03</td><td>新增頁，坐標系統 TWD97，Y 為 2899999</td><td>將 Y 改為 2900001</td><td>輸入當下立即改為 2900000，緯度／經度欄位上一列以紅字提示「Y 坐標需介於 2400000～2900000」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-35a</td><td>驗證</td><td>F-03</td><td>新增頁，緯度已被自動調整並顯示紅字提示</td><td>將緯度改成範圍內數值（如 23.1557）</td><td>紅字提示消失；地圖暫存點隨坐標更新</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-36</td><td>驗證</td><td>F-03</td><td>新增頁，緯度或經度留空</td><td>檢視儲存按鈕</td><td>「儲存」按鈕反灰、不可按</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-37</td><td>驗證</td><td>F-03</td><td>新增頁，必填與位置已填，開發進度一項都沒勾</td><td>檢視儲存按鈕；再勾選任一項</td><td>「儲存」按鈕反灰、不可按；勾選任一項後可按</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-38</td><td>驗證</td><td>F-03</td><td>編輯頁</td><td>案場名稱輸入第 21 個字</td><td>無法輸入（上限 20 字）；此時標題後才出現「最多 20 字」註記；刪到 19 字註記消失</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-39</td><td>驗證</td><td>F-03</td><td>編輯頁</td><td>專區/分區/編訂輸入第 11 個字</td><td>無法輸入（上限 10 字），為文字輸入非下拉</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-40</td><td>驗證</td><td>F-03</td><td>編輯頁</td><td>集團、公司名稱各輸入第 101 個字</td><td>無法輸入（上限 100 字）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-41</td><td>驗證</td><td>F-03</td><td>編輯頁</td><td>備註輸入第 501 個字</td><td>無法輸入（上限 500 字）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-42</td><td>驗證</td><td>F-03</td><td>編輯頁</td><td>裝置容量輸入「abc」按儲存</td><td>不儲存，提示「「裝置容量（MW）」需為數字」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-43</td><td>驗證</td><td>F-03</td><td>編輯頁</td><td>裝置容量輸入 -1</td><td>不允許小於 0 的值</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-44</td><td>主流程</td><td>F-03</td><td>編輯頁，開發進度全不勾</td><td>依序勾「開發中」「籌設中」「施工中」</td><td>開發階段自動變為「施工中」（取最後一項），不可手動改</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-45</td><td>主流程</td><td>F-03</td><td>編輯頁</td><td>勾「籌設中」並填年月 2025/06</td><td>年月輸入框啟用；取消勾選後年月輸入框停用</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-46</td><td>主流程</td><td>F-03</td><td>編輯頁</td><td>查看欄位分類</td><td>土地基礎資訊、投資市場、裝置容量、開發進度四類可收合；案場編號、案場名稱、備註不屬分類、不收合</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-47</td><td>主流程</td><td>F-03</td><td>編輯頁，縣市選臺南市</td><td>開啟鄉鎮市區下拉</td><td>只列臺南市所屬鄉鎮市區</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-48</td><td>主流程</td><td>F-03</td><td>編輯頁</td><td>開啟光電類型、土地權屬下拉</td><td>光電類型 6 項（水面型、農電共生、漁電共生(室外)、地面型、漁電共生(室內)、屋頂型）；土地權屬 5 項（私人、國產署、台糖、工業局、地方政府）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-49</td><td>主流程</td><td>F-03</td><td>編輯頁，修改裝置容量為 0.5</td><td>按儲存</td><td>提示「已儲存 1 項變更並寫入編輯軌跡」；案場編號不變</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-50</td><td>例外</td><td>F-03</td><td>編輯頁，未修改任何欄位</td><td>按儲存</td><td>提示「沒有任何變更，已解除鎖定」，編輯軌跡不新增紀錄</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-51</td><td>例外</td><td>F-03</td><td>編輯頁，已修改欄位</td><td>按左側「✕」離開管理</td><td>跳出「尚有編輯中的案場」，內文「離開管理將放棄未儲存的變更，並解除「{名稱}」的鎖定。」，可選「繼續編輯」或「放棄並離開」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-52</td><td>主流程</td><td>F-03</td><td>清單有案場</td><td>按某案場刪除 → 確認</td><td>先跳出「刪除案場」「確定刪除「{名稱}」？」及說明「…刪除後不可復原。」；按「確定刪除」後提示「已刪除，並寫入編輯軌跡」，案場從清單與地圖消失，無法復原</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-53</td><td>例外</td><td>F-03</td><td>刪除確認視窗</td><td>按「取消」</td><td>視窗關閉，案場仍在</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-54</td><td>主流程</td><td>F-03</td><td>新增兩筆案場</td><td>檢視案場編號</td><td>為全系統連續 5 碼流水號（如 00072、00073），不含縣市代碼；刪除其中一筆後再新增，不重用被刪除的編號</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-55</td><td>主流程</td><td>F-04</td><td>使用者 A 開啟某案場編輯頁</td><td>使用者 B 檢視清單</td><td>該案場顯示鎖頭圖示（在刪除鈕正上方），編輯、刪除不可用，不顯示是誰鎖定</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-56</td><td>例外</td><td>F-04</td><td>A 編輯某案場中</td><td>B 點該案場編輯</td><td>不進入編輯，提示「🔒 {A} 於 {起始時間} 起正在編輯「{案場名稱}」，請待對方儲存或取消後再編輯」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-57</td><td>主流程</td><td>F-04</td><td>A 編輯某案場中</td><td>B 編輯另一個案場</td><td>可正常編輯，不受影響</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-58</td><td>主流程</td><td>F-04</td><td>A 編輯中</td><td>A 儲存或取消</td><td>鎖定立即解除，B 可編輯該案場</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-59</td><td>例外</td><td>F-04</td><td>已在編輯案場甲</td><td>在清單按案場乙的編輯</td><td>提示「您正在編輯另一筆案場，請先儲存或取消」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-60</td><td>例外</td><td>F-04</td><td>編輯中閒置 25 分鐘（剩 5 分鐘）</td><td>等待</td><td>跳出「即將解除編輯鎖定」及完整說明，按鈕「放棄並離開」「繼續編輯」；不自動存檔</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-61</td><td>例外</td><td>F-04</td><td>編輯中閒置滿 30 分鐘</td><td>不操作</td><td>鎖定自動解除，其他人可編輯；未儲存的修改不自動儲存</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-62</td><td>權限</td><td>F-04</td><td>任何使用者</td><td>檢視管理介面</td><td>沒有「強制解鎖」功能</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-63</td><td>主流程</td><td>F-05</td><td>已有軌跡</td><td>在篩選卡片底部按「編輯軌跡」</td><td>進入軌跡頁，預帶清單目前的篩選條件，「異動時間區間」預設為近 1 年（起＝今日往前一年、迄＝今日）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-64</td><td>主流程</td><td>F-05</td><td>清單某案場</td><td>按該列 ⏱</td><td>進入軌跡頁，關鍵字帶入該案場名稱</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-65</td><td>主流程</td><td>F-05</td><td>軌跡頁</td><td>動作選「編輯」</td><td>只顯示「編輯」紀錄，每筆含「欄位／修改前／修改後」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-66</td><td>主流程</td><td>F-05</td><td>軌跡頁</td><td>調整異動時間區間為 2026/10/01～2026/10/31</td><td>只顯示該區間內的紀錄</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-67</td><td>主流程</td><td>F-05</td><td>軌跡頁，案場仍存在</td><td>點紀錄中的案場名稱</td><td>切換到該案場的編輯頁</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-68</td><td>主流程</td><td>F-05</td><td>新增、編輯、刪除各執行一次</td><td>檢視軌跡</td><td>各產生一筆紀錄，動作分別為新增／編輯／刪除；編輯紀錄含前後值；所有紀錄持續保留，不會被自動刪除</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-69</td><td>主流程</td><td>F-05</td><td>某案場已刪除</td><td>軌跡頁篩選「縣市＝該案場原縣市」，或取消任一開發階段</td><td>該案場的軌跡<b>不會</b>被列出（不保留快照）；恢復縣市「全部」、階段全選，或用關鍵字輸入該案場名稱可查到</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-69a</td><td>主流程</td><td>F-05</td><td>已有刪除紀錄</td><td>動作選「刪除」</td><td>只顯示「刪除」紀錄，含動作標籤「刪除」、時間、操作者、案場名稱與「案場已刪除」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-70</td><td>例外</td><td>F-05</td><td>軌跡頁</td><td>篩選條件無符合紀錄</td><td>顯示「沒有符合條件的紀錄」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-71</td><td>主流程</td><td>F-06</td><td>清單篩選「施工中」共 N 筆</td><td>按「匯出」</td><td>直接下載 Excel（不跳選項視窗），檔名「競合分析管理_yyyymmdd.xlsx」，只含這 N 筆，提示「已匯出「競合分析管理_yyyymmdd.xlsx」（共 N 筆，依目前篩選條件）」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-72</td><td>主流程</td><td>F-06</td><td>匯出檔</td><td>檢視欄位</td><td>18 欄依序為：案場名稱、案場編號、縣市、鄉鎮市區、坐標、光電類型、專區/分區/編訂、土地權屬、集團、公司名稱、開始日期、裝置容量(MW)、目標裝置容量(MW)、面積(公頃)、開發階段、開發年月、備註、最後異動日期</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-73</td><td>主流程</td><td>F-06</td><td>一筆坐標系統為 TWD97 的案場</td><td>匯出</td><td>該列坐標欄為 WGS84「緯度, 經度」，且無 TWD97 欄</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-74</td><td>主流程</td><td>F-06</td><td>開發階段為施工中的案場</td><td>匯出</td><td>開發階段欄顯示「[4]施工中」；系統畫面仍只顯示「施工中」</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-75</td><td>主流程</td><td>F-06</td><td>案場階段「已併網」、已併網年月 2026/08</td><td>匯出</td><td>開發年月顯示 2026/08</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-76</td><td>驗證</td><td>F-06</td><td>案場開發階段「施工中」，開發中有年月、施工中無年月</td><td>匯出</td><td>開發年月欄為空</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-77</td><td>驗證</td><td>F-06</td><td>匯出檔</td><td>檢視格式</td><td>案場編號為文字格式，保留前導 0（如 00001）；日期欄顯示 yyyy/mm；含長文字的儲存格自動換行、列高跟著增高</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-78</td><td>主流程</td><td>F-06</td><td>已匯出</td><td>檢視編輯軌跡／其他紀錄</td><td>匯出動作未被記錄</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-79</td><td>主流程</td><td>F-07</td><td>已勾選兩個圖層</td><td>進入競合分析管理</td><td>圖層不被自動取消勾選；開啟圖層套疊時，兩個圖層可勾選（無鎖定、無提示）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-80</td><td>主流程</td><td>F-07</td><td>點圖層未勾</td><td>進入競合分析管理</td><td>點圖層自動勾上，地圖顯示管理清單點位</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-81</td><td>主流程</td><td>F-07</td><td>管理中</td><td>取消勾選「開發/許可中案件」</td><td>地圖點位隱藏，提示可由圖層套疊再勾選</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-82</td><td>主流程</td><td>F-07</td><td>管理中，面圖層勾選</td><td>檢視地圖</td><td>同時看到施工/已併網多邊形與管理清單點位</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-83</td><td>主流程</td><td>F-07</td><td>管理中</td><td>離開管理（✕）</td><td>提示「已離開競合分析管理」；圖層勾選維持現況，不還原</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-83a</td><td>主流程</td><td>F-07</td><td>正在編輯某案場</td><td>左側切換到「圖層套疊」頁籤</td><td>「競合分析管理」按鈕右上角顯示橘色圓點；回到管理後圓點消失，鎖定保留</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-84</td><td>主流程</td><td>F-07</td><td>管理中</td><td>從圖層套疊疊加其他分類圖層</td><td>可勾選並顯示，供對照</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-85</td><td>權限</td><td>F-02</td><td>登入且可進入管理的使用者</td><td>新增、編輯、刪除案場、匯出、查看軌跡</td><td>皆可操作（無角色限制）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-86</td><td>權限</td><td>F-01</td><td>面圖層顯示中</td><td>嘗試編輯面資料</td><td>無法編輯（唯讀）</td><td>☐</td><td>☐</td><td></td></tr><tr><td>AC-87</td><td>非功能</td><td>F-08</td><td>約 520 筆案場</td><td>縮放至熱區與點位</td><td>畫面順暢，不出現明顯卡頓（【需 PG 確認】驗收標準）</td><td>☐</td><td>☐</td><td></td></tr></table></div>\n<p><b>驗收彙總</b>：總測項 96｜通過 __｜不通過 __</p>\n<h3 id=\"sp-七-追溯表\">七、追溯表</h3>\n<div class=\"spscroll\"><table><tr><th>F-編號</th><th>畫面</th><th>規格章節</th><th>AC</th></tr><tr><td>F-01 圖層套疊「光電能源案場」</td><td>3.1、3.5</td><td>3.1、3.5</td><td>AC-01～03、18～20、86</td></tr><tr><td>F-02 競合分析管理清單</td><td>3.2、3.3</td><td>3.2、3.3</td><td>AC-04～13（含 06a）、85</td></tr><tr><td>F-03 案場新增／編輯／刪除</td><td>3.6、3.7</td><td>3.6、3.7</td><td>AC-21～54</td></tr><tr><td>F-04 共編鎖定</td><td>3.8</td><td>3.8</td><td>AC-55～62</td></tr><tr><td>F-05 編輯軌跡</td><td>3.9</td><td>3.9</td><td>AC-63～70</td></tr><tr><td>F-06 匯出</td><td>3.10</td><td>3.10</td><td>AC-71～78</td></tr><tr><td>F-07 管理與圖層</td><td>3.11</td><td>3.11</td><td>AC-79～84</td></tr><tr><td>F-08 地圖互動與熱區</td><td>3.4</td><td>3.4</td><td>AC-14～17、87</td></tr></table></div>\n<h3 id=\"sp-附錄\">附錄</h3>\n<h4 id=\"sp-A-一致性檢查結果-2026-11-13-\">A. 一致性檢查結果（2026-11-13）</h4>\n<div class=\"spscroll\"><table><tr><th>#</th><th>檢查項</th><th>結果</th><th>處理</th></tr><tr><td>1</td><td>需求摘要 F-01～F-08 是否都有畫面</td><td>全部有</td><td>—</td></tr><tr><td>2</td><td>每個 F-編號是否都有 AC</td><td>全部有（見追溯表）</td><td>—</td></tr><tr><td>3</td><td>需求摘要與雛型欄位名稱</td><td>一致（欄位名稱客戶已確認）</td><td>—</td></tr><tr><td>4</td><td>雛型有、摘要沒寫的元素</td><td>點位資訊視窗全欄位、色溫熱區切換級數、閒置提醒 5 分鐘</td><td>已在規格補寫，來源為確認紀錄（客戶訪談 2026-11-12、PM 2026-11-13）</td></tr><tr><td>5</td><td>查無資料文案</td><td>本功能為圖台面板；已與《後台共用規範》（「無符合查詢結果／請調整查詢條件後再試。」）一致，空清單另用「目前沒有案場資料」</td><td>請 PM 確認空清單文案是否沿用</td></tr><tr><td>6</td><td>匯出欄位 vs 編輯欄位</td><td>匯出「開發年月」為單欄（取目前階段年月）；系統編輯為五項進度各自年月</td><td>已定義取值規則（BR-40）</td></tr><tr><td>7</td><td>範本 Excel 欄位 vs BR-37</td><td>一致（18 欄）</td><td>—</td></tr></table></div>\n<h4 id=\"sp-B-待定清單\">B. 待定清單</h4>\n<div class=\"spscroll\"><table><tr><th>編號</th><th>項目</th><th>類別</th><th>決策者</th></tr><tr><td>Q-09</td><td>鎖定狀態如何即時同步（他人鎖定多快反映在清單）</td><td>【待技術確認】</td><td>技術主管</td></tr><tr><td>Q-19</td><td>點位圖徵與點位顏色為暫定，先依雛型實作，客戶看過後如有意見再調整</td><td>【待定】</td><td>客戶</td></tr><tr><td>—</td><td>TWD97 坐標範圍沿用現有「坐標定位」功能，雛型暫以 X 100000～400000、Y 2400000～2900000 設定</td><td>【需 PG 確認】</td><td>技術／PM</td></tr><tr><td>—</td><td>資料匯入方式：資料由客戶依我方提供的清單整理好，雛型未畫匯入功能；一次性匯入或系統功能、案場編號如何在匯入時依序編號</td><td>【需 PG 確認】</td><td>技術／PM</td></tr><tr><td>—</td><td>清單排序與分頁（約 500 筆）、匯出大量資料的行為（逾時、上限）、無權限者是否看得到「光電能源案場」分類</td><td>【需 PG 確認】</td><td>技術</td></tr><tr><td>—</td><td>熱區切換級數與效果為我方設計暫定值，正式版依 Mapbox 實作調整</td><td>【需 PG 確認】</td><td>技術</td></tr></table></div>\n<h4 id=\"sp-C-圖示清單-Material-Icons-Outlined-競合分析管理使用-\">C. 圖示清單（Material Icons Outlined，競合分析管理使用）</h4>\n<div class=\"spscroll\"><table><tr><th>位置</th><th>用途</th><th>圖示名稱</th></tr><tr><td>左側選單</td><td>圖層套疊</td><td><code>layers</code></td></tr><tr><td>左側選單</td><td>空間分析</td><td><code>share_location</code></td></tr><tr><td>左側選單</td><td>定位工具</td><td><code>place</code></td></tr><tr><td>左側選單、圖層套疊分類</td><td>競合分析管理</td><td><code>article</code></td></tr><tr><td>標題列</td><td>新增案場</td><td><code>add</code></td></tr><tr><td>篩選卡片</td><td>匯出</td><td><code>download</code></td></tr><tr><td>篩選卡片、清單每筆</td><td>編輯軌跡</td><td><code>history</code></td></tr><tr><td>清單每筆</td><td>編輯</td><td><code>edit</code></td></tr><tr><td>清單每筆</td><td>刪除</td><td><code>delete</code></td></tr><tr><td>清單每筆</td><td>鎖定</td><td><code>lock</code></td></tr><tr><td>篩選卡片、欄位分類</td><td>展開／收合</td><td><code>expand_more</code>／<code>expand_less</code></td></tr><tr><td>面板、資訊視窗</td><td>關閉</td><td><code>close</code></td></tr></table></div>\n<p>連結格式：<code>https://fonts.google.com/icons?icon.set=Material+Icons&amp;selected=Material+Icons+Outlined:{名稱}:&amp;icon.size=24</code>。左側選單未點擊為白色圖示、點擊後為白底深色圖示；滑鼠懸停顯示：競合分析管理。</p>";
+/* ===== 啟動 ===== */
+const qp=new URLSearchParams(location.search||({"list":"state=list","fopen":"state=list&fopen=1","hot":"state=list&z=8.4&lat=23.6&lng=120.95","dots":"state=list&z=12&lat=23.3&lng=120.2","popup":"state=popup&z=12&lat=23.3&lng=120.2","edit":"state=edit","pick":"state=pick","picked":"state=picked","idle":"state=idle","trace":"state=trace","deltrace":"state=trace&tact=%E5%88%AA%E9%99%A4","trace1":"state=trace1","export":"state=export","managelayers":"state=managelayers&z=9.5&lat=23.3&lng=120.3","editlayers":"state=editlayers"})[location.hash.slice(1)]||"");
+if(qp.get('notes')==='1')document.body.classList.add('notes');
+if(qp.get('spec')==='1')document.body.classList.add('spec');
+if(qp.get('fopen'))S.closed_lf=false;if(qp.get('empty'))S.empty=true;if(qp.get('popfull'))document.body.classList.add('popfull');
+if(qp.get('fcounty'))S.lf.county=decodeURIComponent(qp.get('fcounty'));if(qp.get('fstage'))S.lf.stage=decodeURIComponent(qp.get('fstage')).split(',');
+const st=qp.get('state');
+if(st){ if(st==='list'||st==='editlayers'||st==='managelayers'||st==='trace1'||st==='popup'||st==='idle'||st==='pick'||st==='picked'||st==='edit'||st==='trace'||st==='export'){S.manage=true;S.gov=false;S.vena=true;S.view='list';}
+ if(st==='edit')startEdit(2); if(st==='trace')openTrace('all','list');if(st==='trace1')openTrace(4,'list'); if(st==='export')setTimeout(askExport,50);if(st==='pick'){startEdit('new');S.pick=true;flyTo(23.3,120.2,11.5);rerenderEdit();}if(st==='managelayers'){S.view='layers';}if(st==='editlayers'){startEdit(2);S.view='layers';}if(st==='popup'){selCase(1);}if(st==='idle'){startEdit(2);setTimeout(showIdleWarn,80);}if(st==='picked'){startEdit('new');S.draft.name='示範新案場';setPosFromWgs(23.3,120.2);flyTo(23.3,120.2,11.8);}}
+if(qp.get('closed'))qp.get('closed').split(',').forEach(s=>S.secClosed[decodeURIComponent(s)]=true);
+if(qp.get('pid'))selCase(+qp.get('pid'));if(qp.get('ctest')){setTimeout(()=>{const el=document.querySelector('#panel [data-k="'+(qp.get('cf')||'lat')+'"]');if(el){el.value=qp.get('ctest');el.dispatchEvent(new Event('input'));if(qp.get('cblur'))el.dispatchEvent(new Event('change'));}},150);}if(qp.get('tact'))S.tf.act=decodeURIComponent(qp.get('tact'));if(qp.get('tfrom'))S.tf.from=qp.get('tfrom');if(qp.get('tto'))S.tf.to=qp.get('tto');
+if(qp.get('z')){M.z=+qp.get('z');M.lat=+(qp.get('lat')||M.lat);M.lng=+(qp.get('lng')||M.lng);}
+render();
+</script>
+
+
+
+</body></html>

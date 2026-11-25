@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜合約與工項（v2 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.chg{border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:14px;overflow:hidden}
+.chg .ch{display:flex;gap:10px;align-items:center;padding:12px 16px;background:#FAFBFE;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.chg .cb{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ba>div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px}.ba .af{border-color:var(--brand);background:var(--brand-bg)}
+.chg ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink2)}
+.decide{display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--line);align-items:center}
+.quote{background:#FAFBFE;border-left:4px solid var(--brand);border-radius:0 10px 10px 0;padding:11px 14px;font-size:13px;color:var(--ink2);margin:8px 0}
+.cgrp{border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:12px;overflow:hidden}.cgrp>.gh{padding:10px 16px;background:#FAFBFE;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}.cgrp .quote{margin:10px 16px}.gh2{padding:6px 16px 0}
+.it{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;flex-wrap:wrap}.it+.it{border-top:1px solid var(--line)}.it:hover{background:var(--brand-bg)}.it.low{box-shadow:inset 3px 0 0 var(--coral)}
+.pbar{position:sticky;bottom:0;margin-top:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 20px;border:1px solid var(--brand);border-radius:14px;background:#fff;box-shadow:var(--shadow)}
+</style></head>
+<body data-nav="items" data-crumb="合約與工項">
+<script>window.NOTES=[
+ {id:'Q-31',text:'合約新舊版的比對信心低於多少，要強制 PM 逐條看？（沿用 Q-08 的門檻討論）',who:'技術',tech:true},
+ {id:'Q-32',text:'拆分、合併工項時，原工項編號怎麼保留對照？（目前：2.4 → 2.4a／2.4b，舊編號仍可搜尋）',who:'PM'},
+ {id:'Q-33',text:'提案期的草稿工項轉成正式工項時，要不要保留「草稿」時期的版本紀錄？',who:'PM'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_shared.js"></script><script>V2.boot()</script>
+<div id="page"><div id="root"></div>
+<div class="modal-back" id="m-up"><div class="modal">
+  <div class="mh"><div><h2>上傳新版合約或變更文件</h2><div class="sm muted">AI 會和目前採用的版本比對，只列出建議，不會直接改任何東西。</div></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="mb">
+    <div class="field"><label>文件類型</label><select class="select" id="uptype"><option>預告版</option><option>公告版</option><option>契約</option><option selected>變更文件</option></select></div>
+    <div class="field"><label>檔案</label><div class="row" style="gap:8px"><button class="btn sm" type="button">選擇檔案</button><span class="sm muted">Word、PDF（含掃描檔）；變更文件可一次選多份</span></div></div>
+    <div class="banner"><span>比對後會產生「變更影響清單」：哪些工項新增、修改、拆分、合併、刪除，以及對應的畫面、確認事項、決議要怎麼搬或改。</span></div>
+  </div>
+  <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" data-close id="upgo">上傳並比對</button></div>
+</div></div>
+<div class="modal-back" id="m-edit"><div class="modal">
+  <div class="mh"><div><h2 id="et"></h2><div class="sm muted">改完按儲存</div></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="mb" id="eb"></div>
+  <div class="mf"><button class="btn" id="esplit">拆分</button><button class="btn" id="edel" style="color:var(--coral)">刪除</button><span class="grow"></span><button class="btn" data-close>取消</button><button class="btn primary" id="esave">儲存</button></div>
+</div></div>
+<section class="spec"><h2>本畫面規格（v2 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>合約版本</td><td>預告版、公告版、契約、變更文件都留在同一條時間軸；同時只有一個「目前採用」。每次上傳都走「更新」，不是覆蓋</td></tr>
+<tr><td>開案前提案（未核對）</td><td>專案階段＝開案前提案：AI 依預告版先拆工項，狀態標「依預告版・未核對」，不必逐筆核對；可勾選後批次指派負責 PM；未核對的工項不進入交付文件。工項能做多細看資訊多寡，不受階段限制；也可以不拆，直接跟 AI 談整份合約想做什麼</td></tr>
+<tr><td>取得專案後（已生效）</td><td>按「改為執行中」時提醒：把未核對的工項核對生效、指派負責 PM、用契約和預告版比對一次。正式工項，逐筆核對後生效</td></tr>
+<tr><td>工項的兩種檢視</td><td>「從條文看工項」：依合約條文分組，每段條文下列出拆出的工項；「從工項看條文」：每個工項下顯示對應的條文原文。開案前提案（未核對）與已生效的工項都有，分類篩選兩邊通用</td></tr><tr><td>編輯工項</td><td>點工項整列或「編輯」開視窗，可改名稱、分類、條文出處，並有拆分、刪除；草稿可直接改，已生效的修改記入稽核紀錄；合約內容有變更請走「變更影響」</td></tr><tr><td>變更影響清單</td><td>新版文件上傳後，AI 比對目前採用的版本，列出每一項異動（修改、拆分、合併、新增、刪除）、受影響的畫面／確認事項／決議，以及建議怎麼調整。PM 逐項「接受／修改／略過」，按「套用」後才真的改，可復原</td></tr>
+<tr><td>拆分、合併</td><td>提案期隨便拆也沒關係：確認版合約進來後，工項可拆成多個或多個合併；每個工項掛著的資訊（畫面、確認事項、決議、存檔來源）由 AI 建議怎麼搬，標信心，PM 確認；工項編號保留新舊對照</td></tr></table></section></div>
+<script>
+let tab='items',dec={},P;
+const KT={'修改':'sun','拆分':'violet','新增':'mint','刪除':'coral'};
+function draw(){
+ P=DB.cur();const st=V2.stageOf(P),vers=V2.vers[P.id]||[],ch=V2.changes[P.id]||[],R=$('#root');
+ const nPend=ch.filter(c=>!dec[c.id]).length;
+ const vt=vers.length?vers.slice().reverse().map(v=>`<div class="vi ${v.state==='目前採用'?'now':''} ${v.state==='待處理'?'pend':''}"><span class="dot2"></span><div><div class="row" style="gap:8px;flex-wrap:wrap"><b>${v.v}</b><span class="xs muted">${v.date}</span><span class="sm mono">${v.file}</span></div><div class="xs muted" style="margin-top:2px">${v.note}</div></div><span class="chip ${v.state==='目前採用'?'brand':v.state==='待處理'?'coral':''}">${v.state}</span></div>`).join(''):`<div class="empty sm">還沒有上傳任何合約或需求文件。</div>`;
+ R.innerHTML=`<div class="page-head"><div><h1>合約與工項</h1><p>合約會有多個版本，也可能有變更文件；每次上傳都是「更新」，AI 先列出影響與建議，PM 確認後才改。</p></div><button class="btn primary" data-open="m-up">${ic('upload')}上傳新版／變更文件</button></div>
+ ${st==='開案前提案'?`<div class="banner" style="margin-bottom:16px">${ic('spark')}<span class="grow"><b>開案前提案</b>：工項先依預告版拆，不必逐筆核對、可直接指派負責 PM；資訊多的案子（例如延續案）也可以做得很細。取得專案、拿到契約後，再回來核對生效。</span></div>`:''}
+ <div class="card" style="margin-bottom:16px"><h2>合約版本</h2><div class="sub">依時間排列，最新的在上面</div><div class="vtl">${vt}</div></div>
+ <div class="tabs2"><button data-t="items" class="${tab==='items'?'on':''}">工項${st==='開案前提案'?'（未核對）':''}</button><button data-t="changes" class="${tab==='changes'?'on':''}">變更影響${ch.length?`<span class="n">${nPend}</span>`:''}</button></div>
+ <div id="tb"></div>`;
+ $$('.tabs2 button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+ $('#tb').innerHTML=tab==='items'?itemsHtml(st,ch):changesHtml(ch,nPend);
+ if(tab==='items')bindItems(st,ch);
+ if(tab==='changes')bindChanges(ch);
+}
+let vw='clause',flt='all',ROWS=null,ROWSKEY=null,selIdx=-1;
+const catLab=r=>r.draft?r.cat:DB.CAT[r.cat];
+const catChip=r=>r.draft?`<span class="chip">${r.cat}</span>`:`<span class="cat ${r.cat}">${DB.CAT[r.cat]}</span>`;
+function getRows(st){const key=P.id+'|'+st;if(ROWSKEY===key&&ROWS)return ROWS;ROWSKEY=key;
+ if(st==='開案前提案')ROWS=(V2.drafts[P.id]||[]).map(r=>({no:r[0],name:r[1],cat:r[2],clause:r[3]||'預告版',quote:r[4]||'（條文原文尚未帶入）',conf:r[5]||90,reason:'AI 依預告版條文快速拆出，還沒有逐筆核對。',draft:1,pm:'未指派'}));
+ else ROWS=P.contract.map(r=>({no:r[0],name:r[1],cat:r[2],clause:r[4],quote:r[6],conf:r[3],reason:r[7],draft:0}));
+ return ROWS}
+function itRow(i,cv,ch){const r=ROWS[i],aff=!r.draft&&ch.some(c=>c.item.indexOf(r.no+' ')===0);
+ const pm=r.draft?`<select class="select" data-pm="${i}" style="padding:3px 8px;width:130px"><option>未指派</option>${P.members.map(m=>`<option ${r.pm===m[0]?'selected':''}>${m[0]}</option>`).join('')}</select>`:(r.cat==='dev'?`<span class="sm muted">${DB.pmOf(P,r.no)}</span>`:'');
+ return `<div class="it ${r.conf<70?'low':''}" data-i="${i}">${r.draft?`<input type="checkbox" class="check" data-k="${i}" title="勾選後可批次指派">`:''}<span class="mono sm muted" style="min-width:34px">${r.no}</span><b class="grow">${r.name}</b>${catChip(r)}${pm}<span class="chip ${r.draft?'sun':'mint'} xs">依${cv}・${r.draft?'未核對':'已生效'}</span>${aff?'<span class="chip coral xs">有變更建議</span>':''}${r.conf<70?`<span class="chip coral xs">信心 ${r.conf}%</span>`:''}<button class="btn sm" data-e="${i}">編輯</button></div>`}
+function viewHtml(cv,ch){const ok=i=>flt==='all'||catLab(ROWS[i])===flt;let h='';
+ if(vw==='clause'){const g={};ROWS.forEach((r,i)=>{if(ok(i))(g[r.clause]=g[r.clause]||[]).push(i)});
+  h=Object.keys(g).map(k=>{const ix=g[k];return `<div class="cgrp"><div class="gh"><b>條文 ${k}</b><span class="xs muted">· 拆出 ${ix.length} 筆工項</span></div><div class="quote">${ROWS[ix[0]].quote}</div>${ix.map(i=>itRow(i,cv,ch)).join('')}</div>`}).join('')}
+ else h=ROWS.map((r,i)=>ok(i)?`<div class="cgrp">${itRow(i,cv,ch)}<div class="gh2"><span class="xs muted">對應條文</span> <b class="sm">${r.clause}</b></div><div class="quote">${r.quote}</div></div>`:'').join('');
+ return h||'<div class="empty sm">這個分類沒有工項</div>'}
+function itemsHtml(st,ch){const cv=((V2.vers[P.id]||[]).find(v=>v.state==='目前採用')||{}).v||'預告版';
+ if(st==='開案前提案'&&!(V2.drafts[P.id]||[]).length)return `<div class="card"><div class="empty"><div class="art">${ic('upload')}</div><h2 style="color:var(--ink)">上傳預告或合約</h2><div class="sm" style="max-width:420px;margin:6px auto 14px">AI 會快速拆出工項草稿；也可以不拆，直接在右下角 AI 談整份合約想做什麼。</div></div></div>`;
+ const R=getRows(st),cats=[...new Set(R.map(catLab))],draft=st==='開案前提案';
+ return `${draft?`<div class="row" style="margin-bottom:10px;gap:8px;flex-wrap:wrap"><button class="btn sm">${ic('refresh')}請 AI 重新拆</button><span class="grow"></span><span class="sm muted">勾選後：</span><select class="select" id="bpm" style="width:auto"><option value="">指派給…</option>${P.members.map(m=>`<option>${m[0]}</option>`).join('')}</select><button class="btn sm" id="bgo">批次指派</button><button class="btn sm primary">轉為正式工項（核對後生效）</button></div>`:''}
+ <div class="row wrap" style="margin-bottom:12px;gap:10px"><div class="seg" id="vsw"><button class="${vw==='clause'?'on':''}" data-v="clause">從條文看工項</button><button class="${vw==='item'?'on':''}" data-v="item">從工項看條文</button></div><span class="xs muted">點工項或「編輯」可重新編輯${draft?'；草稿可直接改、不必核對':'；已生效的修改會記入稽核紀錄'}</span><span class="grow"></span><div class="row wrap" id="fc" style="gap:6px"><button class="fchip ${flt==='all'?'on':''}" data-c="all">全部 ${R.length}</button>${cats.map(c=>`<button class="fchip ${flt===c?'on':''}" data-c="${c}">${c} ${R.filter(r=>catLab(r)===c).length}</button>`).join('')}</div></div>
+ <div id="cview">${viewHtml(cv,ch)}</div>`}
+function bindItems(st,ch){const cv=((V2.vers[P.id]||[]).find(v=>v.state==='目前採用')||{}).v||'預告版',re=()=>{$('#cview').innerHTML=viewHtml(cv,ch)};
+ $$('#vsw button').forEach(b=>b.onclick=()=>{vw=b.dataset.v;$$('#vsw button').forEach(x=>x.classList.toggle('on',x===b));re()});
+ $$('#fc .fchip').forEach(b=>b.onclick=()=>{flt=b.dataset.c;$$('#fc .fchip').forEach(x=>x.classList.toggle('on',x===b));re()});
+ $('#cview').addEventListener('click',e=>{if(e.target.closest('select,input'))return;const it=e.target.closest('.it');if(it)openEdit(+it.dataset.i)});
+ $('#cview').addEventListener('change',e=>{if(e.target.dataset.pm!==undefined)ROWS[+e.target.dataset.pm].pm=e.target.value});
+ const g=$('#bgo');if(g)g.onclick=()=>{const who=$('#bpm').value;if(!who){toast('請先選要指派給誰');return}const ks=$$('#cview input[data-k]:checked').map(x=>+x.dataset.k);if(!ks.length){toast('請先勾選工項');return}ks.forEach(k=>ROWS[k].pm=who);re();toast('已指派 '+ks.length+' 個工項給 '+who)};
+ window.__reItems=re}
+function openEdit(i){selIdx=i;const r=ROWS[i];$('#et').textContent='編輯工項 '+r.no;
+ const cats=r.draft?[...new Set(ROWS.map(x=>x.cat))]:Object.keys(DB.CAT);
+ $('#eb').innerHTML=`<div class="field"><label>工項名稱</label><input class="input" id="en" value="${r.name}"></div>
+ <div class="grid2"><div class="field"><label>AI 分類（可改）</label><select class="select" id="ec">${cats.map(k=>`<option value="${k}" ${k===r.cat?'selected':''}>${r.draft?k:DB.CAT[k]}</option>`).join('')}</select></div><div class="field"><label>條文出處</label><input class="input" id="eo" value="${r.clause}"></div></div>
+ <div class="field"><label>合約原文（示範摘錄）</label><div class="quote" style="margin:0">${r.quote}</div></div>
+ <div class="ai-card" style="margin:12px 0"><div class="in"><div class="row" style="margin-bottom:5px"><span class="ai-badge">${ic('spark')}AI 分類理由</span><span class="chip ${r.conf<70?'coral':'mint'}">信心 ${r.conf}%</span></div><div class="sm">${r.reason}</div></div></div>
+ ${r.draft?'':`<div class="banner" style="margin-bottom:6px">${ic('alert')}<span>這個工項已生效，修改會記入稽核紀錄；如果是合約內容有變更，請到「變更影響」頁籤處理。</span></div>`}`;
+ $('#m-edit').classList.add('open')}
+function bindEdit(){
+ $('#esave').onclick=()=>{const r=ROWS[selIdx];r.name=$('#en').value.trim()||r.name;r.cat=$('#ec').value;r.clause=$('#eo').value.trim()||r.clause;$('#m-edit').classList.remove('open');if(window.__reItems)window.__reItems();toast(r.draft?'已儲存':'已儲存，並記入稽核紀錄')};
+ $('#esplit').onclick=()=>toast('已開啟拆分：輸入拆分後的工項名稱，條文出處沿用，資訊由 AI 建議怎麼搬');
+ $('#edel').onclick=()=>{const r=ROWS.splice(selIdx,1)[0];$('#m-edit').classList.remove('open');if(window.__reItems)window.__reItems();toast('已刪除「'+r.name+'」','復原',()=>{ROWS.splice(selIdx,0,r);if(window.__reItems)window.__reItems()})}}
+function changesHtml(ch,nPend){
+ if(!ch.length)return `<div class="card"><div class="empty"><div class="art">${ic('check')}</div><b>目前沒有待處理的合約變更</b><div class="sm">上傳新版合約或變更文件後，AI 會在這裡列出影響與建議。</div></div></div>`;
+ const pick=c=>`<div class="decide"><span class="sm muted" style="margin-right:6px">你的決定：</span><button class="sbtn ok ${dec[c.id]==='接受'?'on':''}" data-c="${c.id}" data-d="接受">接受</button><button class="sbtn ${dec[c.id]==='修改'?'on':''}" data-c="${c.id}" data-d="修改">修改後接受</button><button class="sbtn no ${dec[c.id]==='略過'?'on':''}" data-c="${c.id}" data-d="略過">略過</button></div>`;
+ const body=c=>{if(c.kind==='修改')return `<div class="ba"><div><div class="xs muted">原本</div><b>${c.before}</b></div><div class="af"><div class="xs muted">建議改成</div><b>${c.after}</b></div></div><div><div class="xs muted" style="margin-bottom:4px">會影響</div><ul>${c.impacts.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+  if(c.kind==='拆分')return `<div class="tbl-wrap" style="box-shadow:none"><table class="tbl"><thead><tr><th>原本掛在 2.4 的資訊</th><th style="width:230px">建議搬到</th><th style="width:80px">信心</th></tr></thead><tbody>${c.moves.map(m=>`<tr><td>${m[0]}</td><td><select class="select" style="padding:4px 8px"><option ${m[1].indexOf('2.4a')===0?'selected':''}>2.4a 競合圖層管理</option><option ${m[1].indexOf('2.4b')===0?'selected':''}>2.4b 競合資料匯出</option><option>不搬，留在待處理</option></select></td><td><span class="chip ${m[2]>=85?'mint':'sun'}">${m[2]}%</span></td></tr>`).join('')}</tbody></table></div>`;
+  return `<div><div class="xs muted" style="margin-bottom:4px">會影響</div><ul>${c.impacts.map(i=>`<li>${i}</li>`).join('')}</ul></div>`};
+ return `<div class="banner" style="margin-bottom:14px">${ic('spark')}<span class="grow"><b>變更文件 1</b>（2026-11-12）和目前採用的契約比對完成，共 ${ch.length} 項建議。這些只是 AI 的建議，<b>你確認後才會真的改</b>。</span></div>
+ ${ch.map(c=>`<div class="chg"><div class="ch"><span class="chip ${KT[c.kind]}">${c.kind}</span><b>${c.item}</b><span class="xs muted">${c.src}</span></div><div class="cb"><div>${c.text}</div>${body(c)}<div class="ai-card"><div class="in"><span class="ai-badge">${ic('spark')}AI 建議</span><div class="sm" style="margin-top:6px">${c.suggest}</div></div></div></div>${pick(c)}</div>`).join('')}
+ <div class="pbar"><div><b id="ps1"></b><div class="xs muted">套用後會留下版本紀錄，可以復原；沒決定的項目不會動。</div></div><button class="btn primary" id="apply">套用已接受的項目</button></div>`}
+function bindChanges(ch){
+ const upd=()=>{const a=ch.filter(c=>dec[c.id]==='接受'||dec[c.id]==='修改').length,s=ch.filter(c=>dec[c.id]==='略過').length;$('#ps1').textContent='接受 '+a+'　略過 '+s+'　未決定 '+(ch.length-a-s);$('#apply').disabled=!a};
+ $$('.decide .sbtn').forEach(b=>b.onclick=()=>{dec[b.dataset.c]=b.dataset.d;const wrap=b.parentElement;$$('.sbtn',wrap).forEach(x=>x.classList.toggle('on',x===b));upd();$$('.tabs2 .n').forEach(n=>n.textContent=ch.filter(c=>!dec[c.id]).length)});
+ $('#apply').onclick=()=>toast('已套用 '+ch.filter(c=>dec[c.id]==='接受'||dec[c.id]==='修改').length+' 項，並留下版本紀錄','復原',()=>toast('已復原'));upd()}
+window.pageInit=function(){
+ if(location.hash==='#changes')tab='changes';if(location.hash==='#item')vw='item';
+ draw();bindEdit();
+ $('#upgo').onclick=()=>{const t=$('#uptype').value;if(t==='變更文件'){tab='changes';draw();toast('已比對完成：產生變更影響清單')}else toast('已上傳「'+t+'」，AI 正在和目前採用的版本比對…')};
+};
+</script>
+</body></html>

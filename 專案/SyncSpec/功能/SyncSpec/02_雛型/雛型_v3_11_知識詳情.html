@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜知識詳情（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.sec2{border-top:1px solid var(--line);padding:10px 0}.sec2:first-of-type{border-top:0}.sec2 .lb{font-size:12px;color:var(--muted);margin-bottom:2px}
+.meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}@media(max-width:900px){.meta{grid-template-columns:1fr 1fr}}
+.meta>div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}.meta .lb{font-size:12px;color:var(--muted)}
+.ta{width:100%;min-height:90px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:13.5px;box-sizing:border-box}
+</style></head>
+<body data-nav="library" data-scope="global" data-crumb="">
+<script>window.NOTES=[
+ {id:'Q-51',text:'「經手」怎麼認定（專案成員即算？離開專案後還看得到嗎）？',who:'主管／PM'},
+ {id:'Q-53',text:'「確認無誤」是否需要定期提醒（例如超過半年沒確認就標「待重新確認」）？',who:'PM／主管'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page"><div id="root"></div>
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>用途</td><td>知識庫列表（單位、領域、功能卡、產品）點進來的詳細頁，看完整內容、最後確認與異動紀錄，有權限的人可編輯</td></tr>
+<tr><td>最後確認／最後異動</td><td>各記錄時間與人員。「確認無誤」只更新最後確認；編輯後儲存，確認與異動都更新；每次都留一筆紀錄</td></tr>
+<tr><td>可見與可編輯</td><td>單位：經手過該單位專案的人才看得到，沒有權限顯示「沒有權限」；該單位專案的主 PM 可編輯。領域、功能、產品：所有人看得到，僅系統管理指定的維護人可編輯；其他人唯讀</td></tr>
+<tr><td>功能卡升級</td><td>草稿狀態的功能卡，維護人（PG）可「確認已上線，升為已實作」；升級同時更新最後確認與異動</td></tr>
+<tr><td>單位的所有知識</td><td>單位詳情下方彙整該單位歷次專案的功能卡、所屬領域的知識、還沒入庫的候選</td></tr></table></section></div>
+<script>
+const q=new URLSearchParams(location.search),T=q.get('t')||'unit',K=q.get('k')||'';
+const KIND={unit:'單位',domain:'領域',func:'功能',product:'產品'},KC={unit:'violet',domain:'mint',func:'brand',product:'sun'};
+const SC={'草稿':'sun','已實作':'brand','已驗證':'mint'};
+let X,me,edit=false,can=false;
+function find(){if(T==='unit')return V3.units.find(u=>u.name===K);if(T==='domain')return V3.domainKb.find(x=>x.title===K);if(T==='func')return V3.funcs.find(f=>f.title===K);return V3.products.find(p=>p.name===K)}
+function related(u){const pn=u.projects.map(p=>p.replace(/（.*）/,'')),hit=t=>pn.some(n=>(t||'').indexOf(n)>-1)||(t||'').indexOf(u.name)>-1;return{funcs:V3.funcs.filter(f=>hit(f.src)),dom:V3.domainKb.filter(x=>u.domain.includes(x.d)),cand:V3.cand.filter(c=>hit(c.src)||hit(c.title)),pn}}
+function bodyTxt(){const s=V3.stampOf(T,X);if(T==='unit'){let sec=X.sections.map(a=>a.slice());if(s.text){try{const t=JSON.parse(s.text);sec.forEach((a,i)=>{if(t[i]!==undefined)a[1]=t[i]})}catch(e){}}return sec}
+ return s.text||(T==='domain'?(X.desc||'（示意）此領域知識的內容、適用範圍與例外，由維護人整理。'):X.desc)}
+function metaHtml(){const s=V3.stampOf(T,X),ed=T==='unit'?V3.mainPmsOfUnit(X):(V3.getEditors()[KIND[T]]||[]);
+ return `<div class="meta"><div><div class="lb">最後確認</div><b class="sm">${V3.stampTxt(s.conf)}</b></div><div><div class="lb">最後異動</div><b class="sm">${V3.stampTxt(s.mod)}</b></div><div><div class="lb">${T==='unit'?'維護人（主 PM）':'維護人'}</div><b class="sm">${ed.join('、')||'尚未指定'}</b></div><div><div class="lb">你的權限</div><b class="sm">${can?'可編輯':'唯讀'}</b></div></div>`}
+function allKb(u){const r=related(u);const grp=(chip,tone,title,rows,go)=>'<div class="sec2"><div class="row spread"><div class="lb"><span class="chip '+tone+' xs">'+chip+'</span> '+title+'（'+rows.length+'）</div><a class="sm" style="cursor:pointer" data-go="'+go+'">到「'+chip+'」</a></div>'+(rows.length?rows.join(''):'<div class="xs muted">目前沒有</div>')+'</div>';
+ return '<div class="card" style="margin-top:14px"><h2 style="margin:0">這個單位的所有知識</h2><div class="sub">歷次專案（'+r.pn.join('、')+'）的知識集中在這裡看。</div>'+
+ grp('功能卡','brand','做過的功能',r.funcs.map(f=>'<div class="sm" style="padding:3px 0"><b>'+f.title+'</b> <span class="chip '+SC[V3.funcStatus(f)]+' xs">'+V3.funcStatus(f)+'</span> <span class="xs muted">來源：'+f.src+'</span></div>'),'func')+
+ grp('領域','mint','所屬領域的知識（'+u.domain.join('、')+'）',r.dom.map(x=>'<div class="sm" style="padding:3px 0"><b>'+x.title+'</b> <span class="chip '+(x.state==='已升級'?'mint':'sun')+' xs">'+x.state+'</span></div>'),'domain')+
+ grp('待提取','sun','還沒入庫的候選',r.cand.map(c=>'<div class="sm" style="padding:3px 0"><b>'+c.title+'</b> <span class="chip xs">'+c.state+'</span></div>'),'cand')+'</div>'}
+function draw(){me=V3.user();X=find();const R=$('#root');
+ const back=DB.href(PAGES.library)+'#'+({unit:'unit',domain:'domain',func:'func',product:'product'})[T];
+ if(!X){R.innerHTML=`<div class="card"><div class="empty">找不到這筆知識。<a href="${back}">回知識庫</a></div></div>`;return}
+ if(T==='unit'&&!V3.canSeeUnit(me,X)){R.innerHTML=`<div class="page-head"><div><a class="sm" href="${back}">← 回知識庫</a><h1>沒有權限</h1></div><div class="row" style="gap:6px"><span class="xs muted">目前身分（示意）</span><select class="fsel on" id="me">${V3.users().map(u=>`<option ${u===me?'selected':''}>${u}</option>`).join('')}</select></div></div><div class="card"><div class="empty"><div class="art">${ic('lock')}</div><b>你沒有經手過「${X.name}」的專案</b><div class="sm" style="max-width:420px;margin:6px 0 0">單位知識只給經手過該單位專案的人員看。需要的話，請該單位專案的主 PM 把你加入專案。</div></div></div>`;$('#me').onchange=e=>{V3.setUser(e.target.value);edit=false;draw()};return}
+ can=T==='unit'?V3.canEditUnit(me,X):V3.canEdit(me,T);
+ const st=T==='func'?V3.funcStatus(X):T==='domain'?X.state:'';const s=V3.stampOf(T,X);
+ const title=T==='unit'?X.name+'　單位知識主檔':T==='product'?X.name:X.title,txt=bodyTxt();
+ let body='';
+ if(T==='unit')body=txt.map((a,i)=>`<div class="sec2"><div class="lb">${a[0]}</div>${edit?`<textarea class="ta" data-i="${i}">${a[1]}</textarea>`:`<div class="sm">${a[1]}</div>`}</div>`).join('')||'<div class="empty sm" style="padding:24px">這個單位還沒有單位知識。可以補 5 題基本資料，或等第一次訪談後由 AI 提取；延續案可用冷啟動匯入。</div>';
+ else body=`<div class="sec2"><div class="lb">${T==='product'?'產品說明':'內容'}</div>${edit?`<textarea class="ta" id="ta1">${txt}</textarea>`:`<div class="sm">${txt}</div>`}</div>`+(T==='func'?`<div class="sec2"><div class="lb">來源</div><div class="sm">${X.src}</div></div>`:T==='domain'?`<div class="sec2"><div class="lb">來源</div><div class="sm">${X.src}（${X.n} 個專案）</div></div>`:`<div class="sec2"><div class="lb">專案回報</div><div class="sm">${X.report?X.report+' 件「與實際不符」待處理':'沒有回報'}</div></div>`);
+ const log=(s.log||[]).slice().reverse().map(l=>`<div class="sm"><span class="mono">${l[0]}</span>　${l[1]}　<span class="xs muted">${l[2]}</span></div>`).join('')+(T==='unit'&&X.log.length?X.log.map(l=>`<div class="sm"><span class="mono">${l[0]}</span>　${l[1]}　<span class="xs muted">${l[2]}</span></div>`).join(''):'');
+ R.innerHTML=`<div class="page-head"><div><a class="sm" href="${back}">← 回知識庫・${KIND[T]}</a><div class="row" style="gap:8px;margin:6px 0"><span class="chip ${KC[T]}">${KIND[T]}</span>${st?`<span class="chip ${T==='func'?SC[st]:(st==='已升級'?'mint':'sun')}">${st}</span>`:''}</div><h1>${title}</h1></div>
+  <div class="row" style="gap:6px"><span class="xs muted">目前身分（示意）</span><select class="fsel on" id="me">${V3.users().map(u=>`<option ${u===me?'selected':''}>${u}</option>`).join('')}</select></div></div>
+ ${metaHtml()}
+ <div class="card" style="margin-top:14px"><div class="row spread" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">內容</h2><div class="row" style="gap:8px">${can?(edit?`<button class="btn sm" id="bc">取消</button><button class="btn sm primary" id="bs">儲存</button>`:`<button class="btn sm" id="bok">確認無誤</button>${T==='func'&&st==='草稿'?`<button class="btn sm" id="bup">確認已上線，升為已實作</button>`:''}<button class="btn sm primary" id="be">編輯</button>`):`<span class="chip">唯讀</span>`}</div></div>
+ ${T==='unit'?`<div class="banner" style="margin:10px 0">${ic('book')}<span>單位知識免事前審核，由該單位專案的主 PM 維護；AI 引用時標「未審核」，管理者每月抽查。新資訊累加，衝突時以最新決議為準。</span></div>`:!can?`<div class="banner" style="margin:10px 0">${ic('lock')}<span>所有人都看得到，僅維護人可編輯（在<a href="${DB.href(PAGES.kbadmin)}">系統管理</a>指定）。</span></div>`:''}
+ ${body}</div>
+ <div class="card" style="margin-top:14px"><h2 style="margin:0">確認與異動紀錄</h2><div class="col" style="gap:4px;margin-top:8px">${log||'<div class="sm muted">還沒有紀錄</div>'}</div></div>
+ ${T==='unit'?allKb(X):''}`;
+ $('#me').onchange=e=>{V3.setUser(e.target.value);edit=false;draw()};
+ $$('[data-go]').forEach(a=>a.onclick=()=>{location.href=DB.href(PAGES.library)+'#'+a.dataset.go});
+ const b=id=>document.getElementById(id);
+ if(b('be'))b('be').onclick=()=>{edit=true;draw()};
+ if(b('bc'))b('bc').onclick=()=>{edit=false;draw()};
+ if(b('bok'))b('bok').onclick=()=>{const t=V3.setStamp(T,X,'conf');draw();toast('已記錄最後確認：'+t.at+'・'+t.by)};
+ if(b('bup'))b('bup').onclick=()=>{V3.setFuncStatus(X,'已實作');const t=V3.setStamp(T,X,'mod');draw();toast('已升為「已實作」，AI 之後可以參考；最後確認與異動：'+t.at+'・'+t.by)};
+ if(b('bs'))b('bs').onclick=()=>{let text;if(T==='unit'){const o={};$$('textarea[data-i]').forEach(a=>o[+a.dataset.i]=a.value);text=JSON.stringify(o)}else text=$('#ta1').value;const t=V3.setStamp(T,X,'mod',text);edit=false;draw();toast('已儲存；最後確認與異動：'+t.at+'・'+t.by)}}
+window.pageInit=function(){draw()};
+</script>
+</body></html>

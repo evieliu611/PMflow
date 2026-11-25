@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜專案總覽</title><link rel="stylesheet" href="_shared.css"></head>
+<body data-nav="home" data-crumb="總覽">
+<script>window.NOTES=[
+ {id:'Q-07',text:'「合約範圍判定」「版本歷史比對」本次未做，確認是下期還是不做？',who:'PM'}
+];</script>
+<script src="_data.js"></script><script src="_shared.js"></script>
+<div id="page"><div id="root"></div>
+<section class="spec"><h2>本畫面規格</h2>
+<table><tr><th>元素</th><th>資料來源</th><th>規則</th></tr>
+
+<tr><td>接下來要做什麼</td><td>依專案現況（有沒有合約、成員、參考素材庫、規劃進度）算出目前在第幾步</td><td>六步：上傳合約→核對工項→加成員→選素材庫→開始規劃→處理待定與產文件；新專案一進來就看到「上傳合約」</td></tr><tr><td>問 AI</td><td>全站 AI 助理</td><td>每個頁面右下角都有，隨時可開、可放大（工項工作區用自己的 AI 對話）。可查專案資訊、直接談規劃方向（例如整個後台的方向）、附上或拖入會議紀錄；跨工項的內容由 AI 自行對應到工項，整理進各工項的「AI 整理的說明」，對不到的記為專案層級</td></tr><tr><td>需要你處理</td><td>待定、文件過期、待核對</td><td>每項標出誰要處理（PG／PM／問客戶），並顯示該工項負責 PM；可依「處理者」（角色）「人」（成員）「工項」三個條件篩選，例如選 Allen（PG）就只看 PG 要處理的事（可同時使用），右上顯示符合筆數</td></tr>
+<tr><td>（已移除）</td><td>最近活動、工項分類</td><td>總覽不放這兩塊；要看分類到工項清單</td></tr><tr><td>進度列</td><td>階段（AI 標示、可改）、待定數</td><td>點列進該工項工作區</td></tr>
+<tr><td>參考知識</td><td>專案設定中勾選的公司素材庫</td><td>可調整；僅列出有權限者</td></tr></table>
+<ul><li>各專案資料獨立；切換專案後內容不同。</li><li>空專案（未上傳合約）顯示空狀態與「上傳合約」入口。</li></ul></section></div>
+<script>
+const CATS=[['dev','功能開發','var(--brand)'],['gis','圖資處理','var(--violet)'],['pm','專案管理','var(--sun)'],['doc','文件產出','var(--mint)'],['buy','採購','var(--coral)'],['other','其他','#9AA4C2']];
+window.pageInit=function(){
+ const p=DB.cur(),s=DB.stat(p),R=$('#root');
+ if(!p.contract.length){R.innerHTML=`<div class="page-head"><div><div class="sm muted">${p.client} · ${p.sub}</div><h1>${p.name}</h1></div></div><div class="card"><div class="empty"><div class="art">${ic('upload')}</div><h2 style="color:var(--ink)">從上傳合約開始</h2><div class="sm" style="max-width:420px;margin:6px auto 14px">餵合約給 AI，會自動拆出工作項目並分類；功能開發類工項可直接進入規劃。</div><a class="btn primary" href="${PAGES.manage}#contract">${ic('upload')}上傳合約</a></div></div>`+'';R.insertAdjacentHTML('beforeend','');R.insertAdjacentHTML('afterbegin',guideCard(p));return}
+ const zero=p.items.filter(i=>i.stage===0);const un=p.contract.filter(c=>!c[5]).length;
+  const need=[];p.items.forEach(i=>{i.tbd.forEach(t=>need.push(['<span class="chip coral">待定</span>',i.no+' '+i.name,t[1],WHO(t[2]),i.no+' '+i.name,WHOS(t[2]),DB.pmOf(p,i.no)]));if(i.docs.includes('old'))need.push(['<span class="chip sun">文件過期</span>',i.no+' '+i.name,'圖文對照或簡報落後雛型',WHO('PM'),i.no+' '+i.name,['PM'],DB.pmOf(p,i.no)]);});
+ if(un)need.push([`<span class="chip brand">待核對 ${un}</span>`,'合約拆工項',un+' 筆 AI 信心偏低或未核對',WHO('PM'),'合約拆工項',['PM'],'']);
+ const refs=DB.refOf(p).map(id=>DB.LIB.find(l=>l.id===id)).filter(Boolean);
+ R.innerHTML=`<div class="page-head"><div><div class="sm muted">${p.client} · ${p.sub}</div><h1>${p.name}</h1></div><div class="row"><div class="avs">${p.members.map(m=>`<div class="avatar ${m[5]}">${m[4]}</div>`).join('')}</div><a class="btn sm" href="${PAGES.manage}#members">管理成員</a></div></div>
+ ${guideCard(p)}
+ <div class="grid2" style="grid-template-columns:1.35fr 1fr"><div class="col">
+  <div class="card"><div class="row spread"><div><h2>功能開發工項進度</h2><div class="sub">階段由 AI 依對話自動標示</div></div><a class="btn sm" href="${PAGES.items}">看全部</a></div><div class="col" style="gap:14px">
+   ${p.items.map((i,k)=>`<a class="row" style="color:inherit" href="${PAGES.work}?i=${k}"><span class="st s${i.stage}" style="min-width:104px">${DB.STG[i.stage]}</span><div class="grow"><b>${i.no} ${i.name}</b><div class="xs muted">${i.tbd.length?'待定 '+i.tbd.length:'無待定'}</div></div><span class="dots">${[0,1,2,3,4,5].map(n=>`<i class="${n<=i.stage&&i.stage>0?'f':''}"></i>`).join('')}</span></a>`).join('')||'<div class="sm muted">此專案沒有功能開發工項。</div>'}</div></div>
+ </div>
+ <div class="col">
+  <div class="card"><div class="row spread"><h2>需要你處理</h2><span class="xs muted" id="needN"></span></div><div class="sub">每項標出誰要處理，可依工項、人篩選</div>
+   <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:12px"><select class="fsel" id="fWho"><option value="">處理者</option>${['PM','PG','PL','問客戶','問主管'].map(x=>'<option>'+x+'</option>').join('')}</select><select class="fsel" id="fPer"><option value="">人</option>${p.members.map(m=>'<option value="'+m[0]+'">'+m[0]+'（'+m[3]+'）</option>').join('')}</select><select class="fsel" id="fItem"><option value="">工項</option>${[...new Set(need.map(n=>n[4]))].map(x=>'<option>'+x+'</option>').join('')}</select><button class="btn ghost sm" id="fClr">清除</button></div>
+   <div class="col" style="gap:10px" id="needBox"></div></div>
+  <div class="card"><div class="row spread"><h2>參考的公司素材庫 <span class="chip sun xs">尚未規劃・示意</span></h2><a class="sm" href="${PAGES.manage}#settings">調整</a></div><div class="sub">規劃時 AI 會一併參考</div><div class="col" style="gap:8px">${refs.map(l=>`<div class="row sm"><span class="chip ${l.tone}">${l.scope.split('：')[0]}</span><b>${l.name}</b></div>`).join('')}</div></div>
+ </div></div>`;
+
+ const drawNeed=()=>{['#fWho','#fPer','#fItem'].forEach(k=>$(k).classList.toggle('on',!!$(k).value));const w=$('#fWho').value,it=$('#fItem').value,pm=$('#fPer').value,L=need.filter(n=>(!w||n[5].includes(w))&&(!it||n[4]===it)&&(!pm||(()=>{const m=p.members.find(x=>x[0]===pm);return m&&n[5].includes(m[3])&&(m[3]!=='PM'||n[6]===pm)})()));$('#needN').textContent=L.length===need.length?need.length+' 項':L.length+'／'+need.length+' 項';$('#needBox').innerHTML=L.map(n=>`<div class="row card flat" style="padding:12px">${n[0]}<div class="grow"><b>${n[1]}</b><div class="xs muted">${n[2]}${n[6]?' · 負責 PM：'+n[6]:''}</div></div><div class="col" style="gap:4px;align-items:flex-end">${n[3]}</div></div>`).join('')||'<div class="sm muted">'+(need.length?'沒有符合篩選的事項。':'目前沒有待處理事項。')+'</div>'};
+ ['#fWho','#fPer','#fItem'].forEach(k=>$(k).onchange=drawNeed);$('#fClr').onclick=()=>{['#fWho','#fPer','#fItem'].forEach(k=>$(k).value='');drawNeed()};drawNeed();
+};
+</script>
+</body></html>

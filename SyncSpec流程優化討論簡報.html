@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SyncSpec 流程優化討論</title>
+<style>
+:root{
+  --ink:#1f2933; --ink-2:#52606d; --ink-3:#7b8794;
+  --line:#d8dee5; --line-2:#e8ecf0; --bg:#f4f6f8; --paper:#ffffff;
+  --brand:#1d5a8a; --brand-soft:#eaf1f7;
+  --warn:#b07d1a; --warn-soft:#fdf6e6;
+  --bad:#a6423a; --bad-soft:#fbeeed;
+  --good:#3d7a4e; --good-soft:#eef5f0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",-apple-system,sans-serif;
+  background:#20262c;color:var(--ink);line-height:1.7;
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+}
+.deck{position:fixed;top:0;left:0;width:1280px;height:720px;transform-origin:top left;}
+.slide{
+  position:absolute;top:0;left:0;width:1280px;height:720px;background:var(--paper);
+  padding:44px 60px 56px;overflow:hidden;display:none;animation:in .28s ease-out;
+}
+.slide.active{display:block;}
+@keyframes in{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
+.slide-no{position:absolute;bottom:20px;right:30px;font-size:12px;color:var(--ink-3);letter-spacing:.08em;}
+h1{font-size:40px;line-height:1.35;font-weight:700;letter-spacing:-.01em;}
+h2{font-size:25px;font-weight:700;letter-spacing:-.01em;padding-bottom:10px;border-bottom:2px solid var(--brand);display:inline-block;margin-bottom:8px;}
+h3{font-size:15px;font-weight:700;margin-bottom:7px;color:var(--ink);}
+.sub{color:var(--ink-2);font-size:14px;margin-bottom:18px;}
+p{font-size:13.5px;color:var(--ink-2);}
+.mt{margin-top:18px;} .mt-s{margin-top:12px;}
+
+/* cover */
+.cover{background:var(--paper);border-top:6px solid var(--brand);padding:140px 80px;}
+.cover .eyebrow{font-size:14px;letter-spacing:.24em;color:var(--brand);font-weight:700;margin-bottom:20px;}
+.cover h1{margin-bottom:20px;}
+.cover .lead{font-size:17px;color:var(--ink-2);max-width:840px;}
+.cover .meta{margin-top:44px;padding-top:22px;border-top:1px solid var(--line-2);font-size:13px;color:var(--ink-3);display:flex;gap:28px;flex-wrap:wrap;}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
+th{text-align:left;padding:8px 12px;background:#f0f3f6;border-bottom:2px solid var(--line);font-weight:700;color:var(--ink);font-size:12.5px;}
+td{padding:8px 12px;border-bottom:1px solid var(--line-2);vertical-align:top;color:var(--ink-2);line-height:1.55;}
+td strong{color:var(--ink);font-weight:700;}
+tbody tr:hover{background:#fafbfc;}
+code{font-family:"Cascadia Mono",Consolas,monospace;font-size:12px;background:#eef1f4;padding:1.5px 6px;border-radius:3px;color:var(--brand);white-space:nowrap;}
+
+/* boxes */
+.rule{border:1px solid var(--line);border-left:4px solid var(--brand);background:var(--brand-soft);padding:16px 22px;margin-bottom:12px;}
+.rule .k{font-size:12px;font-weight:700;color:var(--brand);letter-spacing:.08em;}
+.rule h3{margin:5px 0 6px;font-size:18px;}
+.rule p{font-size:14px;color:var(--ink-2);}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:11px 17px;font-size:13px;color:#6b5312;margin-top:14px;line-height:1.62;}
+.note.bad{border-left-color:var(--bad);background:var(--bad-soft);color:#7a3129;}
+.note.good{border-left-color:var(--good);background:var(--good-soft);color:#2f5c3c;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.card{border:1px solid var(--line);padding:15px 18px;background:var(--paper);}
+.card h3{font-size:14.5px;margin-bottom:6px;}
+.card p{font-size:12.8px;line-height:1.6;}
+.card .big{font-size:24px;font-weight:700;color:var(--brand);line-height:1.2;}
+.card.now{border-top:3px solid var(--bad);}
+.card.next{border-top:3px solid var(--good);}
+.card.foc{border-top:3px solid var(--brand);}
+
+/* lists */
+ul.clean{list-style:none;margin-top:6px;}
+ul.clean li{font-size:13px;color:var(--ink-2);padding:3px 0 3px 18px;position:relative;line-height:1.58;}
+ul.clean li::before{content:"";position:absolute;left:2px;top:11px;width:5px;height:5px;background:var(--brand);border-radius:50%;}
+ul.clean li b{color:var(--ink);}
+ol.num{margin:8px 0 0 20px;}
+ol.num li{font-size:13.5px;color:var(--ink-2);padding:4px 0;}
+ol.num li b{color:var(--ink);}
+
+/* pills / roles */
+.pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:2px;background:#eef1f4;color:var(--ink-2);margin-right:5px;font-weight:700;}
+.pill.g{background:var(--good-soft);color:var(--good);}
+.pill.r{background:var(--bad-soft);color:var(--bad);}
+.pill.y{background:var(--warn-soft);color:var(--warn);}
+.pill.b{background:var(--brand-soft);color:var(--brand);}
+.role{display:inline-block;min-width:64px;text-align:center;font-size:12px;padding:2px 8px;border-radius:2px;font-weight:700;white-space:nowrap;}
+.role.pm{background:var(--brand-soft);color:var(--brand);}
+.role.mix{background:var(--warn-soft);color:var(--warn);}
+.role.pg{background:var(--good-soft);color:var(--good);}
+
+/* pipeline / view fan-out */
+.src{border:1px solid var(--line);border-left:4px solid var(--brand);background:var(--brand-soft);padding:12px 18px;text-align:center;}
+.src b{color:var(--brand);font-size:15px;}
+.fan{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:14px;}
+.fan .v{border:1px solid var(--line);border-top:3px solid var(--brand);padding:13px 16px;background:var(--paper);}
+.fan .v .who{font-size:11.5px;color:var(--ink-3);font-weight:700;letter-spacing:.06em;}
+.fan .v h3{margin:4px 0 6px;font-size:15px;}
+.fan .v p{font-size:12.5px;line-height:1.55;}
+.arrow-down{text-align:center;color:var(--brand);font-size:20px;line-height:.9;margin:8px 0 0;}
+
+/* tree */
+.tree{font-family:Consolas,"Cascadia Mono",monospace;font-size:12px;background:#f7f9fa;border:1px solid var(--line-2);padding:13px 18px;color:var(--ink-2);line-height:1.62;white-space:pre;overflow:hidden;}
+.tree b{color:var(--brand);} .tree .own{color:var(--bad);font-weight:700;} .tree .feat{color:var(--good);font-weight:700;}
+
+/* cols */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:6px;}
+.col-head{font-weight:700;font-size:14px;padding:6px 12px;margin-bottom:8px;border-left:4px solid var(--ink-3);background:#f0f3f6;color:var(--ink);}
+.col-head.now{border-left-color:var(--bad);background:var(--bad-soft);}
+.col-head.next{border-left-color:var(--good);background:var(--good-soft);}
+
+/* decision list */
+.dec{display:grid;gap:9px;margin-top:10px;}
+.dec .item{display:grid;grid-template-columns:34px 1fr;gap:12px;border:1px solid var(--line);border-left:4px solid var(--brand);padding:9px 14px;background:#fafbfc;align-items:center;}
+.dec .item .no{font-size:19px;font-weight:700;color:var(--brand);text-align:center;}
+.dec .item b{color:var(--ink);font-size:14px;}
+.dec .item span{display:block;color:var(--ink-3);font-size:12px;margin-top:1px;}
+
+/* progress / control / overview */
+#bar{position:fixed;left:0;bottom:0;height:3px;background:var(--brand);z-index:60;transition:width .28s ease;width:0;}
+#ctl{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:70;display:flex;align-items:center;gap:6px;background:rgba(32,38,44,.86);border:1px solid rgba(255,255,255,.14);border-radius:4px;padding:5px 8px;backdrop-filter:blur(8px);opacity:0;transition:opacity .2s;pointer-events:none;}
+#ctl:hover,body.ui #ctl{opacity:1;pointer-events:auto;}
+#ctl button{background:none;border:none;color:#e6ebef;cursor:pointer;font-size:14px;padding:3px 9px;border-radius:3px;font-family:inherit;}
+#ctl button:hover{background:rgba(255,255,255,.14);}
+#pos{color:#aab6c0;font-size:12px;padding:0 8px;font-variant-numeric:tabular-nums;letter-spacing:.04em;}
+#ov{position:fixed;inset:0;background:#20262c;z-index:80;display:none;grid-template-columns:repeat(5,1fr);gap:14px;padding:34px;overflow-y:auto;align-content:start;}
+#ov.on{display:grid;}
+.thumb{background:var(--paper);border:2px solid transparent;cursor:pointer;padding:13px 14px;border-radius:3px;height:104px;overflow:hidden;}
+.thumb:hover,.thumb.cur{border-color:var(--brand);}
+.thumb .tn{font-size:10.5px;color:var(--ink-3);letter-spacing:.1em;font-weight:700;}
+.thumb .tt{font-size:13.5px;font-weight:700;color:var(--ink);margin-top:6px;line-height:1.4;}
+
+@media print{
+  @page{size:13.333in 7.5in;margin:0;}
+  body{background:#fff;overflow:visible;}
+  #bar,#ctl,#ov{display:none!important;}
+  .deck{position:static;width:auto;height:auto;transform:none!important;}
+  .slide{display:block!important;position:relative;page-break-after:always;animation:none;width:1280px;height:720px;}
+  tbody tr:hover{background:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+<div id="ov"></div>
+<div id="ctl">
+  <button id="bPrev" title="上一頁 (←)">‹</button>
+  <span id="pos">1 / 22</span>
+  <button id="bNext" title="下一頁 (→)">›</button>
+  <button id="bOv" title="總覽 (O / Esc)">總覽</button>
+  <button id="bFs" title="全螢幕 (F)">全螢幕</button>
+</div>
+
+<div class="deck">
+
+<!-- 1 封面 -->
+<section class="slide cover" id="s1" data-n="封面" data-t="PMflow 試用回饋與優化方向">
+  <div class="eyebrow">SYNCSPEC · 流程優化小組</div>
+  <h1>PMflow 流程優化討論</h1>
+  <p class="lead">彙整這輪 PMflow 試用的痛點、五個議題的建議做法，以及今天需要一起拍板的決策。</p>
+  <div class="meta">
+    <span>SyncSpec PM 會議</span>
+    <span>2026 / 09 / 21</span>
+    <span>討論用 · 非定稿</span>
+  </div>
+</section>
+
+<!-- 2 今天的目的 -->
+<section class="slide" id="s2" data-n="背景" data-t="今天要解的核心問題">
+  <div class="slide-no"></div>
+  <h2>今天要解的核心問題</h2>
+  <p class="sub">試用有效，但暴露出七個議題。它們看似分開，其實是同一個結構性問題的不同症狀。</p>
+  <div class="grid2">
+    <div class="card foc">
+      <h3>PMflow 試用的初衷</h3>
+      <ul class="clean">
+        <li>PM 規劃時就用 AI 來回討論可行性、產出 HTML 雛型</li>
+        <li>先找 PL 確認方向，把待確認事項帶去客戶訪談</li>
+        <li>確認完再產規格，PG 直接照規格開發</li>
+        <li><b>目的：把翻案風險從最貴的階段往前移</b></li>
+      </ul>
+    </div>
+    <div class="card now">
+      <h3>試用後浮現的七個議題</h3>
+      <ul class="clean">
+        <li><b>①</b> 想提早到「投標／服務建議書」階段</li>
+        <li><b>②</b> 規格圖／Figma／HTML 對不上（可否 AI 產設計）</li>
+        <li><b>③</b> 規格文件難讀（含「給人看 vs 給 AI 看」）</li>
+        <li><b>④</b> 單機版：多 PM 成果分岔、難即時同步給 PL/PG</li>
+        <li><b>⑤</b> 資料夾想改，並支援專案管理與自動產文件</li>
+        <li><b>⑥</b> 明定流程時間點：文件該在何時給 PL 看</li>
+        <li><b>⑦</b> 接上開發現實：讀既有 DB/API、補完整流程圖</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">今天的產出：七個議題各自的<b>方向共識</b>，以及最後一頁「需要拍板的決策」逐項圈選。</div>
+</section>
+
+<!-- 3 痛點總覽 -->
+<section class="slide" id="s3" data-n="痛點" data-t="表層要求 vs 背後真正的痛">
+  <div class="slide-no"></div>
+  <h2>痛點盤點：表層要求 ≠ 背後真正的痛</h2>
+  <p class="sub">把「大家講出來的建議」還原成「背後真正的痛」，才不會只解到表面。</p>
+  <table>
+    <thead><tr><th style="width:30px">#</th><th style="width:230px">表層建議</th><th>背後真正的痛</th><th style="width:250px">現在卡在哪</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>提早到投標階段</td><td>技術團隊 <b>太晚進場</b>；啟動會議想像落差大</td><td>投標粗雛型與 PMflow 雛型是兩份，要重畫重想像</td></tr>
+      <tr><td>2</td><td>AI 產設計、規格圖要跟 Figma 一致</td><td>規格圖／Figma／HTML <b>三份對不上</b>、PG 混淆；設計還要重畫</td><td>同一畫面多份來源；HTML⇄Figma 雙向是真難點</td></tr>
+      <tr><td>3</td><td>規格難讀、AC 獨立、人/AI 分版</td><td>規格是<b>寫給人讀的</b>，卻用「抽取邏輯」排版</td><td>AC 才剛刻意併進規格 §六（為單一來源）</td></tr>
+      <tr><td>4</td><td>放雲端/NAS 解多人協作</td><td>多 PM <b>成果分道揚鑣</b>、資訊難即時同步</td><td>目前為單機作業、<b>尚無版本控制</b></td></tr>
+      <tr><td>5</td><td>調整資料夾、做專案管理</td><td>共用檔重複跑<b>浪費 token</b>；未來想自動產文件</td><td>資料夾按「產物」切，還沒有「專案管理層」</td></tr>
+      <tr><td>6</td><td>明定流程時間點</td><td>產了文件卻<b>沒在對的時間點給 PL</b>看＝沒用</td><td>缺明確「PL 介入時機」；PL 常有多專案、有些還沒投入</td></tr>
+      <tr><td>7</td><td>接上開發現實</td><td>流程<b>沒讀 DB/API</b>、缺完整流程圖，雛型欄位與既有系統對不上</td><td>PM 主線刻意不碰技術，但需求需<b>錨定現實</b></td></tr>
+    </tbody>
+  </table>
+  <div class="note bad">共同的敵人只有一個：<b>「文件／畫面／程式各自演化」</b>。七個議題若用直覺做法，都會不小心生出「第二份會分岔的來源」或「產了卻沒接上的文件」。</div>
+</section>
+
+<!-- 4 貫穿原則 -->
+<section class="slide" id="s4" data-n="總方針" data-t="單一來源，多重視圖">
+  <div class="slide-no"></div>
+  <h2>一條貫穿五個議題的總方針</h2>
+  <div class="rule">
+    <div class="k">SINGLE SOURCE · MULTIPLE VIEWS</div>
+    <h3>單一來源，多重視圖</h3>
+    <p>來源只有一份，輸出可以有很多份，每一份對準一個對象或一個階段。</p>
+  </div>
+  <p class="sub mt-s">這不是新概念——你們的雛型<b>已經在這樣做</b>了：</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>雛型現況（已驗證的做法）</h3>
+      <ul class="clean">
+        <li>同一份 HTML 雛型 = 唯一真實來源</li>
+        <li><code>?notes=1</code> 討論圖層 → 給客戶 / 主管看未決事項</li>
+        <li><code>?spec=1</code> 規格圖層 → 給 PL / PG 看規格</li>
+      </ul>
+    </div>
+    <div class="card foc">
+      <h3>把同一招套到五個議題</h3>
+      <ul class="clean">
+        <li>投標階段 → 雛型的「輕量視圖」，不是另一份檔</li>
+        <li>給設計 / Figma → 雛型的「匯出視圖」，不回流改來源</li>
+        <li>規格難讀 / AC 獨立 → 同一份規格，出多種閱讀版</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note good">守住「來源一份、視圖多份」，五個議題都能做，且都不破壞單一真實來源。</div>
+</section>
+
+<!-- 5 議題一 規格一源三視圖 -->
+<section class="slide" id="s5" data-n="議題一" data-t="規格難讀 → 一源三視圖">
+  <div class="slide-no"></div>
+  <h2>議題一：規格難讀 → 一源三視圖</h2>
+  <p class="sub">同一份 SPEC 雛型，經 <code>spec-gen</code> 產出三種視圖，各對準一種對象。</p>
+  <div class="src"><b>來源：SPEC 雛型（唯一真實來源）</b> ── <code>spec-gen</code> 抽取</div>
+  <div class="arrow-down">▼</div>
+  <div class="fan">
+    <div class="v"><div class="who">PM 確認 · 需求說明會議</div><h3>① 人讀版</h3><p>圖文左右對照，好掃、好懂、有畫面；用來確認「符不符合想像」。</p></div>
+    <div class="v"><div class="who">PG 餵給 AI 開發</div><h3>② AI 讀版</h3><p>文字自我完備、不靠圖、帶穩定 ID、邊界全攤開；可附 SPEC 雛型 HTML。</p></div>
+    <div class="v"><div class="who">PG 自測 · PM 驗收</div><h3>③ 驗收清單版</h3><p>AC 獨立成冊，開發時不必一起翻；含負向/權限測項與勾選欄。</p></div>
+  </div>
+  <div class="note">關鍵：人讀版最強的「圖文對照」，正是 AI 版最弱的「意義藏在圖裡」。三版<b>同一次產出、版本鎖死</b>；AI 版是投影，絕不手改。<span class="pill g">最好做</span> 建議當 SyncSpec 首勝。</div>
+</section>
+
+<!-- 6 議題二 投標視圖 -->
+<section class="slide" id="s6" data-n="議題二" data-t="提早到投標階段 → 投標視圖">
+  <div class="slide-no"></div>
+  <h2>議題二：提早到投標階段（投標視圖）</h2>
+  <p class="sub">不是「另開一份投標雛型」，而是讓<b>同一份雛型</b>從投標一路長大到規劃。</p>
+  <div class="cols">
+    <div>
+      <div class="col-head now">現況：兩份、要重想像</div>
+      <ul class="clean">
+        <li>業務投標畫一份粗雛型（拋棄式）</li>
+        <li>得標後 PM 重新畫 PMflow 雛型</li>
+        <li>啟動會議大家從頭想像 → <b>落差</b></li>
+      </ul>
+    </div>
+    <div>
+      <div class="col-head next">建議：一份、連續生長</div>
+      <ul class="clean">
+        <li>投標模式產「願景雛型」：低精度、可點擊、<b>不掛厚 SPEC</b></li>
+        <li>得標後同一份原地升版、往上疊 SPEC</li>
+        <li>投標 → 啟動 → 規劃 <b>看的是同一張畫面在長大</b></li>
+      </ul>
+    </div>
+  </div>
+  <div class="note bad">風險提醒：投標畫進去的東西容易被客戶當成<b>已承諾功能</b>。投標視圖要更嚴格標「示意 vs 承諾」，合約範圍判定（<span class="pill g">✅內</span><span class="pill y">⚠️模糊</span><span class="pill r">❌超出</span>）要提前介入。</div>
+</section>
+
+<!-- 7 議題三-1 議題三的由來 -->
+<section class="slide" id="s7" data-n="議題三" data-t="議題三的由來：三份畫面對不上">
+  <div class="slide-no"></div>
+  <h2>議題三：AI 產設計 + Figma（1/4）議題三的由來</h2>
+  <p class="sub">PG 讀需求規格時，<b>規格裡的圖 ↔ Figma ↔ HTML 三份對不上</b>，不知以哪個為準。根因：同一個畫面有多份會分岔的來源。</p>
+  <div class="grid2">
+    <div class="card now">
+      <h3>現在的痛：一個畫面、三份來源</h3>
+      <ul class="clean">
+        <li>規格文件的圖 = <b>另外截一張</b>存進去</li>
+        <li>Figma = 設計師<b>另畫一版</b></li>
+        <li>HTML 雛型 = <b>又一版</b></li>
+        <li>→ 三份各自演化，PG <b>混淆、對不上</b></li>
+      </ul>
+    </div>
+    <div class="card next">
+      <h3>目標原則：一畫面一來源</h3>
+      <ul class="clean">
+        <li>一個畫面，只有<b>一個視覺來源</b></li>
+        <li>規格的圖<b>不自己存</b>，而是「引用」單一來源<b>自動產生</b></li>
+        <li>版本鎖死：雛型 v3 → Figma v3 → 規格 v3，<b>圖永遠同版</b></li>
+        <li>先定「誰是視覺單一來源」→ 規格就從它抽圖</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note good">所以議題三的決策核心＝<b>先定哪一個是視覺單一來源</b>（下一頁 A/B/C）；規格的圖一律從那一個自動產生，才能保證「<b>規格圖＝Figma＝HTML</b>」不分岔。</div>
+</section>
+
+<!-- 8 議題三-2 AI 產圖兩情境做法 -->
+<section class="slide" id="s7b" data-n="議題三" data-t="AI 產圖：延續案 vs 新案做法">
+  <div class="slide-no"></div>
+  <h2>議題三（2/4）AI 產圖：兩種情境、兩套做法</h2>
+  <p class="sub">情境不同、做法不同。這是 PM 現場最需要對齊的操作細節。</p>
+  <div class="cols">
+    <div>
+      <div class="col-head next">延續案：像「同一套系統的下一頁」</div>
+      <ol class="num">
+        <li>PM 收齊<b>既有系統截圖</b>當素材</li>
+        <li>AI 跑 <code>design-baseline</code> 抽視覺基準（配色/字體/間距/圓角陰影/元件）</li>
+        <li>產<b>唯一一份 <code>_shared.css</code></b> ＋ 設計基準.md</li>
+        <li>雛型錨定 css，過「<b>反 AI 感</b>」檢查清單</li>
+      </ol>
+      <p class="mt-s" style="font-size:12.5px"><b>分工：</b><span class="role pm">PM</span> 給素材＋定案 · AI 抽色票＋產雛型 · 設計視需要微調（常可跳過 Figma）</p>
+    </div>
+    <div>
+      <div class="col-head now">新案：需要新穎風格</div>
+      <ol class="num">
+        <li>AI 產 <b>2–3 種風格方向</b>（低精度草稿）</li>
+        <li>PM＋設計<b>選一個定調</b></li>
+        <li>定調後<b>回寫唯一一份 <code>_shared.css</code></b>，之後只追加不重寫</li>
+        <li>才進入功能雛型量產</li>
+      </ol>
+      <p class="mt-s" style="font-size:12.5px"><b>分工：</b>AI 產風格草稿 · <span class="role mix">設計</span> 定調把關 · 之後 AI 依定案產各畫面</p>
+    </div>
+  </div>
+  <div class="note bad">新案的視覺探索是 AI <b>最不穩、最需要人把關</b>之處——別讓它一次到底，務必留「人選定調」這一關。</div>
+</section>
+
+<!-- 9 議題三-3 Figma 三選一決策表 -->
+<section class="slide" id="s7c" data-n="議題三" data-t="Figma 三選一（擴充決策表）">
+  <div class="slide-no"></div>
+  <h2>議題三（3/4）Figma：三選一，明確選一個</h2>
+  <div class="note bad">HTML ⇄ Figma <b>雙向同步 = 兩份會各自演化的來源</b>，正是鐵律一號要防的事。核心原則：<b>同一件事不要兩邊都能改。</b></div>
+  <table class="mt-s">
+    <thead><tr><th style="width:150px">選項（視覺真實來源）</th><th>工作流（具體）</th><th style="width:150px">優點</th><th style="width:170px">代價</th><th style="width:95px">適用</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>A. HTML 為主</b><br><span style="font-size:11.5px;color:var(--ink-3)">SoT ＝ PMflow HTML</span></td>
+        <td>AI 產 HTML 雛型 →（需精修時）單向匯進 Figma 給設計潤 → 潤後當<b>交付參考，不回寫</b></td>
+        <td>單一來源、最省轉手</td>
+        <td>設計要在 HTML/CSS 上調，或精修版不回流程</td>
+        <td>延續案、想極簡</td>
+      </tr>
+      <tr>
+        <td><b>B. 關注點分家</b><br><span style="font-size:11.5px;color:var(--ink-3)">視覺＝Figma／行為＝HTML</span></td>
+        <td>HTML 只管互動＋SPEC；Figma 只出最終視覺；PG <b>視覺看 Figma、規則看規格</b></td>
+        <td>各用所長、新案視覺自由</td>
+        <td>要嚴格劃清「視覺 vs 行為」，兩邊要對得上</td>
+        <td>新案、重視覺</td>
+      </tr>
+      <tr>
+        <td><b>C. 維持現狀</b><br><span style="font-size:11.5px;color:var(--ink-3)">SoT ＝ HTML</span></td>
+        <td>不進 Figma，把 <b>AI 產圖品質拉高</b>到可直接交付 PG</td>
+        <td>流程最單純、零回流風險</td>
+        <td>新案視覺探索能力受限</td>
+        <td>延續案</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note good">關鍵保證：不論 A/B/C，<b>規格圖一律「自動從選定的視覺來源產生」、不手動另存</b>，才能保證「規格圖＝Figma＝HTML」。先定來源，再談工具。</div>
+</section>
+
+<!-- 10 議題三-4 判斷準則 + 工具現實 + 試辦 -->
+<section class="slide" id="s7d" data-n="議題三" data-t="判斷準則 · 工具現實 · 試辦">
+  <div class="slide-no"></div>
+  <h2>議題三（4/4）怎麼選、會前先答什麼、怎麼試</h2>
+  <div class="grid3">
+    <div class="card foc">
+      <h3>判斷準則（建議預設）</h3>
+      <ul class="clean">
+        <li>延續案 → 預設 <b>A 或 C</b>（視覺已被既有系統框住，Figma 邊際效益低）</li>
+        <li>新案且視覺是賣點 → 傾向 <b>B</b></li>
+        <li>git／工具紀律還沒建立 → 先 <b>C</b>，最單純</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>工具現實（要誠實面對）</h3>
+      <ul class="clean">
+        <li>HTML→Figma（html.to.design 等）：<b>圖層會亂、元件會散</b></li>
+        <li>Figma→HTML（Anima／Dev Mode）：產的 code <b>不合 <code>_shared.css</code> 規範、不帶 SPEC</b></li>
+        <li>→ 這就是「回流不可靠」的根本原因</li>
+      </ul>
+    </div>
+    <div class="card next">
+      <h3>會前先答三題</h3>
+      <ul class="clean">
+        <li>這案子<b>視覺是不是賣點</b>／差異化？</li>
+        <li>設計師願在 HTML/CSS 上調，還是<b>非 Figma 不可</b>？</li>
+        <li>潤稿後的視覺<b>要不要回到 PMflow</b>，還是只當交付？</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note good"><b>試辦建議：</b>挑一個<b>延續案</b>試 A／C、一個<b>新案</b>試 B，各跑一輪，量「<b>設計重畫工時</b>」有沒有下降，再回頭定案全公司標準。</div>
+</section>
+
+<!-- 8 議題四-1 四方案評估 -->
+<section class="slide" id="s8" data-n="議題四" data-t="四方案評估：OneDrive/Google/NAS/Git">
+  <div class="slide-no"></div>
+  <h2>議題四（1/2）四個存放方案評估</h2>
+  <p class="sub">先分兩個需求：<b>①存取</b>（大家打得開）雲端/NAS 就能解；<b>②收斂</b>（多人不分岔、可追溯）才是分道揚鑣的關鍵。</p>
+  <table class="mt-s">
+    <thead><tr><th>評估準則</th><th style="width:135px">OneDrive</th><th style="width:135px">Google 雲端</th><th style="width:120px">NAS</th><th style="width:120px">Git</th></tr></thead>
+    <tbody>
+      <tr><td><b>多人同改共用檔不分岔</b></td><td><span class="pill r">❌</span> 衝突副本</td><td><span class="pill r">❌</span> 衝突副本</td><td><span class="pill r">❌</span> 覆蓋/鎖檔</td><td><span class="pill g">✅</span> 自動合併</td></tr>
+      <tr><td><b>變更歷史（誰改/為什麼）</b></td><td><span class="pill y">⚠️</span> 逐檔難用</td><td><span class="pill y">⚠️</span> 逐檔難用</td><td><span class="pill r">❌</span> 幾乎沒有</td><td><span class="pill g">✅</span> 完整語意</td></tr>
+      <tr><td><b>即時同步給 PL/PG</b></td><td><span class="pill y">⚠️</span> 看到 WIP</td><td><span class="pill y">⚠️</span> 看到 WIP</td><td><span class="pill y">⚠️</span> 需 VPN</td><td><span class="pill g">✅</span> 發佈站+PR</td></tr>
+      <tr><td><b>PM 學習曲線</b></td><td><span class="pill g">✅</span> 零</td><td><span class="pill g">✅</span> 零</td><td><span class="pill g">✅</span> 低</td><td><span class="pill y">⚠️</span> 需 GUI 上手</td></tr>
+      <tr><td><b>重檔（截圖/設計檔）</b></td><td><span class="pill g">✅</span> 好</td><td><span class="pill g">✅</span> 好</td><td><span class="pill g">✅</span> 好</td><td><span class="pill y">⚠️</span> 需 LFS</td></tr>
+      <tr><td><b>與「AI 在本機跑」相容</b></td><td><span class="pill y">⚠️</span> 同步殘檔</td><td><span class="pill y">⚠️</span> 同步殘檔</td><td><span class="pill y">⚠️</span> 延遲/鎖檔</td><td><span class="pill g">✅</span> 本機 clone</td></tr>
+    </tbody>
+  </table>
+  <div class="note">只有 <b>Git</b> 能解②「防分岔＋可追溯」；雲端/NAS 在①存取與重檔上更省事、PM 也更好上手。→ 不是四選一，看下一頁的組合。</div>
+</section>
+
+<!-- 8b 議題四-2 評估結論 -->
+<section class="slide" id="s8b" data-n="議題四" data-t="評估結論與導入">
+  <div class="slide-no"></div>
+  <h2>議題四（2/2）評估結論與導入建議</h2>
+  <p class="sub">關鍵能力（防分岔＋可追溯）只有 git 有，但學習曲線與重檔要配套——所以是「組合」，不是四選一。</p>
+  <div class="grid2">
+    <div class="card next">
+      <h3>建議組合（各取所長）</h3>
+      <ul class="clean">
+        <li><b>Git</b> = 唯一真版（文字產物：雛型/規格/確認紀錄/memory）</li>
+        <li><b>雲端／NAS</b> = 重檔倉庫、備份、給非技術者的分享連結</li>
+        <li><b>特定主機</b>（選配）= 雛型發佈站，PL/PG 開網址看最新</li>
+        <li>分工：<span class="role pm">主PM</span> 專案層跑一次／<span class="role pg">功能PM</span> 各自功能夾平行</li>
+      </ul>
+    </div>
+    <div class="card foc">
+      <h3>要一起討論的做法</h3>
+      <ul class="clean">
+        <li><b>現在就上 git</b>（PM 用 GitHub Desktop 等 GUI，不碰指令）？</li>
+        <li>還是<b>先雲端過渡</b>：單一雲端 ＋「共用檔負責人制」（每個共用檔一個 owner，別人改先講）？</li>
+        <li>過渡法能<b>止血</b>，但擋不住根本分岔——<b>何時轉 git</b>？</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note good">重點提醒：不論最後放哪，<b>git repo 不要放進會即時同步的雲端資料夾</b>（內部檔案會被同步弄壞）。</div>
+</section>
+
+<!-- 9 議題五 資料夾架構 -->
+<section class="slide" id="s9" data-n="議題五" data-t="資料夾架構調整">
+  <div class="slide-no"></div>
+  <h2>議題五：資料夾架構（支援專案管理）</h2>
+  <p class="sub">把「主PM 層 vs 功能層」「輸入 vs 產物」在資料夾上切成看得見的界線。</p>
+  <div class="tree">專案/{專案名}/
+├── <b>00_專案管理/</b>      <span class="own">【主PM】</span>專案總覽 · 時程里程碑 · 決策紀錄 · 風險待辦 · 角色聯絡
+├── <b>10_專案素材/</b>      <span class="own">【主PM 跑一次】</span>原始「輸入」：合約 · 會議簡報 · 會議原始記錄 · 轉檔MD
+├── <b>20_專案文件/</b>      【AI 產·主PM 覆核】「衍生」：會議紀錄 · 服務建議書 · 報告書 · 技術文件⚠
+├── memory/            <span class="own">【主PM 跑一次】</span>專案 AI 記憶（功能PM 只讀）
+├── _設計系統/         <span class="own">【主PM 跑一次】</span>唯一一份 _shared.css ＋ 設計基準（全功能共用）
+├── _封存/             只讀墳場
+└── <b>功能/</b>              <span class="feat">【各功能PM 各自擁有 · 平行不撞】</span>
+    └── {功能名}/       01_需求整理 · 02_雛型 · 03_規格 · 04_設計稿 · 05_驗收 · 06_變更</div>
+  <div class="note">重點三招：新增 <b>00 專案管理層</b>、<b>10 輸入與 20 產物嚴格分家</b>（自動產文件的前提）、<code>_shared.css</code> <b>升到專案級只抽一次色票</b>（省 token）。</div>
+  <div class="note good">會議紀錄兩版本：PMflow <b>讀「速筆（會議原始記錄）」轉 MD 當輸入</b>；「給客戶正式版」是 20_ 的<b>產物</b>（現階段先不做），不可回頭當輸入（避免有損迴圈）。</div>
+</section>
+
+<!-- 10 界線澄清 -->
+<section class="slide" id="s10" data-n="界線" data-t="素材 vs 確認紀錄">
+  <div class="slide-no"></div>
+  <h2>界線澄清：素材 vs 確認紀錄</h2>
+  <p class="sub">功能PM 訪談完跟 AI 講的確認事項，<b>不進 10_專案素材</b>——它是功能層的決定。</p>
+  <table>
+    <thead><tr><th style="width:120px"></th><th>素材</th><th>確認事項</th></tr></thead>
+    <tbody>
+      <tr><td><b>本質</b></td><td>外面<b>進來的</b>原始證據（合約、簡報、逐字稿）</td><td>對話中<b>產生的</b>決定（客戶拍板、PL 意見、PM 決定）</td></tr>
+      <tr><td><b>誰寫</b></td><td><span class="role pm">主PM</span>，跑一次</td><td><span class="role pg">功能PM</span>，持續累積</td></tr>
+      <tr><td><b>去哪</b></td><td><code>10_專案素材/</code>（唯讀為主）</td><td><b>寫回雛型 ＋ 該功能 <code>確認紀錄/</code></b></td></tr>
+    </tbody>
+  </table>
+  <div class="note bad">若讓確認事項流進素材，會同時破壞三件事：①「跑一次」失效（多人持續寫）②單一來源被複製 ③商業稽核線弄髒。</div>
+  <div class="note good">一句話：<b>「外面進來的、跨功能的」歸主PM 的 10_ 跑一次；「討論產生的、單功能的」歸功能PM 的雛型＋確認紀錄持續寫。</b>兩條水管永不交叉。</div>
+</section>
+
+<!-- 11 角色分工 -->
+<section class="slide" id="s11" data-n="分工" data-t="業務 / PM / PL / PG / 設計">
+  <div class="slide-no"></div>
+  <h2>角色分工：把 PL 往前拉是投報最高的一招</h2>
+  <p class="sub">最核心的組織痛是「技術團隊太晚進場」。分工圍繞這件事重排。</p>
+  <table>
+    <thead><tr><th style="width:90px">角色</th><th style="width:250px">現在</th><th>建議調整</th></tr></thead>
+    <tbody>
+      <tr><td><b>業務</b></td><td>投標畫粗雛型（另一份）</td><td>改用 PMflow 投標視圖產願景雛型；標「示意 vs 承諾」；合約範圍初判</td></tr>
+      <tr><td><b>PM</b></td><td>得標後接手，主線到規格</td><td>主線不變，<b>多一責任：雛型 v1 完成後、客戶訪談前先找 PL 過可行性</b>；PM 不做技術判斷</td></tr>
+      <tr><td><b>PL</b></td><td>需求說明才進場</td><td><b>提前到雛型 v1</b>：對 <code>⚠️待技術確認</code> 圖層做檢核，翻案風險在最便宜的階段攔下（設為強制關卡）</td></tr>
+      <tr><td><b>PG</b></td><td>需求說明才拿到完整細節</td><td>讀「AI 讀版」開發、開「驗收清單版」自測；任務拆解/API/DDL 仍屬技術團隊</td></tr>
+      <tr><td><b>設計</b></td><td>整體重畫 XD/Figma</td><td>延續案：直接精修 HTML/CSS；新案：只做視覺探索與定調，不從零重畫</td></tr>
+    </tbody>
+  </table>
+  <div class="note good">一句話：把 PL 的介入點從「需求說明」拉到「雛型 v1」，翻案成本從最貴階段移到最便宜階段。</div>
+</section>
+
+<!-- 議題六-1 PL 介入時機 -->
+<section class="slide" id="s11b" data-n="議題六" data-t="流程時間點：文件何時給 PL">
+  <div class="slide-no"></div>
+  <h2>議題六（1/2）流程時間點：文件何時給 PL 看</h2>
+  <div class="rule">
+    <div class="k">TIMING &gt; DOCUMENT</div>
+    <h3>產了文件，沒在對的時間點給 PL＝沒用</h3>
+    <p>錨點原則：<b>每個「對外動作」之前，先過 PL 技術關</b>——給客戶之前、交付 PG 之前。</p>
+  </div>
+  <table class="mt-s">
+    <thead><tr><th style="width:210px">時機</th><th style="width:230px">給 PL 什麼</th><th>PL 要回答</th><th style="width:200px">若卡住怎麼辦</th></tr></thead>
+    <tbody>
+      <tr><td><b>① 雛型 v1 完成、<span style="color:var(--bad)">寄訪談簡報給客戶「之前」</span></b></td><td>雛型連結（<code>?spec</code>）＋ ⚠️待技術確認清單</td><td>這些畫面/流程做得出來嗎？哪些要調？</td><td>不可行的<b>先別放進</b>給客戶的簡報</td></tr>
+      <tr><td><b>② <span style="color:var(--bad)">客戶訪談「之後」</span>、回填升版後</b></td><td>更新後雛型 ＋ 本次確認/變更摘要</td><td>客戶新加的有沒有新風險？</td><td>有風險先標記，下次對外前再確認</td></tr>
+      <tr><td><b>③ 規格定稿、<span style="color:var(--bad)">正式交付 PG「之前」</span></b></td><td>規格（AI 讀版）＋ 驗收清單</td><td>照這規格開發可行嗎？範圍有沒有爆？</td><td>有疑慮回雛型改，再同步規格</td></tr>
+    </tbody>
+  </table>
+  <div class="note good">時機對了，文件才有用。這三個關卡都錨在「對外動作」前，正好對應議題四的 <b>PR/MR 檢核</b>與<b>發佈站連結</b>。</div>
+</section>
+
+<!-- 議題六-2 PL 跨專案 -->
+<section class="slide" id="s11c" data-n="議題六" data-t="PL 跨專案 / 尚未投入怎麼辦">
+  <div class="slide-no"></div>
+  <h2>議題六（2/2）PL 跨專案、還沒投入的專案怎麼辦？</h2>
+  <p class="sub">整包丟給 PL「有空看」＝沒有時限、會太晚、看不完。核心：<b>分級 ＋ 非同步 ＋ 只丟聚焦問題。</b></p>
+  <div class="cols">
+    <div>
+      <div class="col-head next">先分級，不要整包丟</div>
+      <ul class="clean">
+        <li><span class="pill g">🟢 可自決</span>跟舊系統一致／業界慣例／我方可決定 → <b>PM 直接拍板，不佔 PL 時間</b></li>
+        <li><span class="pill y">🟡 技術疑慮</span> → <b>只丟這幾條</b>給 PL，不是整份文件</li>
+        <li><span class="pill r">🔴 高風險/可能翻案</span> → 必須 PL 同步討論</li>
+        <li>給 PL 的是「<b>聚焦問題 ＋ 雛型連結</b>」：開發佈站看畫面、只答被標記的幾題</li>
+      </ul>
+    </div>
+    <div>
+      <div class="col-head">非同步 ＋ 尚未投入的專案</div>
+      <ul class="clean">
+        <li><b>附需回覆日</b>（錨定「客戶訪談日前 X 天」）；設<b>每週技術 triage 時段</b>一次過</li>
+        <li>還沒派 PL 的專案：指定「<b>技術窗口／值班 PL</b>」做輕量掃描（只擋明顯不可行）</li>
+        <li>真的排不進：PM 把假設標 <code>⚠️技術假設(未經PL確認)</code>，<b>照常規劃但不對客戶承諾</b></li>
+        <li>這些假設列為<b>啟動會議強制複審</b>清單</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note good">核心原則：<b>未經 PL 確認的技術假設，可以繼續規劃，但不可對外承諾、且必留顯眼待複審標記。</b>既不卡 PM 進度，又不讓風險溜過。</div>
+</section>
+
+<!-- 議題七-1 讀 DB/API -->
+<section class="slide" id="s12a" data-n="議題七" data-t="接上開發現實：讀既有 DB / API">
+  <div class="slide-no"></div>
+  <h2>議題七（1/2）接上開發現實：讀既有 DB / API</h2>
+  <p class="sub">現在流程沒讀開發會用的資料（DB、API），PM 憑需求定義欄位，<b>容易跟既有系統對不上</b>，PG 開發時才發現。</p>
+  <div class="grid2">
+    <div class="card next">
+      <h3>建議做法</h3>
+      <ol class="num">
+        <li>把既有系統的 <b>DB schema（DDL/ERD）</b> 與 <b>API 文件（Swagger/清單）</b> 放進 <code>10_專案素材/既有系統資料/</code></li>
+        <li><code>material-intake</code> 讀進 memory，讓雛型/規格能<b>引用真實欄位與 API</b></li>
+        <li>雛型 SPEC 的「資料來源」標實際 <code>table.column</code>／API endpoint</li>
+        <li>規格欄位表加一欄「<b>對應資料來源</b>」</li>
+      </ol>
+    </div>
+    <div class="card foc">
+      <h3>邊界（維持 PM 主線界線）</h3>
+      <ul class="clean">
+        <li>這是「<b>讀既有的當參照</b>」讓需求落地</li>
+        <li><b>不是</b> PM 設計新 DDL／新 API——新表/新 API 仍屬技術團隊</li>
+        <li>主要利<b>延續案</b>（全新案還沒有 DB/API 可讀）</li>
+        <li>誰提供：PL/PG 或主PM 收進 <code>10_</code>，跑一次共讀</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note good">效益：雛型欄位與既有系統<b>從第一版就對得上</b>，減少 PG「這欄位/這 API 不存在」的翻案。呼應鐵律一號——讓雛型 SPEC 更貼近現實。</div>
+</section>
+
+<!-- 議題七-2 完整流程圖 -->
+<section class="slide" id="s12b" data-n="議題七" data-t="功能規劃的完整流程圖">
+  <div class="slide-no"></div>
+  <h2>議題七（2/2）功能規劃的完整流程圖</h2>
+  <p class="sub">規格的「例外流程」現在只有文字；功能規劃需要<b>看得見的流程圖</b>。</p>
+  <div class="grid2">
+    <div class="card next">
+      <h3>建議做法</h3>
+      <ul class="clean">
+        <li>流程圖用 <b>Mermaid（文字語法）</b>產出 → 可版控、可 diff、隨 git 走，<b>不變成會分岔的二進位圖檔</b></li>
+        <li>AI 從雛型 SPEC 的「畫面導覽＋例外流程」<b>自動產生</b>，與畫面同源</li>
+        <li>放在規格「人讀版」畫面旁，PG 一眼看懂行為</li>
+      </ul>
+    </div>
+    <div class="card foc">
+      <h3>涵蓋哪幾種圖</h3>
+      <ul class="clean">
+        <li>使用者操作流程（畫面到畫面）</li>
+        <li>跨角色業務流程（swimlane）</li>
+        <li>審核/狀態圖（狀態機）</li>
+        <li>例外／錯誤流程</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note good">原則：流程邏輯的<b>單一來源仍是雛型 SPEC</b>，流程圖是它的「渲染視圖」——改行為要改雛型、流程圖重生，<b>不手改流程圖</b>（同議題三「一畫面一來源」）。</div>
+</section>
+
+<!-- 12 路線圖 -->
+<section class="slide" id="s12" data-n="路線圖" data-t="後續怎麼做（分階段）">
+  <div class="slide-no"></div>
+  <h2>後續行動路線圖（風險低→高排序）</h2>
+  <p class="sub">不要五題並進。照「投報高、風險低」先做，先拿一個看得見的成果。</p>
+  <ol class="num">
+    <li><b>規格圖文對照（議題一 a）</b>：最好做、零風險、PG 立刻有感 → <span class="pill g">SyncSpec 首勝</span></li>
+    <li><b>PL 提前檢查點 ＋ AC 拆視圖（議題一 b）</b>：流程與輸出調整，不碰難工具</li>
+    <li><b>投標視圖（議題二）</b>：挑一個正在投標的案子試跑，驗證「啟動會議想像落差」有無縮小</li>
+    <li><b>Figma 決策會（議題三）</b>：先拍板 A/B/C，<b>再</b>談工具</li>
+    <li><b>資料夾遷移 ＋ 轉 git（議題四、五）</b>：先整包備份 → Python 腳本搬檔 → 同步改 SKILL.md ＋ 四份說明文件 → 轉 git 設分工</li>
+  </ol>
+  <div class="note">每一項改動都要<b>同步四份說明文件 ＋ 對應 SKILL.md</b>（行為權威在 SKILL.md，只改一份必分岔）。並訂兩個成功指標：① 翻案次數 ② 設計重畫工時。</div>
+</section>
+
+<!-- 13 決策清單 -->
+<section class="slide" id="s13" data-n="決策" data-t="今天要一起拍板的事">
+  <div class="slide-no"></div>
+  <h2>今天要一起拍板的事</h2>
+  <div class="dec">
+    <div class="item"><div class="no">1</div><div><b>規格改「一源三視圖」是否先做？</b><span>建議 YES，當首勝；由誰負責改 spec-gen 輸出模板</span></div></div>
+    <div class="item"><div class="no">2</div><div><b>Figma：A / B / C 選哪個？</b><span>決定「視覺真實來源是誰」——這是議題三的前提</span></div></div>
+    <div class="item"><div class="no">3</div><div><b>PL 介入時機與檢核關卡是否定案？</b><span>雛型送客戶前／訪談後／規格交付前；跨專案用「分級＋需回覆日＋每週 triage」</span></div></div>
+    <div class="item"><div class="no">4</div><div><b>是否採用 git 當唯一真版 ＋ 導入節奏？</b><span>建立公司 git 唯一真版、雛型發佈站；PM 用 GUI（GitHub Desktop）上手</span></div></div>
+    <div class="item"><div class="no">5</div><div><b>新資料夾架構是否採用？誰負責遷移試跑？</b><span>主PM / 功能PM 分工是否同步定案</span></div></div>
+    <div class="item"><div class="no">6</div><div><b>是否把 PMflow 擴到「自動產技術文件」？</b><span>會踩現行「PM 主線不做技術判斷」的界線，需<b>有意識</b>決定</span></div></div>
+    <div class="item"><div class="no">7</div><div><b>是否納入「讀既有 DB/API」與「Mermaid 流程圖」？</b><span>讀既有的當參照（不設計新表/新 API）；流程圖與畫面同源</span></div></div>
+  </div>
+</section>
+
+<!-- 14 結尾 -->
+<section class="slide cover" id="s14" data-n="結語" data-t="一句話總結">
+  <div class="eyebrow">SYNCSPEC</div>
+  <h1>單機靠「檔案一份」，<br>多人靠「版本控制」。</h1>
+  <p class="lead">五個議題其實是同一條主線：用「單一來源、多重視圖」守住不分岔，用「分工＋git」讓它在多人時代活下來，而自動產文件的前提，是先把資料夾的「輸入／產物、主PM／功能層」切乾淨。</p>
+  <div class="meta"><span>下一步：逐項圈選決策 → 指派負責人 → 先做首勝</span></div>
+</section>
+
+</div>
+
+<script>
+(function(){
+  var deck=document.querySelector('.deck');
+  var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var ov=document.getElementById('ov'),bar=document.getElementById('bar'),pos=document.getElementById('pos');
+  var i=0;
+  function fit(){
+    var s=Math.min(window.innerWidth/1280,window.innerHeight/720);
+    deck.style.transform='translate('+((window.innerWidth-1280*s)/2)+'px,'+((window.innerHeight-720*s)/2)+'px) scale('+s+')';
+  }
+  window.addEventListener('resize',fit);fit();
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach(function(el,k){el.classList.toggle('active',k===i);});
+    pos.textContent=(i+1)+' / '+slides.length;
+    bar.style.width=((i+1)/slides.length*100)+'%';
+    Array.prototype.forEach.call(ov.children,function(t,k){t.classList.toggle('cur',k===i);});
+    location.hash=slides[i].id;
+  }
+  slides.forEach(function(s,k){var no=s.querySelector('.slide-no');if(no)no.textContent=String(k+1).padStart(2,'0');});
+  function next(){if(i<slides.length-1)show(i+1);}
+  function prev(){if(i>0)show(i-1);}
+  slides.forEach(function(s,k){
+    var t=document.createElement('div');t.className='thumb';
+    t.innerHTML='<div class="tn">'+(k===0?'封面':String(k+1).padStart(2,'0')+'　'+(s.dataset.n||''))+'</div><div class="tt">'+(s.dataset.t||'')+'</div>';
+    t.onclick=function(){ov.classList.remove('on');show(k);};
+    ov.appendChild(t);
+  });
+  function toggleOv(){ov.classList.toggle('on');}
+  document.getElementById('bNext').onclick=next;
+  document.getElementById('bPrev').onclick=prev;
+  document.getElementById('bOv').onclick=toggleOv;
+  document.getElementById('bFs').onclick=function(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();};
+  document.addEventListener('keydown',function(e){
+    var k=e.key;
+    if(ov.classList.contains('on')){if(k==='Escape'||k==='o'||k==='O'){e.preventDefault();toggleOv();}return;}
+    if(k==='ArrowRight'||k==='PageDown'||k===' '||k==='Enter'){e.preventDefault();next();}
+    else if(k==='ArrowLeft'||k==='PageUp'||k==='Backspace'){e.preventDefault();prev();}
+    else if(k==='Home'){e.preventDefault();show(0);}
+    else if(k==='End'){e.preventDefault();show(slides.length-1);}
+    else if(k==='o'||k==='O'||k==='Escape'){e.preventDefault();toggleOv();}
+    else if(k==='f'||k==='F'){e.preventDefault();document.getElementById('bFs').click();}
+  });
+  document.addEventListener('click',function(e){
+    if(e.target.closest('#ctl')||e.target.closest('#ov'))return;
+    if(window.getSelection().toString())return;
+    next();
+  });
+  var lock=0;
+  document.addEventListener('wheel',function(e){
+    if(ov.classList.contains('on'))return;
+    var now=Date.now();
+    if(now-lock<420||Math.abs(e.deltaY)<18)return;
+    lock=now;e.deltaY>0?next():prev();
+  },{passive:true});
+  var x0=null;
+  document.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(x0===null)return;
+    var dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>45)dx<0?next():prev();
+    x0=null;
+  },{passive:true});
+  var idle;
+  function wake(){document.body.classList.add('ui');clearTimeout(idle);idle=setTimeout(function(){document.body.classList.remove('ui');},2200);}
+  document.addEventListener('mousemove',wake);wake();
+  show(0);
+})();
+</script>
+</body>
+</html>

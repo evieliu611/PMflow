@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EMIC 災情整合模組 — 設計交付 v2</title>
+<style>
+  :root{--navy:#1b4f8a;--blue:#2f6fb5;--line:#d8dee6;--ink:#2a3340;--soft:#5a6675;--bg:#eef1f5;
+    --red:#e0483d;--ok:#2e9b57;--warn:#e6a417;--gray:#9aa4b1;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;font-size:14px;line-height:1.6;}
+  .top{background:var(--navy);color:#fff;padding:16px 26px;}
+  .top h1{margin:0;font-size:20px;}
+  .top .sub{color:#dbe6f4;font-size:13px;margin-top:3px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 20px 70px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin:16px 0;box-shadow:0 2px 8px rgba(20,40,70,.08);}
+  h2{font-size:16px;color:var(--navy);margin:0 0 10px;border-left:5px solid var(--blue);padding-left:9px;}
+  h3{font-size:14px;margin:16px 0 6px;color:var(--ink);}
+  .screen{display:flex;gap:18px;align-items:flex-start;margin:14px 0;padding:14px 0;border-top:1px dashed #e3e9f0;}
+  .screen:first-of-type{border-top:none;}
+  .screen img{width:52%;border:1px solid var(--line);border-radius:6px;}
+  .screen .desc{flex:1;}
+  .screen .desc b.name{display:inline-block;background:#eef4fb;color:var(--blue);border-radius:5px;padding:2px 9px;font-size:13px;margin-bottom:6px;}
+  ul{margin:6px 0;padding-left:20px;}
+  li{margin:4px 0;}
+  .lock{background:#fdeef0;border:1px solid #f3c6c9;border-radius:6px;padding:12px 14px;color:#8a3b3b;}
+  .lock b{color:var(--red);}
+  .must{background:#fff6e5;border:1px solid #f0d69a;border-radius:6px;padding:12px 14px;color:#7a5b12;}
+  .swatch{display:inline-flex;align-items:center;gap:6px;margin:2px 12px 2px 0;font-size:13px;}
+  .dot{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0;background:#fff;}
+  th,td{border:1px solid #dbe2ea;padding:7px 9px;text-align:left;vertical-align:top;}
+  th{background:#eef3f9;}
+  .note{color:var(--soft);font-size:12.5px;}
+  .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:10px;background:#eef4fb;color:var(--blue);font-weight:600;margin-right:4px;}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>EMIC 災情整合模組 — 設計交付說明 v2</h1>
+  <div class="sub">中央警察大學 115 年智慧災害模擬演練平台　·　2026-08-05　·　依雛型 v2／需求規格 v2</div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>這份文件怎麼用</h2>
+    <p>只講設計要決定的三件事：<b>①要出什麼</b>（畫面＋要交付的圖徵素材）、<b>②不可以動什麼</b>（欄位／互動／文案）、<b>③非理想狀態也要出圖</b>。欄位規則、業務邏輯、AC 不在這裡 —— 需要時看 <span class="tag">03_規格文件/01_需求規格_EMIC災情_v2.md</span>。本模組是<b>既有前台平台的「EMIC」右側頁籤</b>，整體風格沿用既有系統（深藍 header＋Mapbox 淺色地圖＋右側頁籤面板），不是新做一套。</p>
+  </div>
+
+  <!-- ① 要出什麼 -->
+  <div class="card">
+    <h2>① 要出什麼 — 畫面</h2>
+
+    <div class="screen">
+      <img src="圖/EMIC_演練前.png" alt="演練前">
+      <div class="desc">
+        <b class="name">3.1 演練前（待演練）</b>
+        <ul>
+          <li>頂部演練日期為<b>單一日期區塊</b>（不是起迄兩個時間），且鎖定當天、唯讀。這是相對既有系統頂部工具列的<b>改動點</b>，請比照既有日期選擇器樣式。</li>
+          <li>EMIC 面板此時只有一段引導提示（時鐘圖示＋文字），<b>不出現任何災情</b>。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="screen">
+      <img src="圖/EMIC_演練中.png" alt="演練中">
+      <div class="desc">
+        <b class="name">3.2 演練中（主畫面）</b>
+        <ul>
+          <li>頂部「開始演練」變「結束演練」，並顯示紅點「演練中」。</li>
+          <li>右側面板由上到下：<b>時間播放器</b>（目前時間、播放/暫停、可拖拉時間軸、10 分鐘刻度）→ <b>篩選</b>（類別複選、縣市、狀態圖例含「尚未發生」）→ <b>災情清單</b>（每列：眼睛開關／類型 ICON／災情項目／類別／狀態標籤／刪除）。</li>
+          <li>地圖上災情<b>點位</b>：ICON 依災情類型、顏色依處理狀態。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="screen">
+      <img src="圖/EMIC_演練完成唯讀.png" alt="演練完成">
+      <div class="desc">
+        <b class="name">3.4 演練完成（唯讀）</b>
+        <ul>
+          <li>面板頂多一條<b>唯讀橫幅</b>；<b>隱藏</b>「結束演練」與各列刪除鈕；播放器與眼睛仍可用（供回放檢視）。</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">3.3 點位詳情彈窗併於「演練中」：點點位或清單列彈出，內含 EMIC 全欄位＋附件下載連結，樣式比照既有系統彈窗。</p>
+  </div>
+
+  <!-- ① 要出什麼 — 圖徵素材（本模組最主要的設計交付物） -->
+  <div class="card">
+    <h2>① 要出什麼 — 圖徵素材（本模組核心設計交付物）</h2>
+    <p><b>14 類災情 × 5 版本</b>的點位圖徵，是本模組最主要、也最需要設計定稿的素材。下圖為既有規劃稿，請以此為基礎產出可用於地圖的正式圖檔（含去背 / 尺寸規格）。</p>
+    <img src="圖/圖徵設計_14類x狀態色.png" alt="14類圖徵×狀態色" style="width:100%;border:1px solid var(--line);border-radius:6px;margin:8px 0;">
+    <table>
+      <tr><th>維度</th><th>內容</th></tr>
+      <tr><td>14 類災情</td><td>路樹／廣告招牌／道路、隧道／橋梁／鐵路、高鐵捷運／積淹水／土石／建物毀損／水利設施／民生、基礎設施／車輛、交通事故／環境汙染／火災／其他</td></tr>
+      <tr><td>每類 5 版本</td><td>地圖繪製版（無狀態框，供線上製圖模組共用）＋ 4 狀態色版</td></tr>
+    </table>
+    <h3>4 狀態色（固定，不可改色）</h3>
+    <p>
+      <span class="swatch"><span class="dot" style="background:var(--gray)"></span>未指派＝灰</span>
+      <span class="swatch"><span class="dot" style="background:var(--red)"></span>待處理＝紅</span>
+      <span class="swatch"><span class="dot" style="background:var(--warn)"></span>處理中＝黃</span>
+      <span class="swatch"><span class="dot" style="background:var(--ok)"></span>已處理＝綠</span>
+    </p>
+    <p class="note">此圖徵與「線上製圖模組」共用同一套，請確保兩模組使用一致的圖檔，不要各出一版。</p>
+  </div>
+
+  <!-- ② 不可以動什麼 -->
+  <div class="card">
+    <h2>② 不可以動什麼</h2>
+    <div class="lock">
+      <ul>
+        <li><b>欄位與互動元素不可自行增減</b>：時間播放器、篩選三項（類別/縣市/狀態）、清單每列的「眼睛開關＋刪除」、點位詳情的 EMIC 欄位，少一個或多一個都會讓規格、開發與驗收對不上。</li>
+        <li><b>狀態色不可改</b>：灰/紅/黃/綠對應 未指派/待處理/處理中/已處理，是與線上製圖共用的規格，改色會連動其他模組。</li>
+        <li><b>眼睛 ≠ 刪除</b>：眼睛是地圖顯示/隱藏（資料留著），刪除是永久移除（不存專案）。兩個是不同控制、不可合併成一個。</li>
+        <li><b>文案照規格</b>：提示與確認訊息的實際文字見規格 §三例外流程（如刪除確認、演練前提示、唯讀橫幅），不可自行改寫語意。</li>
+        <li><b>UI 可提案、UX 不可改</b>：配色、間距、樣式可依既有系統風格優化；欄位邏輯、互動流程一律以需求規格為準。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ③ 非理想狀態 -->
+  <div class="card">
+    <h2>③ 非理想狀態也要出圖</h2>
+    <div class="must">
+      <table>
+        <tr><th>狀態</th><th>畫面表現</th></tr>
+        <tr><td>演練前（待演練）</td><td>面板只有引導提示、無災情（見 3.1）</td></tr>
+        <tr><td>此時間點／篩選下無災情</td><td>清單空狀態文字「此時間點／篩選條件下無災情」、地圖無點位</td></tr>
+        <tr><td>點位「尚未發生」</td><td>播放器時間點早於案件發生時間：地圖不顯示、清單狀態欄顯示「尚未發生」（狀態圖例有此一項，樣式為白底描邊）</td></tr>
+        <tr><td>刪除二次確認</td><td>確認對話框（含災情項目名稱）</td></tr>
+        <tr><td>演練完成（唯讀）</td><td>唯讀橫幅、隱藏結束演練與刪除鈕（見 3.4）</td></tr>
+        <tr><td>點位無附件</td><td>詳情彈窗不顯示附件區塊</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <p class="note">交付物僅需這一夾（04_設計稿/）即可作業，圖都在 <b>04_設計稿/圖/</b>。有疑義先問 PM，勿逕自變更欄位或流程。</p>
+</div>
+</body>
+</html>

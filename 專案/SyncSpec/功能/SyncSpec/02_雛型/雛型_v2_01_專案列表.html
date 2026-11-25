@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜專案列表（v2 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.tb2{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.tb2 .select{width:auto;min-width:150px}
+.gh{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#EDF1F9;border-radius:12px;cursor:pointer;margin:18px 0 12px;user-select:none}
+.gh:first-child{margin-top:0}.gh b{font-size:15px}.gh .ar{transition:.15s;display:inline-flex}.gh.c .ar{transform:rotate(-90deg)}
+.pcard{color:inherit;display:block;position:relative}.pcard.closed{background:#F7F8FB}.pcard.closed h2{color:var(--ink2)}
+.more{position:absolute;right:10px;top:10px;border:0;background:transparent;border-radius:8px;padding:4px;color:var(--muted);cursor:pointer}.more:hover{background:var(--bg);color:var(--ink)}
+.lt td{padding:10px 14px}.lt tr.closed td{color:var(--muted)}
+.lt .nm{font-weight:700;color:var(--ink)}.lt tr.closed .nm{color:var(--ink2)}
+.mini{display:flex;align-items:center;gap:8px;width:130px}.mini .bar{flex:1}
+.cnt{margin-left:auto;font-size:12.5px;color:var(--muted)}
+</style></head>
+<body data-nav="projects" data-scope="global" data-crumb="">
+<script>window.NOTES=[
+ {id:'Q-03',text:'機敏資料去識別規則（客戶名、金額、聯絡人）尚未訂，影響「建立專案」時要不要選資料敏感等級。',who:'主管'},
+ {id:'Q-05',text:'成員是否需要「唯讀」等級？目前 PM／PL／PG 同權限。',who:'PM'},
+ {id:'Q-20',text:'結案後：內容是否一律唯讀？誰可以重新開啟（任何成員／僅建立者／管理員）？結案時要不要強制提示把成果沉澱進公司素材庫？',who:'PM／主管'},
+ {id:'Q-21',text:'客戶單位的名稱怎麼維護：建立專案時自由輸入，還是由管理員維護客戶清單（避免「韋能」「台灣韋能能源」分成兩組）？',who:'PM'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_shared.js"></script><script>V2.boot()</script>
+<div id="page">
+<!-- F-01 專案列表：進系統第一頁；依客戶單位分組；結案專案預設隱藏；卡片／清單切換 -->
+<div class="page-head">
+  <div><h1>我的專案</h1><p>依客戶單位分組。專案先是「開案前提案」，取得專案後改成「執行中」，結束時「結案」（含已完成、未得標）；只會看到你是成員的專案。</p></div>
+  <button class="btn primary" data-open="m-new" id="newb"></button>
+</div>
+<div class="tb2">
+  <div class="search" style="width:300px"><span id="s1"></span><input class="input" id="q" placeholder="搜尋專案或客戶"></div>
+  <select class="select" id="fc"></select>
+  <select class="select" id="fs"><option value="act">進行中（開案前提案＋執行中）</option><option value="開案前提案">只看開案前提案</option><option value="執行中">只看執行中</option><option value="結案">已結案（含未得標）</option><option value="all">全部階段</option></select>
+  <label class="row sm" style="gap:6px"><input type="checkbox" class="check" id="fm"> 只看我建立的</label>
+  <span class="cnt" id="cnt"></span>
+  <button class="btn sm ghost" id="fold"></button>
+  <div class="seg" id="vw"><button data-v="card">卡片</button><button data-v="list">清單</button></div>
+</div>
+<div id="groups"></div>
+<div class="empty hide" id="none"><div class="art" id="na"></div><b>找不到符合的專案</b><div class="sm">換個關鍵字，或把狀態改成「含已結案」。</div></div>
+
+<div class="modal-back" id="m-new"><div class="modal">
+  <div class="mh"><div><h2>建立專案</h2><div class="sm muted">提案期就可以建立；得標後不用另開專案，把階段改成「執行中」就好。</div></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="mb">
+    <div class="field"><label>專案名稱</label><input class="input" placeholder="例如：韋能二階"></div>
+    <div class="grid2"><div class="field"><label>客戶單位</label><input class="input" list="clients" placeholder="選擇或輸入客戶單位"><datalist id="clients"></datalist></div>
+    <div class="field"><label>分類</label><select class="select"><option>能源與圖資</option><option>景觀工程</option><option>防災資訊</option><option>未分類</option></select></div></div>
+    <div class="field"><label>專案起點</label>
+      <div class="col" style="gap:8px">
+        <label class="opt on"><input type="radio" name="org" value="new" checked><div><b>新案</b><span>全新的系統，沒有既有畫面可對齊；AI 會提供 3 種風格方案，選一種鎖定。</span></div></label>
+        <label class="opt"><input type="radio" name="org" value="cont"><div><b>延續案</b><span>延續舊專案，新功能必須跟既有系統一致。</span></div></label>
+      </div></div>
+    <div class="field hide" id="contbox" style="background:var(--bg);border-radius:12px;padding:12px 14px">
+      <label>延續自哪個專案</label><select class="select" id="nfrom"></select>
+      <div class="col" style="gap:6px;margin-top:10px">
+        <label class="row sm"><input type="checkbox" class="check" checked> 帶入舊專案的畫面與風格，當作新雛型的基準</label>
+        <label class="row sm"><input type="checkbox" class="check" checked> 帶入舊專案的單位知識</label>
+        <label class="row sm"><input type="checkbox" class="check"> 帶入舊專案已確認的決定（供參考，不直接套用）</label>
+      </div>
+      <div class="xs muted" style="margin:10px 0 6px">現有系統和舊雛型不一樣時，另外補充：</div>
+      <div class="row" style="gap:8px"><button class="btn sm" type="button">上傳新畫面</button><input class="input" placeholder="或貼上系統網址，由 AI 抓取畫面"></div>
+    </div>
+    <div class="field"><label>目前階段</label>
+      <div class="seg" id="nst"><button class="on" data-s="開案前提案">開案前提案</button><button data-s="執行中">執行中（已取得專案）</button></div>
+      <div class="xs muted" id="nsh" style="margin-top:6px"></div></div>
+    <div class="field"><label>專案成員（公司 AD 帳號）</label><input class="input" placeholder="輸入姓名或帳號搜尋，可加入多人"><div class="xs muted">加入的成員權限相同，PM、PL、PG 都可規劃。</div></div>
+    <div class="field"><label>參考公司知識庫 <span class="chip sun xs">尚未規劃・示意</span></label><div class="col" style="gap:6px" id="refpick"></div><div class="xs muted">建立後也可在「專案設定」調整；延續案會自動帶入該單位的單位知識。</div></div>
+  </div>
+  <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" data-close id="create">建立專案</button></div>
+</div></div>
+
+<div class="modal-back" id="m-close"><div class="modal">
+  <div class="mh"><div><h2 id="ct">結案專案</h2><div class="sm muted" id="cs"></div></div></div>
+  <div class="mb" id="cb"></div>
+  <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="cok">確認結案</button></div>
+</div></div>
+
+<section class="spec"><h2>本畫面規格</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>專案階段（v2）</td><td>只有三個：開案前提案／執行中／結案。階段看的是商務狀態（有沒有拿到專案），不代表規劃深度——延續案在開案前就可以做得很細。結案要選原因：已完成、未得標、其他終止。取得專案時按「改為執行中」。預設只顯示開案前提案與執行中</td></tr><tr><td>專案起點（v2）</td><td>新案或延續案。延續案選擇舊專案後，預設帶入舊專案的畫面與風格（當新雛型基準）與單位知識；可另外上傳新畫面或貼系統網址抓圖</td></tr><tr><td>進入流程</td><td>登入（公司 AD）後固定先到本頁；必須先選專案才能看到工項、雛型、素材（F-01）</td></tr>
+<tr><td>分組</td><td>依「客戶單位」分組，群組可收合；群組標題顯示專案數；全部收合／展開</td></tr>
+<tr><td>結案</td><td>狀態：進行中／已結案。已結案專案預設不顯示；用「狀態」篩選可含已結案或只看已結案；已結案專案以灰階呈現並標註結案日期</td></tr>
+<tr><td>檢視方式</td><td>卡片（資訊完整）與清單（密度高、適合專案很多）可切換；記住使用者上次選擇</td></tr>
+<tr><td>篩選</td><td>關鍵字（專案名／客戶）、客戶單位、狀態、只看我建立的</td></tr>
+<tr><td>結案操作</td><td>卡片或清單的「⋯」→ 結案；確認視窗說明結案後唯讀、預設隱藏，並可勾選「把成果沉澱進公司素材庫」；結案後可「重新開啟」（權限待 Q-20）</td></tr>
+<tr><td>可見範圍</td><td>只列出本人為成員的專案</td></tr></table></section>
+</div>
+<script>
+let flt={q:'',c:'',s:'act',m:false},view='card',folded={};
+const ps=()=>Object.values(DB.P);
+function match(p){const st=V2.stageOf(p);return(!flt.q||(p.name+p.client+p.sub).includes(flt.q))&&(!flt.c||p.client===flt.c)&&(flt.s==='all'||(flt.s==='act'&&!V2.isDone(p))||flt.s===st)&&(!flt.m||p.mine)}
+function card(p){const s=DB.stat(p),c=DB.isClosed(p),done=p.items.length?Math.round(p.items.filter(i=>i.stage>=4).length/p.items.length*100):0;
+ return `<a class="card pcard ${c?'closed':''}" href="${PAGES.home}?p=${p.id}"><button class="more" data-more="${p.id}" title="更多">${ic('more')}</button><div class="row" style="gap:6px;flex-wrap:wrap"><span class="chip ${V2.stageTone[V2.stageOf(p)]}">${V2.labelOf(p)}</span><span class="chip ${p.tagc}">${p.tag}</span>${V2.originOf(p)!=='新案'?`<span class="chip violet xs">${V2.originOf(p)}</span>`:''}${p.mine?'<span class="chip">我建立的</span>':''}</div>
+  <h2 style="margin:12px 0 2px">${p.name}</h2><div class="sm muted">${p.sub}</div><div class="hr"></div>
+  ${p.contract.length?`<div class="row spread sm"><span class="muted">工項</span><b>${s.all} 項，功能開發 ${s.dev}</b></div><div class="bar" style="margin:8px 0 12px"><i style="width:${done}%"></i></div>`:`<div class="empty" style="padding:6px 0"><span class="sm">尚未上傳合約，從上傳合約開始 →</span></div>`}
+  <div class="row spread"><div class="avs">${p.members.map(m=>`<div class="avatar ${m[5]}">${m[4]}</div>`).join('')}</div>${c?'<span class="xs muted">唯讀</span>':(s.tbd?`<span class="chip coral"><span class="d"></span>待定 ${s.tbd}</span>`:(p.contract.length?'<span class="chip mint"><span class="d"></span>無待定</span>':''))}</div></a>`}
+function rowOf(p){const s=DB.stat(p),c=DB.isClosed(p),done=p.items.length?Math.round(p.items.filter(i=>i.stage>=4).length/p.items.length*100):0;
+ return `<tr class="${c?'closed':''}" data-go="${p.id}" style="cursor:pointer"><td><div class="nm">${p.name}</div><div class="xs muted">${p.sub}</div></td><td><span class="chip ${V2.stageTone[V2.stageOf(p)]}">${V2.labelOf(p)}</span></td><td><span class="chip ${p.tagc}">${p.tag}</span>${V2.originOf(p)!=='新案'?`<div class="xs muted" style="margin-top:3px">${V2.originOf(p)}</div>`:''}</td><td class="sm">${s.all?`功能開發 ${s.dev} / ${s.all}`:'—'}</td><td><div class="mini"><div class="bar"><i style="width:${done}%"></i></div><span class="xs muted">${done}%</span></div></td><td>${c?'—':(s.tbd?`<span class="chip coral">${s.tbd}</span>`:'<span class="muted">—</span>')}</td><td><div class="avs">${p.members.map(m=>`<div class="avatar ${m[5]}">${m[4]}</div>`).join('')}</div></td><td class="muted sm">${p.upd}</td><td>${c?`<span class="chip">${c}</span>`:'<span class="chip mint">進行中</span>'}</td><td><button class="btn ghost sm" data-more="${p.id}">${ic('more')}</button></td></tr>`}
+function draw(){
+ const all=ps(),act=all.filter(p=>!DB.isClosed(p)).length,cl=all.length-act;
+ const L=all.filter(match),G={};L.forEach(p=>(G[p.client]=G[p.client]||[]).push(p));
+ const sc={};all.forEach(p=>{const k=V2.stageOf(p);sc[k]=(sc[k]||0)+1});$('#cnt').textContent=`開案前提案 ${sc['開案前提案']||0}　執行中 ${sc['執行中']||0}　結案 ${sc['結案']||0}${flt.s==='act'?'（結案預設隱藏）':''}`;
+ $('#none').classList.toggle('hide',L.length>0);
+ $('#groups').innerHTML=Object.keys(G).sort().map(c=>{const arr=G[c].sort((a,b)=>(!!DB.isClosed(a))-(!!DB.isClosed(b)));const f=folded[c];
+  const body=view==='card'?`<div class="grid3">${arr.map(card).join('')}</div>`:`<div class="tbl-wrap"><table class="tbl lt"><thead><tr><th>專案</th><th style="width:90px">階段</th><th style="width:110px">分類</th><th style="width:130px">工項</th><th style="width:170px">進度</th><th style="width:70px">待定</th><th style="width:110px">成員</th><th style="width:90px">最後更新</th><th style="width:90px">狀態</th><th style="width:44px"></th></tr></thead><tbody>${arr.map(rowOf).join('')}</tbody></table></div>`;
+  return `<div class="gh ${f?'c':''}" data-g="${c}"><span class="ar">${ic('chev')}</span><b>${c}</b><span class="chip">${arr.length} 個專案</span></div>${f?'':body}`}).join('');
+ $$('.seg#vw button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));
+ $('#fold').innerHTML=ic('chev')+(Object.keys(G).every(c=>folded[c])?'全部展開':'全部收合');
+ $$('.gh').forEach(h=>h.onclick=()=>{folded[h.dataset.g]=!folded[h.dataset.g];draw()});
+ $$('[data-go]').forEach(r=>r.onclick=e=>{if(e.target.closest('[data-more]'))return;location.href=PAGES.home+'?p='+r.dataset.go});
+ $$('[data-more]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();openClose(b.dataset.more)});
+}
+let target=null;
+function openClose(id){const p=DB.P[id];target=p;const c=DB.isClosed(p);
+ $('#ct').textContent=c?'重新開啟專案':'結案專案';$('#cs').textContent=p.client+' · '+p.name;
+ $('#cok').textContent=c?'重新開啟':'確認結案';
+ $('#cb').innerHTML=c?`<div class="banner" style="margin-bottom:10px">${ic('lock')}<span>「${p.name}」目前已結案（${c}），內容唯讀。重新開啟後會回到專案列表的進行中，成員可繼續編輯。</span></div>`
+  :`<div class="field" style="margin-bottom:12px"><label>結案原因</label><select class="select"><option>已完成</option><option>未得標</option><option>其他終止</option></select></div><div class="banner warn" style="margin-bottom:12px">${ic('alert')}<span>結案後，「${p.name}」預設不再顯示在專案列表，內容改為唯讀；之後可用「狀態」篩選找回，也可重新開啟。</span></div>
+   <label class="row" style="margin-bottom:8px"><input type="checkbox" class="check" checked> 把本專案的成果沉澱進公司素材庫（功能卡）<span class="chip xs">建議</span></label>
+   <div class="xs muted" style="margin:-2px 0 10px 26px">AI 會依已定稿的規格整理功能卡草稿，進「待審核」由管理員抽查。</div>
+   <label class="row"><input type="checkbox" class="check"> 同時封存專案素材中含客戶機敏資料的檔案</label>`;
+ $('#m-close').classList.add('open')}
+window.pageInit=function(){
+ $('#newb').innerHTML=ic('plus')+'建立專案';$('#s1').outerHTML=ic('search');$('#na').innerHTML=ic('search');
+ try{view=localStorage.getItem('ss_view')||'card'}catch(e){}
+ const cl=[...new Set(ps().map(p=>p.client))].sort();
+ $('#fc').innerHTML='<option value="">全部客戶單位</option>'+cl.map(c=>`<option>${c}</option>`).join('');$('#clients').innerHTML=cl.map(c=>`<option value="${c}">`).join('');
+ $('#refpick').innerHTML=DB.LIB.filter(l=>l.id!=='secret').map(l=>`<label class="row sm"><input type="checkbox" class="check" ${['cards','decide'].includes(l.id)?'checked':''}> ${l.name}<span class="chip xs">${l.scope}</span></label>`).join('');
+ $('#q').oninput=e=>{flt.q=e.target.value.trim();draw()};$('#fc').onchange=e=>{flt.c=e.target.value;draw()};$('#fs').onchange=e=>{flt.s=e.target.value;draw()};$('#fm').onchange=e=>{flt.m=e.target.checked;draw()};
+ $$('#vw button').forEach(b=>b.onclick=()=>{view=b.dataset.v;try{localStorage.setItem('ss_view',view)}catch(e){}draw()});
+ $('#fold').onclick=()=>{const keys=[...new Set(ps().filter(match).map(p=>p.client))];const all=keys.every(c=>folded[c]);keys.forEach(c=>folded[c]=!all);draw()};
+ $('#cok').onclick=()=>{const was=DB.isClosed(target);DB.setClosed(target,!was);$('#m-close').classList.remove('open');draw();toast(was?'已重新開啟「'+target.name+'」':'已結案「'+target.name+'」，預設從列表隱藏','復原',()=>{DB.setClosed(target,was?true:false);draw()})};
+ $('#nfrom').innerHTML=ps().map(p=>'<option>'+p.name+'（'+V2.stageOf(p)+'）</option>').join('');
+ const nsh={'開案前提案':'先上傳預告或合約，AI 快速拆工項（草稿）、發想雛型，用來寫建議書與評選簡報；工項不必逐筆核對。','執行中':'上傳合約後正式拆工項，核對後生效，再指派負責 PM、深入規劃。'};let nst='開案前提案';$('#nsh').textContent=nsh[nst];
+ $$('#nst button').forEach(b=>b.onclick=()=>{nst=b.dataset.s;$$('#nst button').forEach(x=>x.classList.toggle('on',x===b));$('#nsh').textContent=nsh[nst]});
+ $$('input[name=org]').forEach(r=>r.onchange=()=>$('#contbox').classList.toggle('hide',r.value!=='cont'||!r.checked));
+ $('#create').onclick=()=>toast('已建立專案（'+nst+'），下一步：上傳'+(nst==='開案前提案'?'預告或合約':'合約'));draw();
+};
+</script>
+</body></html>

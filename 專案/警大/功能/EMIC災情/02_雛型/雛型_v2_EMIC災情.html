@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EMIC 災情整合模組 雛型 v2 — 智慧災害模擬演練平台</title>
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<!--
+  ===== EMIC 災情整合模組 雛型 v2 =====
+  v1→v2 異動【調整 v2 2026-08-05】：Q-01 經技術主管確認銷案（分頁由開發者實作、逾時加重試、歷程缺漏客戶已接受）。
+  對應需求摘要：../01_需求整理/01_需求摘要.md
+  三個檢視：
+    預設（?sc=mid）→ 乾淨畫面（投影給客戶/主管），預設演示「演練中」
+    ?notes=1       → 討論模式（只放未決事項＋情境切換器），或右下角按鈕
+    ?spec=1        → 規格檢視（欄位表、業務規則、例外流程；給 PL/PG/設計）
+    ?sc=pre|mid|done → 直接切演練前 / 演練中 / 演練完成 情境
+  資料源：EMIC 演練區 API（memory/外部系統介接方式_TERIA_EMIC.md 定案版）；
+  假資料為高雄/臺南水災情境示意，非真實案件。
+-->
+
+<!-- ---------- Header ---------- -->
+<header class="app-header">
+  <div class="brand"><span class="logo">警</span>智慧災害模擬演練平台</div>
+  <a class="to-admin" href="#">進入後台</a>
+</header>
+
+<!-- ---------- Toolbar ---------- -->
+<!-- SPEC: 演練日期 F-01【對話確認 2026-08-05】型別:日期(單一，非起迄) 必填:是 預設:系統今日 驗證:鎖定當天不可改為其他日期 來源:系統時鐘 互動:唯讀顯示今日 -->
+<!-- SPEC: 開始/結束演練 F-01,F-10【對話確認 2026-08-05】待演練→按「開始演練」進演練中並啟動每10分鐘取災情；演練中→按「結束演練」轉演練完成 -->
+<div class="app-toolbar">
+  <button class="tb-btn"><span>☰</span> 專案管理</button>
+  <select class="tb-select"><option>115年演練專案</option><option>未分類</option></select>
+  <span class="tb-proj">高雄水災應變演練</span>
+  <span class="tb-sep"></span>
+  <button class="tb-btn">儲存</button>
+  <button class="tb-btn">另存</button>
+  <button class="tb-btn">權限設定</button>
+  <span class="tb-spacer"></span>
+  <span class="tb-drilldate" title="演練日期鎖定當天，只設定到日期">📅 演練日期 2026/08/05 <span class="lock">🔒當天</span></span>
+  <span class="tb-toggle on"><span class="sw"></span>EMIC整合</span>
+  <span class="running-dot" id="runDot" style="display:none">演練中</span>
+  <button class="tb-btn danger" id="drillBtn">開始演練</button>
+</div>
+
+<!-- ---------- Body：地圖 + 右側面板 ---------- -->
+<div class="app-body">
+
+  <!-- 地圖（離線示意，非真 Mapbox）。點位＝EMIC 災情，ICON 依類型、顏色依處理狀態 -->
+  <div class="map" id="map">
+    <div class="sea"></div>
+    <div class="land"></div>
+
+    <!-- SPEC: 災情點位 F-04【明確】圖徵:14類災情各一 ICON（見參考截圖/現有規劃_14類災情圖徵設計.png）
+         顏色:處理狀態 灰=未指派 紅=待處理 黃=處理中 綠=已處理
+         互動:點擊→彈出詳情；顏色隨時間播放器所在時間點的狀態變化 -->
+    <div id="markerLayer"></div>
+
+    <!-- 點位詳情彈窗（F-09） -->
+    <!-- SPEC: 點位詳情 F-09【明確 API欄位】欄位:案件編號/發生時間/縣市鄉鎮/發生地點/災情類別項目/描述/處理狀態/聯絡人電話/傷亡受困失蹤收容人數/交通障礙/重大災情/結案/退水/通報來源/更新時間 附件:FILE_LIST 下載連結 來源:EMIC API -->
+    <div class="detail-pop" id="detailPop">
+      <div class="dh"><span id="dpTitle">災情詳情</span><span class="x" id="dpClose">✕</span></div>
+      <div class="db" id="dpBody"></div>
+    </div>
+
+    <div class="map-controls">
+      <div class="mc">◈</div>
+      <div class="mc">＋</div>
+      <div class="mc">－</div>
+      <div class="mc solid">2D</div>
+      <div class="mc">◎</div>
+    </div>
+    <div class="map-credit">© Mapbox　© OpenStreetMap</div>
+
+    <!-- 【調整 v2 2026-08-05】Q-01 已技術確認銷案，移除原地圖上「待技術確認」標記 -->
+  </div>
+
+  <!-- 右側面板：EMIC 頁籤 -->
+  <aside class="panel">
+    <div class="panel-tabs">
+      <div class="tab"><span class="ic">▤</span>圖層</div>
+      <div class="tab"><span class="ic">✔</span>已選</div>
+      <div class="tab"><span class="ic">▦</span>建物</div>
+      <div class="tab"><span class="ic">✎</span>繪製</div>
+      <div class="tab active"><span class="ic">⚠</span>EMIC</div>
+      <div class="tab"><span class="ic">👥</span>人口密度</div>
+    </div>
+
+    <div class="panel-body">
+
+      <!-- 演練完成唯讀橫幅 -->
+      <div class="readonly-banner" id="doneBanner" style="display:none">
+        本專案已「演練完成」，資料已凍結，僅可檢視與回放；如需調整請「另存」複製一份新專案。
+      </div>
+
+      <!-- ① 演練前：尚未開始 -->
+      <!-- SPEC: 演練前提示 F-01【明確 規劃畫面】規則:專案=待演練且未開始時，EMIC 面板不顯示災情，提示先設定並開始演練 -->
+      <div id="preView">
+        <div class="pre-hint">
+          <div class="big">🕓</div>
+          演練日期已設定為 <b>當天</b><br>
+          按上方 <b>「開始演練」</b> 後，<br>系統將自動每 10 分鐘帶入 EMIC 災情資訊。
+        </div>
+      </div>
+
+      <!-- ② 演練中／完成：播放器 + 篩選 + 清單 -->
+      <div id="liveView" style="display:none">
+
+        <!-- SPEC: 時間播放器 F-05【明確 規劃畫面・對話確認 2026-08-05】
+             時間軸範圍:演練開始時間~最新取得時間（演練完成則到結束時間）
+             刻度:每10分鐘一格（取災情頻率）
+             行為:拖拉/播放時，依各案件「狀態變更時間戳」重建該時間點的處理狀態，地圖點位顏色與清單狀態同步變化
+             資料重建規則:見業務規則 BR-03 -->
+        <div class="player" id="player">
+          <div class="pt">
+            <span class="now" id="pNow">08/05 10:20</span>
+            <span class="rng">演練 09:00 起</span>
+          </div>
+          <div class="ctl">
+            <button class="play" id="pPlay" title="播放/暫停">▶</button>
+            <div class="track" id="pTrack"><div class="fill" id="pFill"></div><div class="head" id="pHead"></div></div>
+            <span class="speed" id="pSpeed">1×</span>
+          </div>
+          <div class="ticks"><span>09:00</span><span>09:30</span><span>10:00</span><span id="pEnd">10:20</span></div>
+        </div>
+
+        <!-- SPEC: 篩選 F-06【明確 規劃畫面】災情類別(可複選)、縣市、災情狀態(可複選)
+             狀態圖例含「尚未發生」＝該案件發生時間晚於播放器目前時間點時的呈現 -->
+        <div class="p-section-title">災情清單</div>
+        <div class="filters">
+          <div class="frow"><label>類別</label>
+            <select class="msel" title="災情類別（可複選）"><option>已選擇 14 類（全部）</option><option>僅積淹水</option><option>僅道路、隧道</option></select>
+          </div>
+          <div class="frow"><label>縣市</label>
+            <select class="msel" id="fCounty"><option value="">全部縣市</option><option value="高雄市">高雄市</option><option value="臺南市">臺南市</option></select>
+          </div>
+          <div class="st-legend" id="stLegend">
+            <span class="chip" data-st="unassigned"><span class="dot" style="background:var(--st-unassigned)"></span>未指派</span>
+            <span class="chip" data-st="pending"><span class="dot" style="background:var(--st-pending)"></span>待處理</span>
+            <span class="chip" data-st="progress"><span class="dot" style="background:var(--st-progress)"></span>處理中</span>
+            <span class="chip" data-st="done"><span class="dot" style="background:var(--st-done)"></span>已處理</span>
+            <span class="chip future" data-st="future"><span class="dot"></span>尚未發生</span>
+          </div>
+        </div>
+
+        <div class="result-title">
+          災情清單 <span class="cnt" id="rCnt">共 6 筆</span>
+        </div>
+
+        <!-- SPEC: 災情清單列 F-06,F-07,F-08【明確・對話確認 2026-08-05】
+             欄位:👁顯示開關 / 類型ICON / 災情項目 / 災害類別 / 當前狀態
+             F-07 眼睛:開關地圖上該點位顯示/隱藏，開關狀態隨專案儲存
+             F-08 刪除:點🗑二次確認，確認後該災情不出現在專案、也不會被儲存下來
+             互動:點整列→地圖點位高亮並定位 -->
+        <table class="result-table emic-list" id="rTable">
+          <thead>
+            <tr>
+              <th class="lead"></th>
+              <th class="type"></th>
+              <th>災情項目</th>
+              <th>類別</th>
+              <th class="st">狀態</th>
+              <th class="act"></th>
+            </tr>
+          </thead>
+          <tbody id="rBody"><!-- 由 JS 依 cases 產生 --></tbody>
+        </table>
+
+        <div class="empty" id="rEmpty" style="display:none">此時間點 / 篩選條件下無災情</div>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<!-- ============ 規格檢視圖層（?spec=1） ============ -->
+<section class="spec-view">
+  <h2>📋 本畫面規格 — EMIC 災情整合模組 v2</h2>
+  <p style="color:#5a6675;font-size:13px;margin:2px 0 4px">
+    唯一真實來源為本雛型 SPEC 註解；下表由註解抽取。API 欄位與型別以 memory/外部系統介接方式_TERIA_EMIC.md 的定案版為準，不另猜欄位。
+  </p>
+
+  <h3>欄位／元素表</h3>
+  <table>
+    <thead><tr><th>元素</th><th>型別</th><th>必填</th><th>驗證／規則</th><th>資料來源</th><th>互動行為</th><th>F-編號</th></tr></thead>
+    <tbody>
+      <tr><td>演練日期</td><td>日期（單一）</td><td>是</td><td>鎖定系統當天，不可改為其他日期；只設到日期、不設起迄時間</td><td>系統時鐘</td><td>唯讀顯示今日</td><td class="fcode">F-01</td></tr>
+      <tr><td>開始演練 / 結束演練 按鈕</td><td>按鈕</td><td>—</td><td>待演練→開始演練；演練中→結束演練</td><td>—</td><td>開始→啟動每10分鐘取災情、專案轉演練中；結束→轉演練完成並凍結</td><td class="fcode">F-01,F-10</td></tr>
+      <tr><td>災情點位</td><td>地圖圖徵</td><td>—</td><td>ICON 依 14 類災情；顏色依處理狀態（灰未指派/紅待處理/黃處理中/綠已處理）</td><td>EMIC API</td><td>點擊→詳情彈窗；顏色隨播放器時間點變化；可經清單眼睛隱藏</td><td class="fcode">F-04</td></tr>
+      <tr><td>時間播放器</td><td>時間軸</td><td>—</td><td>範圍＝演練開始~最新取得時間；刻度每 10 分鐘一格</td><td>狀態變更時間戳</td><td>拖拉/播放→重建該時間點各案件狀態，點位與清單同步</td><td class="fcode">F-05</td></tr>
+      <tr><td>類別 篩選</td><td>複選</td><td>—</td><td>14 類災情，可複選</td><td>EMIC 災情類別表</td><td>篩選地圖與清單</td><td class="fcode">F-06</td></tr>
+      <tr><td>縣市 篩選</td><td>單選</td><td>—</td><td>依取得災情涵蓋縣市</td><td>EMIC API COUNTY_N</td><td>篩選地圖與清單</td><td class="fcode">F-06</td></tr>
+      <tr><td>狀態 篩選</td><td>複選</td><td>—</td><td>未指派/待處理/處理中/已處理＋尚未發生（發生時間晚於播放器時間點）</td><td>EMIC CASE_STATUS / CASE_DT</td><td>點圖例切換顯示</td><td class="fcode">F-06</td></tr>
+      <tr><td>👁 顯示／隱藏</td><td>切換</td><td>—</td><td>開關地圖上該點位顯示；<b>開關狀態隨專案儲存</b></td><td>—</td><td>點擊切換；隱藏時該列淡化、地圖不畫該點</td><td class="fcode">F-07</td></tr>
+      <tr><td>🗑 刪除</td><td>按鈕</td><td>—</td><td>二次確認後移除；<b>刪除後該災情不出現在專案、也不會被儲存</b></td><td>—</td><td>點擊跳「確定刪除此災情點位？刪除後不會存入專案。」</td><td class="fcode">F-08</td></tr>
+      <tr><td>點位詳情彈窗</td><td>彈窗</td><td>—</td><td>顯示 EMIC 該案件全欄位＋附件</td><td>EMIC API（含 FILE_LIST）</td><td>點位或清單列點擊開啟；附件為下載連結</td><td class="fcode">F-09</td></tr>
+    </tbody>
+  </table>
+
+  <h3>業務規則</h3>
+  <ul>
+    <li><b>BR-01</b>（F-02）演練開始後，系統<b>每 10 分鐘</b>呼叫一次 EMIC 演練區 API 取災情與狀態；警大防災所已接受此頻率造成的時間差／歷程缺失（memory 定案）。</li>
+    <li><b>BR-02</b>（F-03）EMIC 無處理歷程 API，<b>不逐次儲存全快照</b>；每次取回時比對，<b>只有案件狀態有變更時，才在對應狀態欄位記下該變更的時間點</b>（節省儲存空間）。</li>
+    <li><b>BR-03</b>（F-05）播放器在時間點 T 的呈現：取每案件狀態變更時間戳中「時間 ≤ T 的最後一筆」作為該點位當下狀態顏色；案件發生時間 &gt; T 者視為「尚未發生」不顯示。</li>
+    <li><b>BR-04</b>（F-04）圖徵＝14 類災情各一 ICON × 4 狀態色，與線上製圖模組共用同一套圖徵（memory 定案；圖徵原稿見參考截圖）。</li>
+    <li><b>BR-05</b>（F-06）篩選：災情類別可複選、縣市、災情狀態可複選；篩選同時作用於地圖點位與清單。</li>
+    <li><b>BR-06</b>（F-07）點位眼睛＝地圖顯示/隱藏；<b>開關狀態隨專案儲存</b>，重開專案沿用。隱藏≠刪除，資料仍在專案內。</li>
+    <li><b>BR-07</b>（F-08）刪除＝二次確認後永久移除該災情；<b>被刪除的災情不會出現在專案、也不會被儲存</b>（與眼睛隱藏的差別）。</li>
+    <li><b>BR-08</b>（F-10）演練日期只能為<b>當天</b>；若當天 23:59 使用者尚未按「結束演練」，系統<b>自動視同結束演練</b>：停止呼叫新災情、專案轉「演練完成」並凍結。</li>
+    <li><b>BR-09</b>（F-11）演練期間取得的災情、狀態變更時間戳、點位眼睛開關狀態，皆隨專案儲存；專案「演練完成」後不可編輯，僅能「另存」複製（沿用既有系統專案 3 狀態機制）。</li>
+    <li><b>BR-10</b>（F-02）查詢範圍為全國、系統自動分批取完（單次 API 上限 100 筆）。<b>【技術確認 2026-08-05】</b>分頁機制由開發者實作；效能受 EMIC 端影響、我方較不可控；API 逾時／無回應時<b>加重試機制</b>；重試仍失敗導致的狀態歷程缺漏，屬 EMIC API 本身限制，<b>客戶（老師）已表示可接受</b>。</li>
+  </ul>
+
+  <h3>例外流程與提示</h3>
+  <table>
+    <thead><tr><th>情境</th><th>系統行為</th><th>提示文字（暫定，待定稿）</th></tr></thead>
+    <tbody>
+      <tr><td>專案＝待演練、尚未按開始</td><td>EMIC 面板不顯示災情</td><td>「按『開始演練』後，系統將自動每 10 分鐘帶入 EMIC 災情資訊」</td></tr>
+      <tr><td>此時間點／篩選下無災情</td><td>清單顯示空狀態</td><td>「此時間點／篩選條件下無災情」</td></tr>
+      <tr><td>點刪除（🗑）</td><td>先跳二次確認，取消則不刪</td><td>「確定刪除此災情點位？刪除後不會存入專案。」</td></tr>
+      <tr><td>當天 23:59 未按結束演練</td><td>自動停止呼叫、自動視同結束演練、專案轉演練完成並凍結</td><td>（次日開啟）「本演練已於 23:59 自動結束」</td></tr>
+      <tr><td>專案＝演練完成</td><td>顯示唯讀橫幅；隱藏刪除鈕；播放器仍可回放；眼睛仍可切換檢視</td><td>「本專案已『演練完成』，資料已凍結，僅可檢視與回放」</td></tr>
+      <tr><td>EMIC API 逾時／無回應</td><td>加重試機制；重試仍失敗則本次略過、下個 10 分鐘再取</td><td>狀態歷程可能缺漏，屬 EMIC 端限制、客戶已接受【技術確認 2026-08-05】</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 討論模式圖層（?notes=1 / 右下角按鈕） ============ -->
+<button class="notes-toggle" id="notesToggle">💬 討論模式</button>
+<div class="notes-panel" id="notesPanel">
+  <div class="notes-head">討論模式 — 今天要決定的事</div>
+
+  <div class="notes-sec">
+    <h4>情境切換（示範用，非規格）</h4>
+    <div class="scenario-switch" id="scenarioSwitch">
+      <button data-sc="pre">演練前</button>
+      <button data-sc="mid" class="on">演練中</button>
+      <button data-sc="done">演練完成（唯讀）</button>
+    </div>
+  </div>
+
+  <div class="notes-sec">
+    <h4>① 今天要決定的事</h4>
+    <ul class="undecided">
+      <li style="color:#2e9b57">✅ 目前無待決事項 —— Q-01 已於 2026-08-05 經技術主管確認銷案，本模組需求已收斂完成，可進入規格。</li>
+    </ul>
+  </div>
+
+  <div class="notes-sec">
+    <h4>② 已定案摘要（不必再討論，供對照）</h4>
+    <ul class="undecided">
+      <li>每 10 分鐘取一次；不存全快照，只記狀態變更時間戳（播放器據此回放）。</li>
+      <li>14 類圖徵 × 4 狀態色；點位可經眼睛顯示/隱藏（狀態存專案）、可刪除（刪了不存）。</li>
+      <li>演練日期只能當天；23:59 未結束→自動視同結束演練、專案凍結。</li>
+      <li>查詢全國自動分批取完；篩選＝類別(複選)/縣市/狀態(複選)。</li>
+      <li><b>【技術確認 2026-08-05】</b>分頁由開發者實作；API 逾時／無回應加重試機制；重試仍失敗的狀態歷程缺漏屬 EMIC 端限制、客戶已接受。</li>
+    </ul>
+  </div>
+</div>
+
+<span class="spec-badge" id="specBadge" style="display:none">📋 規格檢視模式（?spec=1）</span>
+
+<script>
+// ================= 假資料（高雄/臺南水災情境示意，非真實案件） =================
+// t 以 "HH:MM" 表示狀態變更時間點；history 依時間排序。
+var DRILL_START="09:00", NOW="10:20";
+var TYPES={
+  tree:{name:"路樹災情",cat:"路樹",emoji:"🌳"},
+  sign:{name:"廣告招牌災情",cat:"廣告招牌",emoji:"🪧"},
+  road:{name:"道路、隧道災情",cat:"道路、隧道",emoji:"🚧"},
+  flood:{name:"積淹水災情",cat:"積淹水",emoji:"🌊"},
+  building:{name:"建物毀損",cat:"建物毀損",emoji:"🏢"},
+  utility:{name:"民生、基礎設施災情",cat:"民生基礎設施",emoji:"💡"}
+};
+var cases=[
+ {id:"EMIC-115080501",type:"flood",item:"到路積淹水",county:"高雄市",town:"三民區",loc:"建工路與大順路口",
+  desc:"連日豪雨致路面積水約 40 公分，車輛通行受阻。",coord:"120.3210,22.6510",geom:"點",
+  contact:"王大民",phone:"07-311-xxxx",injured:0,death:0,trapped:0,missing:0,shelter:0,
+  traffic:"是",serious:"否",close:"否",retreat:"否",src:"民眾通報",updated:"10:12",
+  files:["現場照片_001.jpg","積水範圍示意.png"],x:38,y:44,
+  history:[{s:"pending",t:"09:10"},{s:"progress",t:"09:30"},{s:"done",t:"10:10"}]},
+ {id:"EMIC-115080502",type:"road",item:"道路封閉",county:"高雄市",town:"前鎮區",loc:"中山三路高架橋下",
+  desc:"地下道積水封閉，改道疏導。",coord:"120.3300,22.5980",geom:"線",
+  contact:"李所長",phone:"07-812-xxxx",injured:0,death:0,trapped:0,missing:0,shelter:0,
+  traffic:"是",serious:"否",close:"否",retreat:"—",src:"消防隊",updated:"09:48",
+  files:["封閉範圍.pdf"],x:44,y:56,
+  history:[{s:"pending",t:"09:10"},{s:"progress",t:"09:40"}]},
+ {id:"EMIC-115080503",type:"tree",item:"行道樹倒塌",county:"高雄市",town:"苓雅區",loc:"四維路人行道",
+  desc:"路樹傾倒壓損機車格。",coord:"120.3150,22.6210",geom:"點",
+  contact:"陳巡官",phone:"07-336-xxxx",injured:0,death:0,trapped:0,missing:0,shelter:0,
+  traffic:"否",serious:"否",close:"否",retreat:"—",src:"巡邏發現",updated:"09:52",
+  files:[],x:47,y:49,
+  history:[{s:"progress",t:"09:20"}]},
+ {id:"EMIC-115080504",type:"tree",item:"行道樹倒塌",county:"臺南市",town:"東區",loc:"林森路二段",
+  desc:"樹幹橫倒占用一線道。",coord:"120.2260,22.9860",geom:"點",
+  contact:"張隊員",phone:"06-269-xxxx",injured:0,death:0,trapped:0,missing:0,shelter:0,
+  traffic:"是",serious:"否",close:"否",retreat:"—",src:"民眾通報",updated:"09:35",
+  files:[],x:33,y:30,
+  history:[{s:"pending",t:"09:30"}]},
+ {id:"EMIC-115080505",type:"sign",item:"招牌鬆脫",county:"臺南市",town:"中西區",loc:"民族路商圈",
+  desc:"大型招牌螺絲鬆脫有掉落風險。",coord:"120.2010,22.9930",geom:"點",
+  contact:"—",phone:"—",injured:0,death:0,trapped:0,missing:0,shelter:0,
+  traffic:"否",serious:"否",close:"否",retreat:"—",src:"民眾通報",updated:"09:50",
+  files:[],x:30,y:34,
+  history:[{s:"unassigned",t:"09:50"}]},
+ {id:"EMIC-115080506",type:"utility",item:"區域停電",county:"高雄市",town:"鳳山區",loc:"文化路一帶",
+  desc:"變電設施泡水致約 300 戶停電。",coord:"120.3560,22.6270",geom:"面",
+  contact:"台電高雄區處",phone:"07-746-xxxx",injured:0,death:0,trapped:0,missing:0,shelter:0,
+  traffic:"否",serious:"是",close:"否",retreat:"—",src:"台電通報",updated:"10:05",
+  files:["停電範圍圖.png"],x:52,y:52,
+  history:[{s:"pending",t:"09:10"},{s:"progress",t:"10:00"}]}
+];
+var ST={unassigned:"未指派",pending:"待處理",progress:"處理中",done:"已處理"};
+
+// ---- 時間工具 ----
+function toMin(hhmm){var p=hhmm.split(":");return (+p[0])*60+(+p[1]);}
+function fmt(min){var h=Math.floor(min/60),m=min%60;return ("0"+h).slice(-2)+":"+("0"+m).slice(-2);}
+var START=toMin(DRILL_START), END=toMin(NOW);
+var playhead=END;              // 播放器目前時間點（分）
+var stFilter={unassigned:true,pending:true,progress:true,done:true,future:true};
+var countyFilter="";
+
+// 某案件在時間點 T 的狀態；未發生回傳 null（尚未發生）
+function statusAt(c,T){
+  var cur=null;
+  for(var i=0;i<c.history.length;i++){ if(toMin(c.history[i].t)<=T) cur=c.history[i].s; else break; }
+  return cur; // null = 尚未發生
+}
+
+// ================= 渲染 =================
+var markerLayer=document.getElementById('markerLayer');
+var rBody=document.getElementById('rBody');
+var mode='mid'; // pre|mid|done
+
+function render(){
+  // 演練前：不顯示災情
+  var live = (mode!=='pre');
+  document.getElementById('preView').style.display = live?'none':'block';
+  document.getElementById('liveView').style.display = live?'block':'none';
+  document.getElementById('doneBanner').style.display = (mode==='done')?'block':'none';
+  if(!live){ markerLayer.innerHTML=''; return; }
+
+  // 播放器時間顯示
+  document.getElementById('pNow').textContent='08/05 '+fmt(playhead);
+  var pct=(playhead-START)/(END-START)*100; pct=Math.max(0,Math.min(100,pct));
+  document.getElementById('pFill').style.width=pct+'%';
+  document.getElementById('pHead').style.left=pct+'%';
+
+  // 地圖點位 + 清單
+  markerLayer.innerHTML=''; rBody.innerHTML='';
+  var shown=0;
+  cases.forEach(function(c){
+    var s=statusAt(c,playhead);           // null=尚未發生
+    var stKey = s||'future';
+    // 篩選：縣市、狀態圖例
+    var passCounty = !countyFilter || c.county===countyFilter;
+    var passSt = stFilter[stKey];
+    var visible = c.visible!==false;
+    var passAll = passCounty && passSt;
+
+    // ---- 地圖 marker（尚未發生 or 隱藏 or 未通過篩選則不畫）----
+    if(passAll && visible && s){
+      var m=document.createElement('div');
+      m.className='marker st-'+s+(c._sel?' sel':'');
+      m.style.left=c.x+'%'; m.style.top=c.y+'%';
+      m.title=c.item+'（'+ST[s]+'）';
+      m.textContent=TYPES[c.type].emoji;
+      m.addEventListener('click',function(ev){ev.stopPropagation();openDetail(c,this);selRow(c);});
+      markerLayer.appendChild(m);
+    }
+
+    // ---- 清單列（尚未發生仍列出，狀態欄顯示「尚未發生」；未通過篩選不列）----
+    if(passAll){
+      shown++;
+      var tr=document.createElement('tr');
+      tr.className='row'+(c._sel?' sel':'')+(visible?'':' hidden-row');
+      var badge = s
+        ? '<span class="stbadge st-'+s+'">'+ST[s]+'</span>'
+        : '<span class="stbadge" style="background:#fff;color:#9aa4b1;border:1px solid #cfd6df">尚未發生</span>';
+      tr.innerHTML=
+        '<td class="lead"><button class="ic-btn eye'+(visible?'':' off')+'" title="顯示/隱藏">👁</button></td>'+
+        '<td class="type" title="'+TYPES[c.type].name+'">'+TYPES[c.type].emoji+'</td>'+
+        '<td>'+c.item+'</td>'+
+        '<td>'+TYPES[c.type].cat+'</td>'+
+        '<td class="st">'+badge+'</td>'+
+        '<td class="act">'+(mode==='done'?'':'<button class="ic-btn del" title="刪除">🗑</button>')+'</td>';
+      // 眼睛
+      tr.querySelector('.eye').addEventListener('click',function(e){e.stopPropagation();
+        c.visible = (c.visible===false); render();});
+      // 刪除（二次確認；刪了不存入專案）
+      var del=tr.querySelector('.del');
+      if(del) del.addEventListener('click',function(e){e.stopPropagation();
+        if(!confirm('確定刪除此災情點位「'+c.item+'」？\n刪除後此災情不會存入專案，也無法回放。')) return;
+        cases=cases.filter(function(x){return x!==c;}); render();});
+      // 點列 → 選中並開詳情
+      tr.addEventListener('click',function(e){ if(e.target.closest('.ic-btn'))return; selRow(c); openDetail(c); });
+      rBody.appendChild(tr);
+    }
+  });
+  document.getElementById('rCnt').textContent='共 '+shown+' 筆';
+  document.getElementById('rTable').style.display= shown?'table':'none';
+  document.getElementById('rEmpty').style.display= shown?'none':'block';
+}
+
+function selRow(c){ cases.forEach(function(x){x._sel=(x===c);}); render(); }
+
+// ---- 詳情彈窗 ----
+var pop=document.getElementById('detailPop');
+function openDetail(c,anchor){
+  var s=statusAt(c,playhead), stTxt = s?('<span class="stbadge st-'+s+'">'+ST[s]+'</span>'):'尚未發生';
+  var rows=[
+    ['案件編號',c.id],['發生時間','08/05 '+ (c.history[0]?c.history[0].t:'—')],
+    ['縣市／鄉鎮',c.county+' '+c.town],['發生地點',c.loc],
+    ['災情類別',TYPES[c.type].cat],['災情項目',c.item],['災情描述',c.desc],
+    ['處理狀態',stTxt],['聯絡人',c.contact+'（'+c.phone+'）'],
+    ['傷/亡/困/失/收','＋'+c.injured+' / '+c.death+' / '+c.trapped+' / '+c.missing+' / '+c.shelter],
+    ['交通障礙',c.traffic],['重大災情',c.serious],['結案',c.close],['退水狀態',c.retreat],
+    ['通報來源',c.src],['幾何型別',c.geom],['坐標(WGS84)',c.coord],['更新時間','08/05 '+c.updated]
+  ];
+  var html=rows.map(function(r){return '<div class="drow"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>';}).join('');
+  if(c.files.length){ html+='<div class="files"><b style="font-size:12px;color:#5a6675">附件（FILE_LIST）</b>'+
+    c.files.map(function(f){return '<a href="#" onclick="return false">📎 '+f+'</a>';}).join('')+'</div>'; }
+  document.getElementById('dpTitle').textContent=c.item;
+  document.getElementById('dpBody').innerHTML=html;
+  // 定位彈窗
+  var mx=(anchor?parseFloat(anchor.style.left):c.x), my=(anchor?parseFloat(anchor.style.top):c.y);
+  var map=document.getElementById('map');
+  pop.style.left=Math.min(map.clientWidth-276, map.clientWidth*mx/100+16)+'px';
+  pop.style.top=Math.max(8, map.clientHeight*my/100-40)+'px';
+  pop.classList.add('open');
+}
+document.getElementById('dpClose').addEventListener('click',function(){pop.classList.remove('open');});
+document.getElementById('map').addEventListener('click',function(){pop.classList.remove('open');});
+
+// ---- 播放器互動 ----
+var track=document.getElementById('pTrack');
+function seekFromEvent(e){
+  var r=track.getBoundingClientRect();
+  var pct=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  playhead=Math.round((START+pct*(END-START))/10)*10; // 對齊 10 分鐘刻度
+  playhead=Math.max(START,Math.min(END,playhead));
+  render();
+}
+var dragging=false;
+track.addEventListener('mousedown',function(e){dragging=true;seekFromEvent(e);});
+window.addEventListener('mousemove',function(e){if(dragging)seekFromEvent(e);});
+window.addEventListener('mouseup',function(){dragging=false;});
+// 播放
+var timer=null;
+document.getElementById('pPlay').addEventListener('click',function(){
+  if(timer){clearInterval(timer);timer=null;this.textContent='▶';return;}
+  this.textContent='⏸';var self=this;
+  if(playhead>=END) playhead=START;
+  timer=setInterval(function(){
+    playhead+=10; if(playhead>=END){playhead=END;clearInterval(timer);timer=null;self.textContent='▶';}
+    render();
+  },700);
+});
+
+// ---- 篩選 ----
+document.getElementById('fCounty').addEventListener('change',function(){countyFilter=this.value;render();});
+document.getElementById('stLegend').addEventListener('click',function(e){
+  var chip=e.target.closest('.chip'); if(!chip)return;
+  var k=chip.dataset.st; stFilter[k]=!stFilter[k]; chip.classList.toggle('off',!stFilter[k]); render();
+});
+
+// ================= 情境切換 =================
+var drillBtn=document.getElementById('drillBtn'), runDot=document.getElementById('runDot');
+function applyScenario(sc){
+  mode=sc;
+  if(sc==='pre'){ drillBtn.style.display='inline-flex'; drillBtn.textContent='開始演練'; runDot.style.display='none'; }
+  else if(sc==='mid'){ drillBtn.style.display='inline-flex'; drillBtn.textContent='結束演練'; drillBtn.classList.remove('danger'); drillBtn.classList.add('tb-btn'); runDot.style.display='inline-flex'; playhead=END; }
+  else if(sc==='done'){ drillBtn.style.display='none'; runDot.style.display='none'; }
+  document.querySelectorAll('#scenarioSwitch button').forEach(function(x){x.classList.toggle('on',x.dataset.sc===sc);});
+  render();
+}
+// 開始/結束演練 按鈕
+drillBtn.addEventListener('click',function(){
+  if(mode==='pre'){ applyScenario('mid'); }
+  else if(mode==='mid'){ if(confirm('確定結束演練？結束後專案轉「演練完成」並凍結，僅能檢視與回放。')) applyScenario('done'); }
+});
+
+// ---- 討論模式開關 ----
+var notesPanel=document.getElementById('notesPanel');
+function openNotes(on){document.body.classList.toggle('show-notes',on);notesPanel.classList.toggle('open',on);}
+document.getElementById('notesToggle').addEventListener('click',function(){openNotes(!notesPanel.classList.contains('open'));});
+document.getElementById('scenarioSwitch').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b)return; applyScenario(b.dataset.sc);
+});
+
+// ---- 依查詢字串切換（放最後） ----
+(function(){
+  var qs=new URLSearchParams(location.search);
+  var sc=qs.get('sc')||'mid'; applyScenario(sc);
+  if(qs.get('spec')==='1'){document.body.classList.add('show-spec');document.getElementById('specBadge').style.display='block';}
+  if(qs.get('notes')==='1'){openNotes(true);}
+})();
+</script>
+</body>
+</html>

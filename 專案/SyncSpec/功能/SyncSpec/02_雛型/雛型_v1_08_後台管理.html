@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜後台管理</title><link rel="stylesheet" href="_shared.css">
+<style>.ub{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:13px}.ub .l{width:90px;color:var(--ink2)}.ub .bar{flex:1;height:10px}.ub .v{width:60px;text-align:right;font-family:var(--mono);font-size:12px}
+.sw{width:16px;height:16px;border-radius:5px;display:inline-block;vertical-align:-3px;margin-right:6px}</style></head>
+<body data-nav="admin" data-scope="global" data-crumb="">
+<script>window.NOTES=[
+ {id:'Q-13',text:'工項分類清單除了目前 6 類，是否允許各專案自訂？（目前為全系統統一，只有管理員可改）',who:'PM'},
+ {id:'Q-03',text:'公司素材庫去識別檢查的項目與標準尚未訂。',who:'主管'}
+];</script>
+<script src="_data.js"></script><script src="_shared.js"></script>
+<div id="page">
+<!-- F-14 後台管理（僅管理員）；成員帳號由公司 AD 同步，此處不維護密碼 -->
+<div class="page-head"><div><h1>後台管理</h1><p>只有系統管理員看得到。帳號與登入由公司 AD 管理，這裡不處理密碼。</p></div></div>
+<div class="tabs"><button class="tab on" data-g="a" data-tab="kb">公司素材庫審核 <span class="n">2</span></button><button class="tab" data-g="a" data-tab="cats">工項分類清單</button><button class="tab" data-g="a" data-tab="audit">稽核與用量</button></div>
+
+<div data-g="a" data-panel="kb" class="on">
+ <div class="grid2">
+  <div class="card"><h2>待審核</h2><div class="sub">共用層內容需通過去識別與抽查</div>
+   <div class="li" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>資料下載紀錄（含 PDF 下載）</b><div class="xs muted">EvieLiu · 規格定稿時存入</div></div><span class="chip coral">聯絡人未去識別</span></div>
+   <div class="li" style="display:flex;gap:10px;padding:10px 0"><div class="grow"><b>觀賞樹木盤點與巡檢</b><div class="xs muted">管理員批次匯入</div></div><span class="chip mint">可通過</span></div>
+   <a class="btn sm" style="margin-top:12px" href="雛型_v1_07_公司素材庫.html">到公司素材庫審核</a></div>
+  <div class="card"><h2>公司素材庫概況</h2><div class="sub">功能卡 4 · 決策與踩雷 3 · 專案級文件 3</div>
+   <div class="ub"><span class="l">本月新增</span><div class="bar"><i style="width:30%"></i></div><span class="v">+2</span></div>
+   <div class="ub"><span class="l">被引用次數</span><div class="bar"><i style="width:62%"></i></div><span class="v">18</span></div>
+   <div class="ub"><span class="l">過期待確認</span><div class="bar"><i style="width:8%;background:var(--sun)"></i></div><span class="v">0</span></div></div>
+ </div>
+</div>
+
+<div data-g="a" data-panel="cats">
+ <div class="card"><div class="row spread"><div><h2>工項分類清單</h2><div class="sub">AI 拆合約時會用這份清單分類；現階段只有「功能開發」提供 AI 規劃</div></div><button class="btn primary" data-open="m-cat" id="addc"></button></div>
+ <div class="tbl-wrap" style="box-shadow:none"><table class="tbl"><thead><tr><th>分類</th><th>顏色</th><th>AI 規劃支援</th><th>使用中的工項</th><th></th></tr></thead><tbody>
+  <tr><td><span class="cat dev">功能開發</span></td><td><i class="sw" style="background:var(--brand)"></i>電光藍</td><td><span class="chip mint">已支援</span></td><td>5</td><td><button class="btn sm ghost">編輯</button></td></tr>
+  <tr><td><span class="cat pm">專案管理</span></td><td><i class="sw" style="background:var(--sun)"></i>琥珀</td><td><span class="chip">預留</span></td><td>1</td><td><button class="btn sm ghost">編輯</button></td></tr>
+  <tr><td><span class="cat doc">文件產出</span></td><td><i class="sw" style="background:var(--mint)"></i>薄荷</td><td><span class="chip">預留</span></td><td>0</td><td><button class="btn sm ghost">編輯</button></td></tr>
+  <tr><td><span class="cat buy">採購</span></td><td><i class="sw" style="background:var(--coral)"></i>珊瑚</td><td><span class="chip">預留</span></td><td>0</td><td><button class="btn sm ghost">編輯</button></td></tr>
+  <tr><td><span class="cat gis">圖資處理</span></td><td><i class="sw" style="background:var(--violet)"></i>紫藍</td><td><span class="chip">預留</span></td><td>3</td><td><button class="btn sm ghost">編輯</button></td></tr>
+  <tr><td><span class="cat other">其他</span></td><td><i class="sw" style="background:#9AA4C2"></i>灰</td><td><span class="chip">—</span></td><td>3</td><td><button class="btn sm ghost">編輯</button></td></tr></tbody></table></div></div>
+</div>
+
+<div data-g="a" data-panel="audit">
+ <div class="grid2">
+  <div class="card"><h2>AI 使用量</h2><div class="sub">近 7 天，依專案</div>
+   <div class="ub"><span class="l">韋能二階</span><div class="bar"><i style="width:82%"></i></div><span class="v">412</span></div>
+   <div class="ub"><span class="l">NCDR健康豬</span><div class="bar"><i style="width:46%"></i></div><span class="v">231</span></div>
+   <div class="ub"><span class="l">新北景觀</span><div class="bar"><i style="width:21%"></i></div><span class="v">104</span></div>
+   <div class="xs muted">單位為 AI 呼叫次數（示意）；額度與模型由技術團隊管理。</div></div>
+  <div class="card"><h2>稽核紀錄</h2><div class="sub">誰在什麼時候做了什麼</div>
+   <table class="tbl sm"><tbody>
+    <tr><td class="mono xs muted">11-16 10:42</td><td>EvieLiu</td><td>產生「競合分析」規格文件 v4</td></tr>
+    <tr><td class="mono xs muted">11-16 10:20</td><td>AllenYeh</td><td>改工項 4.1 分類：功能開發 → 其他</td></tr>
+    <tr><td class="mono xs muted">11-16 09:55</td><td>EvieLiu</td><td>下載圖文對照並凍結雛型 v1</td></tr>
+    <tr><td class="mono xs muted">11-16 09:12</td><td>EvieLiu</td><td>上傳合約並解析（12 項）</td></tr></tbody></table></div>
+ </div>
+</div>
+
+<div class="modal-back" id="m-cat"><div class="modal"><div class="mh"><h2>新增工項分類</h2></div><div class="mb">
+ <div class="field"><label>分類名稱</label><input class="input" placeholder="例如：教育訓練"></div>
+ <div class="field"><label>顏色</label><div class="row"><i class="sw" style="background:var(--brand)"></i><i class="sw" style="background:var(--mint)"></i><i class="sw" style="background:var(--coral)"></i><i class="sw" style="background:var(--violet)"></i></div></div>
+ <div class="field"><label>給 AI 的分類說明</label><textarea class="input" rows="3" placeholder="什麼樣的合約項目屬於這一類？AI 會參考這段文字分類。"></textarea></div></div>
+ <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" data-close>新增</button></div></div></div>
+
+<section class="spec"><h2>本畫面規格</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>權限</td><td>只有系統管理員；成員帳號與登入由公司 AD 管理（F-15），本頁不維護密碼</td></tr>
+<tr><td>分類清單</td><td>名稱、顏色、給 AI 的分類說明；刪除分類前須先處理使用中的工項；「AI 規劃支援」目前只有功能開發</td></tr>
+<tr><td>稽核紀錄</td><td>記錄分類修改、標註、文件產出與下載、版本凍結、公司素材庫審核；不可編輯</td></tr>
+<tr><td>使用量</td><td>依專案顯示 AI 呼叫次數；額度與模型設定不在此（技術團隊）</td></tr></table></section>
+</div>
+<script>window.pageInit=function(){$('#addc').innerHTML=ic('plus')+'新增分類'};</script>
+</body></html>

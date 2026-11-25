@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>空間分析報告匯出紀錄 — 土地評估圖台系統 管理後台（雛型 v1）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40"><path d="M20 3C10 12 7 22 14 31c3 4 9 6 14 3 6-4 8-14-8-31z" fill="#1c6fb0"/><path d="M14 31c6-2 10-8 6-16-6 8-9 12-6 16z" fill="#8bc34a"/></svg>
+      <div><div class="en">VENA<br>ENERGY<br>韋能能源</div></div>
+      <h1>土地評估圖台系統</h1><span class="bk-tag">管理後台</span>
+    </div>
+    <div class="top-right"><span>返回前台</span><span class="user-chip">👤 測試管理者 <a href="javascript:void 0">登出</a></span></div>
+  </header>
+  <div class="body">
+    <!-- F-01 左側選單新增「空間分析報告匯出紀錄」入口，僅系統管理者可見【對話確認】 -->
+    <!-- SPEC: 左側入口 F-01【對話確認】 位置:登入紀錄之後 顯示條件:角色=系統管理者 -->
+    <nav class="bk-rail" id="rail"></nav>
+    <main class="bk-main" id="main"></main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<button class="notes-fab" onclick="toggleNotes()">討論模式</button>
+<div class="notes-panel" id="notes"></div>
+<section id="spec"></section>
+
+<script>
+/* ---------- 假資料（寫入時即存帳號與姓名快照，帳號之後被刪也照顯示 F-02） ---------- */
+var ACC=[
+ ['admin@test','測試管理者'],['AlvinLin@richitech.com.tw','Alvin'],['caseychen@richitech.com.tw','Casey'],
+ ['charliehsieh@richitech.com.tw','瑞竣管理'],['evieliu@richitech.com.tw','Evie'],['karenhuang@richitech.com.tw','Karen'],
+ ['sandytsai@richitech.com.tw','Sandy'],['user@test','測試使用者'],['wang2025t1','王小明'],['wang2025t2','王小明'],
+ ['olduser@richitech.com.tw','林舊人']          // 已被刪除的帳號，紀錄與 PDF 仍保留，畫面不標示
+];
+var ALL=[];
+(function(){
+  var t=Date.now()-37*60*1000,i,seed=11;
+  function rnd(){seed=(seed*9301+49297)%233280;return seed/233280;}
+  for(i=0;i<37;i++){
+    var a=ACC[Math.floor(rnd()*ACC.length)];
+    ALL.push({id:i+1,acct:a[0],name:a[1],time:t});
+    t-=Math.floor(rnd()*20*3600*1000)+10*60*1000;
+  }
+})();
+/* 【客戶確認 2026-11-13】紀錄完整保留；PDF 只保留近 1 年，超過 1 年的 PDF 後台不提供匯出 */
+(function(){var base=Date.now(),D=86400000,old=[[395,'wang2025t1','王小明'],[430,'caseychen@richitech.com.tw','Casey'],[512,'olduser@richitech.com.tw','林舊人'],[640,'karenhuang@richitech.com.tw','Karen']];old.forEach(function(o,i){ALL.push({id:101+i,acct:o[1],name:o[2],time:base-o[0]*D-(i+1)*3600000});});})();
+function expired(ms){var d=new Date(ms),due=new Date(d.getFullYear()+1,d.getMonth(),d.getDate()),t=new Date();t.setHours(0,0,0,0);return t.getTime()>due.getTime();}   /* 到期日=匯出日期 1 年後同月同日；到期日當天仍可匯出，隔天起不提供（客戶確認 2026-11-13） */
+function p2(n){return n<10?'0'+n:''+n;}
+function fmt(ms){var d=new Date(ms);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+' '+p2(d.getHours())+':'+p2(d.getMinutes())+':'+p2(d.getSeconds());}
+
+/* ---------- 狀態 ---------- */
+/* F-03 匯出時間預設為近 7 天：迄日=今天，起日=今天往前 6 天（含今天共 7 天）【對話確認 2026-10-30】 */
+function ymd(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function defRange(){var e=new Date(),s=new Date();s.setDate(s.getDate()-6);return {from:ymd(s),to:ymd(e)};}
+function defF(){var r=defRange();return {acct:'',name:'',from:r.from,to:r.to};}
+var S={role:'admin',data:'normal',f:defF(),sk:'time',sd:-1,page:1,per:10};
+var qp=new URLSearchParams(location.search);
+if(qp.get('state')==='empty')S.data='empty';
+if(qp.get('state')==='noperm')S.role='user';
+if(qp.get('range')==='all'){S.f.from='';S.f.to='';}   /* 方便看超過 1 年的紀錄 */
+if(qp.get('oldest')==='1'){S.sd=1;}   /* 方便看最舊的紀錄 */
+
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(function(){t.classList.remove('on')},2800);}
+
+function renderRail(){
+  var ic1='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/></svg>';
+  var ic2='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h24v24H0z" fill="none"/><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>';   /* 「登入紀錄」按鈕沿用登入紀錄雛型的 Material Icons Outlined「login」 */
+  var ic3='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-8L4 8v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 2v16H6V8.83L10.83 4H18z"/><path d="m16 13-4 4-4-4 1.41-1.41L11 13.17V9.02L13 9v4.17l1.59-1.59L16 13z"/></svg>';
+  var h='<button data-tip="帳號管理" aria-label="帳號管理" onclick="toast(\'帳號管理為既有功能，此處僅示意\')">'+ic1+'</button>';
+  if(S.role==='admin'){
+    h+='<button data-tip="登入紀錄" aria-label="登入紀錄" onclick="toast(\'登入紀錄為另一功能（合約 3.1），此處僅示意入口位置\')">'+ic2+'</button>';
+    h+='<button class="active" data-tip="空間分析報告匯出紀錄" aria-label="空間分析報告匯出紀錄">'+ic3+'</button>';
+  }
+  document.getElementById('rail').innerHTML=h;
+}
+
+/* ---------- 篩選／排序 ---------- */
+function filtered(){
+  if(S.data==='empty')return [];
+  var f=S.f,from=f.from?new Date(f.from+'T00:00:00').getTime():-Infinity,to=f.to?new Date(f.to+'T23:59:59').getTime():Infinity;
+  var rows=ALL.filter(function(r){
+    return (!f.acct||r.acct.toLowerCase().indexOf(f.acct.toLowerCase())>=0)
+      &&(!f.name||r.name.toLowerCase().indexOf(f.name.toLowerCase())>=0)
+      &&r.time>=from&&r.time<=to;
+  });
+  rows.sort(function(a,b){var x=a[S.sk],y=b[S.sk];return (x<y?-1:x>y?1:0)*S.sd;});
+  return rows;
+}
+function sortBy(k){if(S.sk===k)S.sd=-S.sd;else{S.sk=k;S.sd=k==='time'?-1:1;}S.page=1;renderList();}
+
+function renderMain(){
+  var m=document.getElementById('main');
+  if(S.role!=='admin'){m.innerHTML='<div class="noperm"><b>🔒 您沒有權限檢視此頁面</b>空間分析報告匯出紀錄僅限系統管理者使用。</div>';return;}
+  var f=S.f;
+  m.innerHTML=
+  '<h2 class="pg">空間分析報告匯出紀錄</h2>'+
+  '<h3 class="sec-t">空間分析報告匯出紀錄查詢</h3>'+
+  '<div class="qrow">'+
+   '<!-- F-03 帳號篩選【對話確認】 --><!-- SPEC: 帳號欄 F-02【對話確認 2026-10-30】 清單表頭與內容皆靠左對齊 --><!-- SPEC: 匯出時間 F-03【對話確認 2026-10-30】 預設:近7天（起=今天-6、迄=今天）；清除=回到預設；手動清空日期=不限 --><span class="qf"><span class="q-l">帳號</span><input class="w-t" id="fa" value="'+f.acct+'" placeholder="輸入關鍵字"></span>'+
+   '<span class="qf"><span class="q-l">姓名</span><input class="w-t" id="fn" value="'+f.name+'" placeholder="輸入關鍵字"></span>'+
+   '<span class="qf"><span class="q-l">匯出時間</span><input type="date" class="w-d" id="ff" value="'+f.from+'"><span class="dash">～</span><input type="date" class="w-d" id="ft" value="'+f.to+'"></span>'+
+   '<span class="qbtns"><button class="btn" onclick="clearQ()">清除</button><button class="btn primary" onclick="doQ()">查詢</button></span>'+
+   '<div class="qerr" id="qerr">匯出時間的起日不可晚於迄日</div>'+
+  '</div><hr class="bk-hr">'+
+  '<div class="bk-list-head"><h3 class="sec-t" style="margin:0">空間分析報告匯出紀錄清單</h3><span class="cnt" id="cnt"></span></div>'+
+  '<div id="tbl"></div><div class="pager" id="pager"></div>';
+  renderList();
+}
+function doQ(){
+  var from=document.getElementById('ff').value,to=document.getElementById('ft').value;
+  if(from&&to&&from>to){document.getElementById('qerr').classList.add('on');return;}
+  document.getElementById('qerr').classList.remove('on');
+  S.f={acct:v('fa'),name:v('fn'),from:from,to:to};S.page=1;renderList();
+}
+function v(id){return document.getElementById(id).value.trim();}
+function clearQ(){S.f=defF();S.page=1;renderMain();}
+function goPage(p){S.page=p;renderList();}
+function dl(id){
+  var r=ALL.filter(function(x){return x.id===id})[0];
+  /* F-04 重新取得「當時」產出的 PDF，內容與匯出當下完全一致；此動作不另記一筆【對話確認】 */
+  toast('示意：匯出 '+r.name+' 於 '+fmt(r.time)+' 匯出的 PDF（內容與當時完全一致）');
+}
+
+function renderList(){
+  var rows=filtered(),total=rows.length,pages=Math.max(1,Math.ceil(total/S.per));
+  if(S.page>pages)S.page=pages;
+  var start=(S.page-1)*S.per,cur=rows.slice(start,start+S.per);
+  function th(k,label,al){var on=S.sk===k;return '<th class="sortable'+(on?' sorted':'')+(al?' al':'')+'" onclick="sortBy(\''+k+'\')">'+label+'<span class="ar">'+(on?(S.sd>0?'▲':'▼'):'⇅')+'</span></th>';}
+  var h='<table class="bk"><thead><tr><th style="width:80px">項次</th>'+
+    '<!-- F-02 帳號【明確】合約3.2 -->'+th('acct','帳號',1)+th('name','姓名')+
+    '<!-- F-02 匯出時間【明確】合約3.2 -->'+th('time','匯出時間')+
+    '<!-- F-02/F-04 匯出檔案：只有 PDF 按鈕【客戶確認 2026-11-13：只記空間分析 PDF】；表頭與內容靠左，介面不顯示檔名 -->'+'<th class="al" style="width:160px">匯出檔案</th></tr></thead><tbody>';
+  if(!total){
+    h+='<tr style="background:none"><td colspan="5"><div class="empty"><b>無符合查詢結果</b>請調整查詢條件後再試。'+'</div></td></tr>';
+  }else cur.forEach(function(r,i){
+    h+='<tr><td>'+(start+i+1)+'</td><td class="al">'+r.acct+'</td><td>'+r.name+'</td><td>'+fmt(r.time)+'</td>'+
+       '<td class="al">'+(expired(r.time)?'<span class="expired" title="PDF 已超過 1 年保存期限，後台不提供匯出">-</span>':'<button class="btn sm pdfbtn" onclick="dl('+r.id+')">PDF</button>')+'</td></tr>';
+  });
+  document.getElementById('tbl').innerHTML=h+'</tbody></table>';
+  document.getElementById('cnt').textContent='共 '+total+' 筆';
+  var pg='';
+  if(total){pg+='<button '+(S.page===1?'disabled':'')+' onclick="goPage('+(S.page-1)+')">‹</button>';
+    for(var p=1;p<=pages;p++)pg+='<button class="'+(p===S.page?'on':'')+'" onclick="goPage('+p+')">'+p+'</button>';
+    pg+='<button '+(S.page===pages?'disabled':'')+' onclick="goPage('+(S.page+1)+')">›</button>';}
+  document.getElementById('pager').innerHTML=pg;
+}
+
+/* ---------- 討論模式：只放未決事項 ---------- */
+var QS=[
+
+
+ ['Q-04','每頁筆數目前暫設 10 筆；查詢與排序的效能指標（匯出時間區間不設上限，已確認）','PM／技術主管'],
+
+
+];
+function renderNotes(){
+  document.getElementById('notes').innerHTML='<h4>① 今天要決定的（'+QS.length+' 項）</h4>'+
+   QS.map(function(q){return '<div class="q"><b>'+q[0]+'</b> '+q[1]+'<div class="own">決策者：'+q[2]+'</div></div>';}).join('')+
+   '<div class="sw"><b>情境切換</b>'+
+   '<label>視角：<select onchange="S.role=this.value;renderRail();renderMain()"><option value="admin">系統管理者</option><option value="user">一般使用者（無權限）</option></select></label>'+
+   '<label>資料：<select onchange="S.data=this.value;S.page=1;renderMain()"><option value="normal">有資料</option><option value="empty">尚無任何紀錄</option></select></label></div>'+
+   '<details style="padding:8px 14px;font-size:13px;color:#555"><summary>② 已定案摘要</summary>只記進階匯出成果（空間分析匯出）的 PDF；只有系統管理者看得到；欄位為項次、帳號、姓名、匯出時間、匯出檔案（只有一顆 PDF 按鈕，靠左，不顯示檔名）；沒有功能欄、沒有匯出檔案與功能的篩選【客戶確認 2026-11-13：只記空間分析 PDF】；查詢為帳號、姓名、匯出時間起訖（預設近 7 天）；帳號被刪後紀錄與 PDF 保留；匯出紀錄完整保留不清除，PDF 只保留近 1 年，超過 1 年的紀錄 PDF 後台不提供匯出，該欄顯示「-」；以匯出日期起算，到期日（1 年後同月同日）當天仍可匯出，隔天起不提供，逾期 PDF 由系統自動刪除，排程時間點由技術安排；匯出時間區間沒有上限【客戶確認 2026-11-13】；管理者重新匯出不另記一筆；PDF 於匯出時儲存成檔，點「PDF」直接調用、不即時重新產生【技術確認 2026-10-30】；只在成功匯出後才記錄【技術確認 2026-10-30】；匯出時間預設近 7 天（含今天共 7 天），按「清除」回到預設；「可再次匯出」屬合約內、不追加報價【PM 確認 2026-10-30】；最新在前、分頁。</details>';
+}
+function toggleNotes(){document.body.classList.toggle('notes');}
+
+/* ---------- 規格檢視 ?spec=1 ---------- */
+document.getElementById('spec').innerHTML='<h2>📋 本畫面規格（後台・空間分析報告匯出紀錄・雛型 v1）</h2>'+
+'<h3>欄位表（清單）</h3><table><tr><th>F-</th><th>欄位</th><th>型別</th><th>資料來源</th><th>顯示／互動</th></tr>'+
+'<tr><td>F-02</td><td>項次</td><td>整數</td><td>依目前排序與頁碼連續編號</td><td>—</td></tr>'+
+'<tr><td>F-02</td><td>帳號</td><td>文字</td><td>匯出當下的帳號（寫入時存快照）</td><td>可排序；表頭與內容靠左對齊；不標示帳號目前是否仍存在</td></tr>'+
+'<tr><td>F-02</td><td>姓名</td><td>文字</td><td>匯出當下的姓名（快照）</td><td>可排序</td></tr>'+
+'<tr><td>F-02</td><td>匯出時間</td><td>日期時間 yyyy-MM-dd HH:mm:ss</td><td>系統時間</td><td>可排序；預設由新到舊</td></tr>'+
+'<tr><td>F-04</td><td>匯出檔案</td><td>按鈕「PDF」</td><td>匯出時已儲存的 PDF 檔，點擊直接調用、不重新產生【技術確認 2026-10-30】</td><td>表頭與內容靠左對齊；點擊取得與當時完全一致的 PDF；介面不顯示檔名；不可排序；此動作不另記一筆</td></tr></table>'+
+'<h3>欄位表（查詢條件）</h3><table><tr><th>F-</th><th>條件</th><th>型別</th><th>比對方式</th><th>預設</th></tr>'+
+'<tr><td>F-03</td><td>帳號</td><td>文字</td><td>包含關鍵字，不分大小寫</td><td>空</td></tr>'+
+'<tr><td>F-03</td><td>姓名</td><td>文字</td><td>包含關鍵字，不分大小寫</td><td>空</td></tr>'+
+'<tr><td>F-03</td><td>匯出時間</td><td>日期區間（起～迄）</td><td>起日 00:00:00 至迄日 23:59:59，含頭尾；可只填一端；區間沒有上限【客戶確認 2026-11-13】</td><td>近 7 天（起=今天往前 6 天、迄=今天）；使用者可手動清空，清空即不限</td></tr></table>'+
+'<h3>業務規則</h3><ul>'+
+'<li>F-01 左側選單「空間分析報告匯出紀錄」入口只有角色為系統管理者者看得到；其他角色即使直接輸入網址也顯示無權限。</li>'+
+'<li>F-05 只記錄「進階匯出成果」（空間分析匯出）產出的 PDF【客戶確認 2026-11-13】；kml、競合分析表格等其他匯出不納入。</li>'+
+'<li>F-05 每次 PDF 匯出寫入一筆紀錄，寫入當下保存帳號、姓名與該份 PDF；之後帳號被刪除或改名都不影響既有紀錄與 PDF。只在成功匯出後才記錄，匯出失敗或沒有取得檔案不留紀錄【技術確認 2026-10-30】。</li>'+
+'<li>F-02 清單預設匯出時間由新到舊；點欄位標題可切換排序；每頁 10 筆（TODO：Q-04）；查詢條件同時成立（AND）。</li>'+
+'<li>F-02 紀錄唯讀，畫面上沒有新增、修改、刪除；匯出紀錄完整保留，不自動清除【客戶確認 2026-11-13】。</li>'+
+'<li>F-04 PDF 只保留近 1 年：匯出時間超過 1 年的紀錄仍顯示，但該筆的 PDF 後台不提供匯出，「匯出檔案」欄改顯示淡色「-」（滑鼠移上提示「PDF 已超過 1 年保存期限，後台不提供匯出」），不是按鈕【客戶確認 2026-11-13】。到期日為匯出日期 1 年後的同月同日，到期日當天仍可匯出，隔天起不提供；逾期 PDF 由系統自動刪除，排程時間點由技術安排，排程執行前也依此規則顯示「-」【客戶確認 2026-11-13】。</li>'+
+'<li>F-03 進入頁面時匯出時間自動帶入近 7 天並依此查詢（預設含今天共 7 天【PM 確認 2026-10-30】）；按「查詢」套用條件並回到第 1 頁；按「清除」將全部條件回復預設（帳號、姓名清空，匯出時間回到近 7 天）並重新查詢；手動清空起訖日期表示不限。</li>'+
+'<li>F-04 按「匯出」取得的 PDF 與該筆當時匯出的檔案內容完全一致；管理者此動作不新增紀錄。</li></ul>'+
+'<h3>例外流程與訊息文案</h3><table><tr><th>情境</th><th>畫面行為／文案</th></tr>'+
+'<tr><td>查詢無符合資料</td><td>表格區顯示「無符合查詢結果」＋「請調整查詢條件後再試。」</td></tr>'+
+'<tr><td>系統尚無任何紀錄</td><td>表格區顯示「無符合查詢結果」＋「請調整查詢條件後再試。」</td></tr>'+
+'<tr><td>起日晚於迄日</td><td>條件列下方紅字「匯出時間的起日不可晚於迄日」，不送出查詢</td></tr>'+
+'<tr><td>非系統管理者</td><td>顯示「🔒 您沒有權限檢視此頁面」＋「空間分析報告匯出紀錄僅限系統管理者使用。」</td></tr>'+
+'<tr><td>PDF 已超過 1 年保存期限</td><td>該筆「匯出檔案」欄顯示「-」，不可點擊；紀錄其他欄位照常顯示</td></tr>'+
+'<tr><td>PDF 因其他原因取不到（非逾期）</td><td>TODO：待定，隨技術確認一併決定</td></tr></table>';
+
+/* ---------- 啟動 ---------- */
+renderRail();renderMain();renderNotes();
+if(qp.get('notes')==='1')document.body.classList.add('notes');
+if(qp.get('spec')==='1')document.body.classList.add('spec');
+</script>
+</body>
+</html>

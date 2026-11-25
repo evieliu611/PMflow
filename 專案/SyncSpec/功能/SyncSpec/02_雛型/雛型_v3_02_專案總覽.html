@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜專案總覽（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.dist{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--bg);margin:10px 0 8px}.dist i{display:block;height:100%}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink2)}.leg span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:5px}
+.rd{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:start;padding:9px 0}.rd+.rd{border-top:1px dashed var(--line)}
+.rd .nn{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}.rd.next .nn{background:var(--brand)}
+</style></head>
+<body data-nav="home" data-crumb="總覽">
+<script>window.NOTES=[
+ {id:'Q-28',text:'規範的維護與審核：依規範類型分配（技術主管、資深 PM），細節還沒定。',who:'主管'},
+ {id:'Q-29',text:'未得標（結案原因）的評選簡報、單位資訊，要不要提取成知識？（雛型已定不做功能卡）',who:'PM'},
+ {id:'Q-30',text:'對話存檔轉成知識後刪除原文：刪除前怎麼確認、機敏資料怎麼去識別？',who:'PM／主管'},
+ {id:'Q-37',text:'訪談輪次（第 N 次訪談）要不要成為正式的物件：記錄日期、勾選的工項、簡報、回填結果？目前示範成簡單清單。',who:'PM'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page"><div id="root"></div>
+<div class="modal-back" id="m-go"><div class="modal">
+  <div class="mh"><div><h2>改為「執行中」</h2><div class="sm muted">已取得專案、拿到契約後，建議順手做這三件事（都可以稍後再做）。</div></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="mb"><div class="col" style="gap:10px">
+    <label class="opt on"><input type="checkbox" checked><div><b>把「未核對」的工項核對生效</b><span>用契約重新拆一次並逐筆核對；和預告版的差異會列成變更影響清單，由你確認。</span></div></label>
+    <label class="opt on"><input type="checkbox" checked><div><b>指派每個工項的負責 PM</b><span>開案前已指派的會保留。</span></div></label>
+    <label class="opt on"><input type="checkbox" checked><div><b>把開案前的雛型與對話整理進專案記憶</b><span>建議書、評選簡報用的雛型保留，不會被覆蓋。</span></div></label></div></div>
+  <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" data-close id="gogo">改為執行中</button></div>
+</div></div>
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>資料來源</th><th>規則</th></tr>
+<tr><td>專案階段與起點</td><td>專案屬性</td><td>階段只有三個：開案前提案／執行中／結案（結案原因：已完成、未得標、其他終止）。階段看商務狀態，不代表規劃深度。新案或延續自某舊專案</td></tr>
+<tr><td>改為執行中</td><td>開案前提案的專案</td><td>按鈕開視窗，提醒三件事：把未核對的工項核對生效、指派負責 PM、把開案前的雛型與對話整理進專案記憶</td></tr>
+<tr><td>工項進度</td><td>各工項的規劃階段</td><td>一條堆疊橫條顯示各階段的工項數（尚未開始、初步構想、功能細節規劃、規劃調整、產出規格、規格調整）；每個工項各自前進，不用一條專案層級的階段線。開案前提案且還沒有正式工項時，顯示未核對的草稿工項數</td></tr>
+<tr><td>訪談循環</td><td>訪談輪次</td><td>列出第 N 次訪談的狀態（準備中、已回填）、日期與勾選的工項；下次訪談可一鍵產出需求訪談簡報。訪談輪次才是專案裡會循環的東西（Q-37）</td></tr>
+<tr><td>提醒卡（v3 調整）</td><td>合約版本、規格定稿工項</td><td>合約有待處理的變更；有可提取成知識的定稿工項。專案層級的「對話存檔」已移除；「系統資料」先不做（11/25），相關卡片一併拿掉</td></tr>
+<tr><td>交付快照（v3）</td><td>專案層級的版本標籤：交付技術團隊時，把各工項「最新定稿（已凍結）版」打成一組並命名；未定稿的工項不納入。快照建立後不隨工項繼續修改而變動；卡片顯示最近一份快照，以及「自快照後有幾個工項改版」。給技術團隊的交付一律指向某一份快照。工項進度列表也顯示各工項的雛型版本（v2 編輯中、v1 已凍結…）</td></tr>
+<tr><td>延續案基準</td><td>延續自的舊專案</td><td>顯示帶入的畫面基準、風格與單位知識；新雛型須與基準一致</td></tr>
+<tr><td>需要你處理</td><td>待定、文件過期、待核對</td><td>每項標示誰處理（PG／PM／問客戶／問主管）並顯示負責 PM；可依「處理者」（角色）「人」（成員）「工項」三個條件篩選，可同時使用，右上顯示符合筆數</td></tr>
+<tr><td>本專案參考的知識（v3 調整）</td><td>自動帶入的知識與勾選的產品</td><td>單位、領域、規範由系統自動帶入；專案只勾選要用的公司產品；「查看與排除」連到專案設定</td></tr></table>
+<ul><li>本頁沿用 v1 的左側導覽，沒有「存檔」與「系統資料」；右上「公司知識庫」取代「公司素材庫」。</li></ul></section></div>
+<script>
+const COL=['#C3CBE0','#9FB2F5','#6C86F0','#3D5BE8','#12B886','#F5A524'];
+function snapHtml(p){const L=V3.snaps(p),sc=V3.sinceSnap(p),last=L[L.length-1];
+ return '<div class="card" style="margin-bottom:18px"><div class="row spread" style="flex-wrap:wrap;gap:8px"><div><h2 style="margin:0">交付快照</h2><div class="sub" style="margin:2px 0 0">交付技術團隊時，把各工項當時的最新定稿版打成一組；之後工項繼續改，不影響已交付的快照。</div></div><button class="btn sm primary" id="snapNew">'+ic('flag')+'建立交付快照</button></div>'+
+ (last?'<div class="row" style="gap:8px;margin:10px 0;flex-wrap:wrap"><span class="chip mint">最近：'+last.date+' '+last.name+'</span>'+(sc.changed.length?'<span class="chip sun">自快照後有 '+sc.changed.length+' 個工項改版（'+sc.changed.map(i=>i.no).join('、')+'）</span>':'<span class="chip">自快照後沒有工項改版</span>')+'</div>':'<div class="sm muted" style="margin:10px 0">還沒有交付快照。</div>')+
+ (L.length?'<div class="col" style="gap:0">'+L.slice().reverse().map(x=>'<div class="row sm" style="padding:6px 0;border-top:1px dashed var(--line);gap:10px"><b>'+x.date+'　'+x.name+'</b><span class="grow"></span><span class="xs muted">'+Object.keys(x.items).map(k=>k+' v'+x.items[k]).join('、')+'</span></div>').join('')+'</div>':'')+'</div>'}
+function snapElig(p,it){const v=V3.verOf(p,it);if(!v.n)return{ver:0,note:'還沒有雛型'};if(v.frozen)return{ver:v.n,note:'v'+v.n+' 已凍結'};if(v.n>1)return{ver:v.n-1,note:'v'+(v.n-1)+' 已凍結（v'+v.n+' 編輯中，不納入）'};return{ver:0,note:'v1 編輯中，尚未定稿'}}
+function bindSnap(p){if(!$('#m-snap'))document.body.insertAdjacentHTML('beforeend','<div class="modal-back" id="m-snap"><div class="modal"><div class="mh"><div><h2>建立交付快照</h2><div class="sm muted">只納入已凍結（定稿）的版本，快照建立後不會跟著變動</div></div><button class="btn ghost sm" data-close>✕</button></div><div class="mb" id="snb"></div><div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="snok">建立快照</button></div></div></div>');
+ const b=$('#snapNew');if(!b)return;
+ b.onclick=()=>{const today=V3.nowStr().slice(0,10),n=V3.snaps(p).length+1;
+  $('#snb').innerHTML='<div class="field"><label>名稱</label><input class="input" id="snn" value="第'+['一','二','三','四','五','六'][Math.min(n-1,5)]+'批交付"></div><div class="xs muted" style="margin-bottom:6px">'+today+'・勾選要納入的工項</div>'+(p.items.length?p.items.map((it,i)=>{const e=snapElig(p,it);return '<label class="row sm" style="margin-bottom:6px;'+(e.ver?'':'opacity:.55')+'"><input type="checkbox" class="check snc" data-i="'+i+'" '+(e.ver?'checked':'disabled')+'> <b>'+it.no+' '+it.name+'</b><span class="grow"></span><span class="chip '+(e.ver?'mint':'sun')+' xs">'+e.note+'</span></label>'}).join(''):'<div class="sm muted">這個專案還沒有工項。</div>');
+  $('#m-snap').classList.add('open')};
+ $('#snok').onclick=()=>{const items={};$$('.snc').forEach(c=>{if(c.checked){const it=p.items[+c.dataset.i];items[it.no]=snapElig(p,it).ver}});if(!Object.keys(items).length){toast('請至少勾一個已定稿的工項');return}
+  const sn={name:$('#snn').value.trim()||'交付快照',date:V3.nowStr().slice(0,10),items};V3.addSnap(p,sn);$('#m-snap').classList.remove('open');$('#snapwrap').innerHTML=snapHtml(p);bindSnap(p);toast('已建立交付快照「'+sn.name+'」，共 '+Object.keys(items).length+' 個工項；給技術團隊的交付請指向這份快照')}}
+function emptyHint(p){const hasWork=p.items.length>0||p.contract.length>0||(V2.drafts[p.id]||[]).length>0;if(hasWork)return '';const files=V3.contractFiles(p),h=DB.href(PAGES.materials),up=h+(h.indexOf('?')>-1?'&':'?')+'up=1';
+ return files.length?'<div class="card" style="margin-bottom:18px"><div class="row spread" style="flex-wrap:wrap;gap:10px"><div><h2 style="margin:0">素材裡有合約檔案</h2><div class="sub" style="margin:2px 0 0">'+files[0].name+'</div></div><a class="btn primary" href="'+DB.href(PAGES.contract2)+'">'+ic('doc')+'用它拆工項</a></div></div>':'<div class="card" style="margin-bottom:18px"><div class="row spread" style="flex-wrap:wrap;gap:10px"><div><h2 style="margin:0">先把合約丟進來</h2><div class="sub" style="margin:2px 0 0">這個專案還沒有素材。上傳合約後，到「工項 › 合約」選它來拆工項。</div></div><a class="btn primary" href="'+up+'">'+ic('upload')+'上傳素材</a></div></div>'}
+window.pageInit=function(){
+ const p=DB.cur(),R=$('#root'),st=V2.stageOf(p),org=V2.originOf(p);
+ const H=(pg,q)=>DB.href(pg)+(q||'');
+ const ch=(V2.changes[p.id]||[]),SY=V3.sys[p.id]||null;
+ const fin=p.items.filter(i=>i.stage>=4).length,rounds=V2.rounds[p.id]||[],drafts=(V2.drafts[p.id]||[]).length;
+ const need=[];p.items.forEach(i=>{i.tbd.forEach(t=>need.push(['<span class="chip coral">待定</span>',i.no+' '+i.name,t[1],WHO(t[2]),i.no+' '+i.name,WHOS(t[2]),DB.pmOf(p,i.no)]));if(i.docs.includes('old'))need.push(['<span class="chip sun">文件過期</span>',i.no+' '+i.name,'圖文對照或簡報落後雛型',WHO('PM'),i.no+' '+i.name,['PM'],DB.pmOf(p,i.no)])});
+ const unc=p.contract.filter(c=>!c[5]).length;if(unc)need.push(['<span class="chip brand">待核對 '+unc+'</span>','合約拆工項',unc+' 筆 AI 信心偏低或未核對',WHO('PM'),'合約拆工項',['PM'],'']);
+ const refs=DB.refOf(p).map(id=>DB.LIB.find(l=>l.id===id)).filter(Boolean);
+ const cnt=DB.STG.map((_,n)=>p.items.filter(i=>i.stage===n).length);
+ const prog=p.items.length?`<div class="dist">${cnt.map((c,n)=>c?`<i style="width:${c/p.items.length*100}%;background:${COL[n]}" title="${DB.STG[n]} ${c}"></i>`:'').join('')}</div><div class="leg">${DB.STG.map((s,n)=>cnt[n]?`<span style="--c:${COL[n]}">${s} ${cnt[n]}</span>`:'').join('')}</div>
+   <div class="col" style="gap:0;margin-top:10px">${p.items.map((i,k)=>`<a class="row" style="color:inherit;padding:7px 0;border-top:1px dashed var(--line)" href="${H(PAGES.work,'&i='+k)}"><span class="st s${i.stage}" style="min-width:104px">${DB.STG[i.stage]}</span><div class="grow sm"><b>${i.no} ${i.name}</b></div><span class="chip xs" title="雛型版本">${V3.verTxt(V3.verOf(p,i))}</span><span class="xs muted">${i.tbd.length?'待確認 '+i.tbd.length:'無待確認'}</span></a>`).join('')}</div>`
+  :(drafts?`<div class="sm" style="margin-top:8px">有 <b>${drafts}</b> 個工項草稿，<b>依預告版・未核對</b>。還沒進入正式規劃，所以這裡先不分階段。</div><div style="margin-top:10px"><a class="btn sm" href="${H(PAGES.contract2)}">看合約與工項</a></div>`:`<div class="sm muted" style="margin-top:8px">還沒有工項。先上傳預告或合約，AI 會快速拆出來。</div>`);
+ const iv=rounds.length?rounds.map((r,i)=>`<div class="rd ${r.state==='準備中'?'next':''}"><span class="nn">${r.n}</span><div><b>第 ${r.n} 次訪談</b> <span class="xs muted">${r.date}</span><div class="xs muted">${r.note}${r.items.length?'（'+r.items.join('、')+'）':''}</div></div><span class="chip ${r.state==='準備中'?'brand':'mint'}">${r.state}</span></div>`).join('')+`<div class="row" style="margin-top:10px;gap:8px"><a class="btn sm primary" href="${H(PAGES.items)}">${ic('doc')}產出需求訪談簡報</a><span class="xs muted">下次訪談：${p.ivDate||'未定'}</span></div>`
+  :`<div class="sm muted" style="margin-top:8px">還沒有訪談紀錄。勾選要訪談的工項後，可一鍵產出需求訪談簡報；訪談後匯入紀錄，AI 回填到各工項。</div><div style="margin-top:10px"><a class="btn sm" href="${H(PAGES.items)}">到工項勾選下次訪談</a></div>`;
+ R.innerHTML=`<div class="page-head"><div><div class="row" style="gap:6px;margin-bottom:6px"><span class="chip ${V2.stageTone[st]}">${V2.labelOf(p)}</span>${org!=='新案'?`<span class="chip violet">${org}</span>`:'<span class="chip">新案</span>'}<span class="chip">${V3.natureOf(p)}</span></div><div class="sm muted">${p.client} · ${p.sub}</div><h1>${p.name}</h1></div><div class="row"><div class="avs">${p.members.map(m=>`<div class="avatar ${m[5]}">${m[4]}</div>`).join('')}</div>${st==='開案前提案'?`<button class="btn sm primary" data-open="m-go">${ic('flag')}已得標，改為執行中</button>`:''}<a class="btn sm" href="${H(PAGES.manage,'#members')}">管理成員</a></div></div>
+ ${st==='結案'?`<div class="banner warn" style="margin-bottom:16px">${ic('lock')}<span class="grow"><b>已結案${V2.reason[p.id]?'（'+V2.reason[p.id]+'）':''}</b>，內容唯讀。可以把有實作過的成果提取成知識；未得標的提案雛型沒有實作過，不做功能卡。</span></div>`:''}
+ ${emptyHint(p)}
+ <div class="grid2" style="margin-bottom:18px;align-items:start"><div class="card"><div class="row spread"><div><h2 style="margin:0">工項進度</h2><div class="sub" style="margin:2px 0 0">每個工項各自前進；${st==='開案前提案'?'階段看商務狀態，不代表規劃深度':'依 AI 對話自動標示'}</div></div><a class="btn sm" href="${H(PAGES.items)}">看全部</a></div>${prog}</div>
+  <div class="card"><div class="row spread"><div><h2 style="margin:0">訪談循環</h2><div class="sub" style="margin:2px 0 0">訪談 → 回填 → 確認，下一輪再來</div></div></div>${iv}</div></div>
+ <div class="grid3" style="margin-bottom:18px">
+  <a class="card" style="color:inherit;display:block" href="${H(PAGES.contract2,'#changes')}"><div class="row spread"><b>合約與變更</b>${ch.length?`<span class="chip coral">${ch.length} 項待確認</span>`:'<span class="chip mint">沒有待處理</span>'}</div><div class="sm muted" style="margin-top:8px">${ch.length?'變更文件 1 已比對完成，AI 列出受影響的工項並建議怎麼調整，確認後才會真的改。':'目前的合約版本沒有待處理的變更。'}</div></a>
+  <a class="card" style="color:inherit;display:block" href="${H(PAGES.library,'#cand')}"><div class="row spread"><b>可提取成知識</b>${fin?`<span class="chip brand">${fin} 個定稿工項</span>`:'<span class="chip">尚無</span>'}</div><div class="sm muted" style="margin-top:8px">${fin?'規格定稿的工項可提取成功能卡候選；單位免事前審核、功能卡升已實作需 PG 確認、領域與產品另有審核人（待確認）。':'工項規格定稿後，可以提取成功能卡。'}</div></a>
+ </div>
+ ${org!=='新案'?`<div class="card" style="margin-bottom:18px"><div class="row spread"><div><h2 style="margin:0">既有系統基準</h2><div class="sub" style="margin:2px 0 0">${org}　新功能必須跟既有系統一致　・基準在專案設定</div></div><div class="row" style="gap:8px"><a class="btn sm" href="${H(PAGES.manage,'#base')}">編輯基準</a><a class="btn sm" href="${H(PAGES.cold)}">補第一批知識</a><a class="btn sm" href="${H(PAGES.proto)}">看完整雛型</a></div></div>
+  <div class="grid3"><div class="card flat"><b class="sm">畫面基準</b><div class="sm muted" style="margin-top:4px">從舊專案帶入 15 張畫面（預設）；可上傳新畫面或貼系統網址抓圖。</div></div><div class="card flat"><b class="sm">風格</b><div class="sm muted" style="margin-top:4px">對齊既有系統並鎖定，之後只追加不重排。</div></div><div class="card flat"><b class="sm">單位知識</b><div class="sm muted" style="margin-top:4px">${p.client}：已有 ${V3.unitKb(V3.unit(p.client))} 條單位知識，自動帶入。</div></div></div></div>`:''}
+ <div id="snapwrap">${snapHtml(p)}</div>
+ <div class="grid2" style="align-items:start;grid-template-columns:1.35fr 1fr"><div class="card"><div class="row spread"><h2>需要你處理</h2><span class="xs muted" id="needN"></span></div><div class="sub">每項標出誰要處理，可依處理者、人、工項篩選</div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:12px"><select class="fsel" id="fWho"><option value="">處理者</option>${['PM','PG','PL','問客戶','問主管'].map(x=>`<option>${x}</option>`).join('')}</select><select class="fsel" id="fPer"><option value="">人</option>${p.members.map(m=>`<option value="${m[0]}">${m[0]}（${m[3]}）</option>`).join('')}</select><select class="fsel" id="fItem"><option value="">工項</option>${[...new Set(need.map(n=>n[4]))].map(x=>`<option>${x}</option>`).join('')}</select><button class="btn ghost sm" id="fClr">清除</button></div>
+  <div class="col" style="gap:10px" id="needBox"></div></div>
+  <div class="card"><div class="row spread"><h2>本專案參考的知識 <span class="chip mint xs">自動帶入</span></h2><a class="sm" href="${H(PAGES.manage,'#knowledge')}">查看與排除</a></div><div class="sub">單位、領域、規範由系統自動帶入；專案只決定要用的公司產品</div><div class="col" style="gap:8px"><div class="row sm"><span class="chip violet">單位</span><b>${p.client}${V3.unit(p.client)?'（'+V3.unitKb(V3.unit(p.client))+' 條）':''}</b></div><div class="row sm"><span class="chip mint">領域</span><b>${V3.aiDomain(p).join('、')||'尚未判斷'}</b><span class="xs muted">AI 判斷</span></div>${V3.prodPick(p).map(n=>`<div class="row sm"><span class="chip sun">產品</span><b>${n}</b></div>`).join('')||'<div class="sm muted">還沒有勾選公司產品。</div>'}</div></div></div>`;
+ bindSnap(p);
+ const g=$('#gogo');if(g)g.onclick=()=>toast('已改為「執行中」，並開始處理三件事（示意）');
+ const drawNeed=()=>{const w=$('#fWho').value,it=$('#fItem').value,pm=$('#fPer').value;['#fWho','#fPer','#fItem'].forEach(k=>$(k).classList.toggle('on',!!$(k).value));
+  const L=need.filter(n=>(!w||n[5].includes(w))&&(!it||n[4]===it)&&(!pm||(()=>{const m=p.members.find(x=>x[0]===pm);return m&&n[5].includes(m[3])&&(m[3]!=='PM'||n[6]===pm)})()));
+  $('#needN').textContent=L.length===need.length?need.length+' 項':L.length+'／'+need.length+' 項';
+  $('#needBox').innerHTML=L.map(n=>`<div class="row card flat" style="padding:12px">${n[0]}<div class="grow"><b>${n[1]}</b><div class="xs muted">${n[2]}${n[6]?' · 負責 PM：'+n[6]:''}</div></div><div class="col" style="gap:4px;align-items:flex-end">${n[3]}</div></div>`).join('')||'<div class="sm muted">'+(need.length?'沒有符合篩選的事項。':'目前沒有待處理事項。')+'</div>'};
+ ['#fWho','#fPer','#fItem'].forEach(k=>$(k).onchange=drawNeed);$('#fClr').onclick=()=>{['#fWho','#fPer','#fItem'].forEach(k=>$(k).value='');drawNeed()};drawNeed();
+};
+</script>
+</body></html>

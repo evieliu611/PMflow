@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜專案設定（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.kr{display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}.kr:first-of-type{border-top:0}
+.kr.off{opacity:.5}.kr.off b{text-decoration:line-through}
+.kl{display:flex;flex-direction:column;gap:2px;padding:6px 0 6px 10px;border-left:3px solid var(--line);margin:4px 0}
+.kl.off{opacity:.5}
+</style></head>
+<body data-nav="manage" data-crumb="專案設定">
+<script>window.NOTES=[
+ {id:'Q-54',text:'案件性質（建置、擴充、維運、規劃評估）與專案起點（新案、延續案）有重疊：要合併成一個欄位（擴充、維運自動視為延續案，再填延續自哪個專案），還是兩個都留？',who:'PM'},
+ {id:'Q-05',text:'成員是否需要「唯讀」等級？目前 PM／PL／PG 同權限，角色標籤只是顯示用。',who:'PM'},
+ {id:'Q-54',text:'案件性質放在系統層（沒拆系統就放專案層），取代原本的新案／延續案；擴充、維運必須有既有系統基準，建置、規劃評估沒有。是否合適？',who:'PM'},
+ {id:'Q-55',text:'系統層是選填：AI 偵測到合約有多個系統才建議拆，PM 可略過；混合公開與內部又不拆時，AI 是否要再提醒一次？',who:'PM'},
+ {id:'Q-48',text:'「自動帶入的知識」可由專案排除：排除後之後的規劃不再參考；是否需留排除原因、誰可以排除？',who:'PM／主管'},
+ {id:'Q-49',text:'領域由 AI 依合約或需求書判斷、PM 確認；領域清單由誰維護、AI 判斷錯誤時怎麼回報？',who:'PM／主管'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page">
+<div class="page-head"><div><h1>設定</h1><p>這個專案的基本資訊、成員、系統與既有系統基準、參考的知識。合約拆工項在左側「合約」。</p></div></div>
+<div id="start"></div>
+<div class="tabs">
+  <button class="tab on" data-g="m" data-tab="settings">基本資訊</button>
+  <button class="tab" data-g="m" data-tab="members">成員 <span class="n" id="nm">0</span></button>
+  <button class="tab" data-g="m" data-tab="base">系統基準</button>
+  <button class="tab" data-g="m" data-tab="knowledge">參考知識</button>
+</div>
+
+<div data-g="m" data-panel="settings" class="on">
+ <div style="max-width:760px">
+  <div class="card">
+   <h2>基本資料</h2><div class="sub">專案名稱、客戶單位與可見範圍</div>
+   <div class="field"><label>專案名稱</label><input class="input" id="sn"></div>
+   <div class="grid2"><div class="field"><label>客戶單位</label><input class="input" id="sc" disabled><div class="xs muted" style="margin-top:4px">單位決定自動帶入哪一份單位知識，建立後不在此更改。</div></div><div class="field"><label>領域 <span class="chip mint xs">AI 判斷</span></label><div class="row wrap" id="sdom" style="gap:6px"></div></div></div>
+   <div class="field"><label>可見範圍</label><div class="opt on"><input type="radio" checked name="v"><div><b>只有專案成員看得到</b><span>合約與客戶資料不會出現在其他人的列表中。</span></div></div></div>
+   <div class="row spread"><button class="btn" id="closeBtn" style="color:var(--coral)">結案專案</button><button class="btn primary" id="sv">儲存設定</button></div>
+  </div>
+ </div>
+</div>
+
+<div data-g="m" data-panel="base">
+ <div style="max-width:900px"><div class="card" id="syscard"></div></div>
+</div>
+
+<div data-g="m" data-panel="knowledge">
+ <div class="grid2" style="grid-template-columns:1fr 1.25fr;align-items:start">
+   <div class="card">
+    <div class="row spread"><h2 style="margin:0">要用的公司產品</h2><span class="chip brand xs">專案只需要決定這一項</span></div>
+    <div class="sub">不是每個專案都會用到公司的產品，所以由專案勾選；AI 依合約建議，PM 確認。</div>
+    <div class="col" id="prods" style="gap:8px"></div>
+   </div>
+   <div class="card">
+    <div class="row spread"><h2 style="margin:0">本專案正在參考的知識</h2><span class="chip mint xs">自動帶入</span></div>
+    <div class="sub">以下由系統自動判斷帶入（規範一定套用，所以不列）。不相關的可以「排除」，之後的 AI 規劃就不再參考；回答時 AI 會標出引用來源。</div>
+    <div id="kn"></div>
+    <div class="hr"></div><div class="sm" style="margin-bottom:6px"><b>自動帶入沒帶到的，可以手動加上</b></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><select class="select" id="mt" style="width:110px"><option>單位</option><option>領域</option><option>功能卡</option></select><select class="select" id="mi" style="flex:1;min-width:200px"></select><button class="btn sm primary" id="madd">加入</button></div>
+    <div class="xs muted" style="margin-top:6px">規範一定會套用，不列在這裡（到公司知識庫「規範」查看）。跨單位引用單位知識時請留意機敏資料。</div>
+    <div class="banner" style="margin-top:12px"><span id="lk"></span><span>自動帶入仍尊重公司知識庫的權限：限部門的知識庫沒有權限就不會被帶入；單位知識以單位為鍵，不會跨單位。功能卡預設只參考「已實作」以上，草稿標示未驗證。</span></div>
+   </div>
+ </div>
+</div>
+
+<div data-g="m" data-panel="members">
+ <div class="banner" style="margin-bottom:12px"><span id="mi"></span><span>專案角色分四種：主 PM、協同 PM、PL、PG；每個專案只有一位主 PM。四種角色的規劃、標註、產出權限相同（是否另分權限待 Q-05），差別在責任：主 PM 負責維護該單位的單位知識。</span></div><div class="banner ok" style="margin-bottom:16px"><span id="mrev"></span></div>
+ <div class="card">
+  <div class="row spread" style="margin-bottom:12px"><h2>專案成員</h2>
+   <div class="row" style="width:380px"><div class="search grow"><span id="ms"></span><input class="input" id="adq" placeholder="輸入姓名或 AD 帳號搜尋並加入"></div></div></div>
+  <div id="adres" class="card flat hide" style="padding:6px;margin-bottom:12px"><div class="row" style="padding:8px 10px"><div class="avatar d">Y</div><div class="grow"><b>Yvonne Chen</b> <span class="muted xs">yvonne.chen@公司網域 · 系統開發部</span></div><button class="btn sm primary" id="addm">加入</button></div></div>
+  <div class="tbl-wrap" style="box-shadow:none"><table class="tbl"><thead><tr><th>成員</th><th>AD 帳號</th><th>部門</th><th>專案角色</th><th></th></tr></thead><tbody id="mb"></tbody></table></div>
+ </div>
+</div>
+
+<div class="modal-back" id="m-close"><div class="modal">
+  <div class="mh"><div><h2 id="ct"></h2><div class="sm muted" id="cs"></div></div></div>
+  <div class="mb" id="cb"></div>
+  <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="cok"></button></div>
+</div></div>
+
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>用途與入口（v3 調整）</td><td>取代 v1 的「專案管理」頁與右上「專案管理」下拉。入口統一在左側導覽最下方的「設定」；合約拆工項改到左側導覽的「合約」。設定分四個分頁：基本資訊（名稱、客戶單位、領域、可見範圍、結案）、成員（含專案角色）、系統基準（系統、使用對象、案件性質、既有系統基準）、參考知識（要用的公司產品、本專案參考的知識與手動加入）。連結用 #settings、#members、#base、#knowledge 直接開到對應分頁</td></tr>
+<tr><td>專案只決定產品</td><td>單位、領域、規範、功能卡都由系統自動判斷帶入，專案不必逐項設定；只有「要用的公司產品」需要勾選（AI 依合約建議，PM 確認）</td></tr>
+<tr><td>領域（AI 判斷）</td><td>領域清單由公司維護，AI 只能從清單選；建立專案時由 AI 依合約或需求書建議，PM 一鍵確認或調整；清單沒有的新領域由知識庫管理者建立（Q-49）</td></tr>
+<tr><td>本專案正在參考的知識</td><td>列出自動帶入的單位知識（必帶）、領域知識、功能卡（只讀已實作以上，AI 依合約條文推薦、規劃時逐個採用或略過）、產品知識（規範一定套用，不列）；每項標來源；可「排除」不相關的條目，排除後可還原；AI 回答時標出引用來源（Q-48）</td></tr>
+<tr><td>權限</td><td>自動帶入仍尊重公司知識庫的權限，沒有權限的不會被帶入、也不能勾選；單位知識以單位為鍵，不會跨單位</td></tr>
+<tr><td>結案</td><td>同 v1／v2：選結案原因（已完成、未得標、其他終止），結案後唯讀，可重新開啟</td></tr>
+<tr><td>專案角色（v3）</td><td>主 PM、協同 PM、PL、PG 四種；每個專案只有一位主 PM（改指定別人時，原主 PM 變協同 PM；不能讓專案沒有主 PM）。該單位專案的主 PM 負責維護單位知識（免事前審核、每月抽查）</td></tr>
+<tr><td>系統與既有系統基準（v3）</td><td>專案下可選填「系統」這一層：多數專案只有一個系統，不用拆，使用對象、案件性質、既有系統基準直接在專案層設定；AI 偵測到合約有多個系統時建議拆，PM 可略過，也可事後補拆或合併回去。每個系統有：使用對象（公開、內部，可複選，決定規範）、案件性質（建置、擴充、維運、規劃評估）、既有系統基準（擴充與維運才需要）。取代原本的新案／延續案、系統型態、技術能力（形態與技術特性由 AI 從功能卡與工項內容辨識，不另外勾選）</td></tr>
+<tr><td>既有系統基準（v3）</td><td>來源可選舊專案、上傳截圖、貼系統網址由 AI 抓圖；可鎖定沿用基準風格；基準畫面可標「本次會改」，新工項從這些畫面複製開始。畫面優先取上線畫面，沒有才用舊專案凍結的雛型。基準只在這裡設定，其他頁只顯示與連結</td></tr>
+<tr><td>領域（v3）</td><td>領域由 AI 判斷、可調整、可複選；專案「分類」已併入領域。領域新增「兵推演練」（偏歷史資料與假設情境，與偏即時資料的防救災與韌性分開）</td></tr>
+<tr><td>手動加入知識（v3）</td><td>自動帶入沒帶到的單位、領域、功能卡，可由專案手動加入；手動加入的標「手動加入」，可移除。規範一定套用，不列在參考清單</td></tr>
+<tr><td>成員</td><td>同 v1：以公司 AD 帳號加入，專案建立者不可被移除</td></tr></table></section>
+</div>
+<script>
+let P,ex={},types=[],extra=[],roles=[],curDoms=null;
+const ROLES=['主 PM','協同 PM','PL','PG'];
+function knowledge(){
+ const u=V3.unit(P.client),kb=u?V3.unitKb(u):0,doms=curDoms||V3.aiDomain(P),
+  dk=V3.domainKb.filter(x=>doms.some(d=>x.d===d||(P.cat.indexOf(x.d)>-1))&&x.state==='已升級'),
+  rules=V2.rules.filter(r=>r.scope==='全公司'||(types.includes('公開系統')&&r.scope==='公開系統')||(types.includes('GIS 圖台')&&r.scope==='GIS 圖台')),
+  cards=V3.funcs.filter(f=>f.status!=='草稿'),draft=V3.funcs.filter(f=>f.status==='草稿').length;
+ const G=[
+  ['單位','violet','自動・必帶',u?[['單位知識主檔：'+u.name+'（'+kb+' 條）','來源：公司知識庫・單位；歷次專案：'+u.projects.join('、')]]:[['此單位還沒有單位知識','可到專案總覽「補第一批知識」']]],
+  ['領域','mint','AI 判斷'+(doms.length?'：'+doms.join('、'):''),(dk.length?dk:[]).map(x=>[x.title,'來源：'+x.src+'（'+x.n+' 個專案）']).concat(dk.length?[]:[['尚無已升級的領域知識','領域知識要出現在 2 個以上專案才會升級']])],
+  ['功能卡','brand','AI 依合約推薦',cards.map(f=>[f.title+'（'+f.status+'）','來源：'+f.src]).concat(draft?[['另有 '+draft+' 張草稿功能卡','預設不參考，標示未驗證']]:[])],
+  ['產品','sun','專案勾選',[['依上方勾選的公司產品','產品知識由產品負責人維護；有不符請回報']]]];
+ extra.forEach(e=>{const g=G.find(x=>x[0]===e[0]);if(g)g[3].push([e[1],e[2],true])});
+ let n=0;
+ return G.map(g=>'<div class="kr"><span class="chip '+g[1]+'">'+g[0]+'</span><div><div class="xs muted" style="margin-bottom:2px">'+g[2]+'</div>'+g[3].map((it,i)=>{const id=g[0]+i,off=ex[id];n++;return '<div class="kl '+(off?'off':'')+'"><div class="row" style="gap:8px"><b class="sm grow">'+it[0]+(it[2]?' <span class="chip sun xs">手動加入</span>':'')+'</b>'+(g[0]==='產品'?'':it[2]?'<button class="btn sm ghost" data-rm="'+it[0]+'">移除</button>':'<button class="btn sm ghost" data-ex="'+id+'">'+(off?'還原':'排除')+'</button>')+'</div><div class="xs muted">'+it[1]+(off?'　・已排除，AI 不再參考':'')+'</div></div>'}).join('')+'</div><span></span></div>').join('')}
+function manOpts(t){const have=new Set(extra.map(e=>e[1])),u=V3.unit(P.client);let L;
+ if(t==='單位')L=V3.units.filter(x=>!u||x.name!==u.name).map(x=>[x.name,'其他單位的知識主檔（'+V3.unitKb(x)+' 條）・歷次專案：'+x.projects.join('、')]);
+ else if(t==='領域')L=V3.domainKb.map(x=>[x.title,'領域「'+x.d+'」・'+x.state]);
+ else L=V3.funcs.map(f=>['功能卡：'+f.title,'功能卡・'+f.status+'・來源：'+f.src]);
+ return L.filter(x=>!have.has(x[0]))}
+function fillMan(){const t=$('#mt').value,L=manOpts(t);$('#mi').innerHTML=L.length?L.map((x,i)=>'<option value="'+i+'">'+x[0]+'</option>').join(''):'<option value="">沒有可加入的</option>'}
+function draw(){$('#kn').innerHTML=knowledge();$$('[data-rm]').forEach(b=>b.onclick=()=>{extra=extra.filter(e=>e[1]!==b.dataset.rm);draw();fillMan();toast('已移除')});$$('[data-ex]').forEach(b=>b.onclick=()=>{const k=b.dataset.ex;ex[k]=!ex[k];draw();toast(ex[k]?'已排除，之後的 AI 規劃不再參考這一條':'已還原')})}
+let S;
+function projOpts(sel){return Object.values(DB.P).filter(x=>x.id!==P.id).map(x=>'<option'+(x.name===sel?' selected':'')+'>'+x.name+'</option>').join('')}
+function baseHtml(u,k){if(u.nat==='建置'||u.nat==='規劃評估')return '<div class="banner" style="margin-top:8px"><span>'+(u.nat==='建置'?'全新建置：沒有既有系統基準。AI 會提供 3 種風格方案，選一種鎖定。':'規劃評估案不一定產出系統，沒有基準。')+'</span></div>';
+ const scr=V3.baseScreens[P.id]||V3.baseScreens.def,b=u.base;
+ return '<div class="card flat" style="padding:12px 14px;background:var(--bg);margin-top:8px"><div class="row spread"><b class="sm">既有系統基準</b><span class="chip xs">'+b.state+'</span></div>'+
+ '<div class="col" style="gap:8px;margin-top:8px"><label class="row sm" style="gap:8px"><span style="white-space:nowrap">舊專案</span><select class="select" data-from="'+k+'" style="flex:1">'+projOpts(b.from)+'</select></label>'+
+ '<div class="row" style="gap:8px"><button class="btn sm" data-up="1">上傳截圖</button><input class="input grow" data-url="'+k+'" value="'+(b.url||'')+'" placeholder="或貼上系統網址，由 AI 抓取畫面"><button class="btn sm" data-fetch="1">抓取</button></div>'+
+ '<label class="row sm"><input type="checkbox" class="check" data-lock="'+k+'" '+(b.lock?'checked':'')+'> 沿用基準風格並鎖定（只追加，不重排）</label></div>'+
+ '<div class="xs muted" style="margin:10px 0 4px">基準畫面：勾「本次會改」的，新工項可以從這裡複製開始</div><div class="row wrap" style="gap:8px">'+scr.map(x=>'<label class="opt '+(b.mod[x]?'on':'')+'" style="padding:6px 10px;margin:0"><input type="checkbox" data-bs="'+k+'|'+x+'" '+(b.mod[x]?'checked':'')+'><div><b class="sm">'+x+'</b><span>'+(b.mod[x]?'本次會改':'僅參考')+'</span></div></label>').join('')+'</div>'+
+ '<div class="xs muted" style="margin-top:6px">畫面優先取自上線畫面，沒有才用舊專案的凍結雛型；開發後常與雛型有出入，以上線為準。</div></div>'}
+function unitHtml(u,k,multi){return '<div class="'+(multi?'card flat':'')+'" style="'+(multi?'padding:12px 14px;margin-top:10px':'')+'">'+(multi?'<div class="row" style="gap:8px;margin-bottom:8px"><input class="input grow" data-name="'+k+'" value="'+u.name+'" placeholder="系統名稱"><button class="btn ghost sm" data-del="'+k+'" title="移除這個系統">'+ic('x')+'</button></div>':'')+
+ '<div class="field" style="margin-bottom:8px"><label>使用對象（可複選，決定套用的規範）</label><div class="row wrap" style="gap:6px">'+V3.audience.map(a=>'<button type="button" class="sbtn '+(u.aud.includes(a)?'on':'')+'" data-aud="'+k+'|'+a+'">'+a+'</button>').join('')+'</div></div>'+
+ '<div class="field" style="margin-bottom:0"><label>案件性質</label><div class="row wrap" style="gap:6px">'+V3.natures.map(n=>'<button type="button" class="sbtn '+(u.nat===n[0]?'on':'')+'" data-nat="'+k+'|'+n[0]+'" title="'+n[1]+'">'+n[0]+'</button>').join('')+'</div><div class="xs muted" style="margin-top:4px">'+V3.natures.find(n=>n[0]===u.nat)[1]+'</div></div>'+baseHtml(u,k)+'</div>'}
+function renderSys(){const box=$('#syscard'),ai=V3.sysAI[P.id];
+ box.innerHTML='<div class="row spread" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">系統與既有系統基準</h2>'+(S.split?'<button class="btn sm" id="mg">合併回單一系統</button>':'<button class="btn sm" id="sp">拆成多個系統</button>')+'</div>'+
+ '<div class="sub">'+(S.split?'每個系統各自設定使用對象、案件性質與既有系統基準；工項會多一個「所屬系統」。':'大多數專案只有一個系統，不用拆；這裡直接設定。有多個系統才需要拆。')+'</div>'+
+ (!S.split&&ai&&!S.aiDismissed?'<div class="banner warn" style="margin-bottom:10px"><span class="grow">'+ic('spark')+' AI 偵測到合約有 '+ai.length+' 個系統（'+ai.map(x=>x[0]).join('、')+'），建議拆開設定。</span><button class="btn sm primary" id="aiok">接受建議</button><button class="btn sm ghost" id="aino">略過</button></div>':'')+
+ (S.split?S.list.map((u,i)=>unitHtml(u,i,true)).join('')+'<button class="btn sm" id="add" style="margin-top:10px">＋ 新增系統</button>':unitHtml(S.main,'m',false));
+ bindSys()}
+function save(){V3.setSys(P,S);types=S.split&&S.list.length?[...new Set([].concat(...S.list.map(x=>x.aud)))]:S.main.aud.slice();draw()}
+function U(k){return k==='m'?S.main:S.list[+k]}
+function bindSys(){const g=(a,b)=>{const e=$(a);if(e)e.onclick=b};
+ g('#sp',()=>{S.split=true;if(!S.list.length)S.list=[V3.mkUnit(P,'系統 1',S.main.aud,S.main.nat),V3.mkUnit(P,'系統 2',S.main.aud,'建置')];save();renderSys();toast('已拆成多個系統，工項可以指定所屬系統')});
+ g('#mg',()=>{S.split=false;save();renderSys();toast('已合併回單一系統（各系統的設定仍保留）')});
+ g('#aiok',()=>{S.split=true;S.list=V3.sysAI[P.id].map(x=>V3.mkUnit(P,x[0],[x[1]],x[2]));save();renderSys();toast('已依 AI 建議拆成 '+S.list.length+' 個系統：「建置」的系統沒有基準，「擴充」的要設定基準')});
+ g('#aino',()=>{S.aiDismissed=true;save();renderSys()});
+ g('#add',()=>{S.list.push(V3.mkUnit(P,'系統 '+(S.list.length+1),['內部系統'],'建置'));save();renderSys()});
+ $$('[data-del]').forEach(b=>b.onclick=()=>{if(S.list.length<=1){toast('至少保留一個系統；要回到單一系統請按「合併回單一系統」');return}S.list.splice(+b.dataset.del,1);save();renderSys()});
+ $$('[data-name]').forEach(i=>i.onchange=()=>{U(i.dataset.name).name=i.value.trim()||U(i.dataset.name).name;save()});
+ $$('[data-aud]').forEach(b=>b.onclick=()=>{const [k,a]=b.dataset.aud.split('|'),u=U(k);u.aud=u.aud.includes(a)?(u.aud.length>1?u.aud.filter(x=>x!==a):u.aud):u.aud.concat(a);save();renderSys()});
+ $$('[data-nat]').forEach(b=>b.onclick=()=>{const [k,n]=b.dataset.nat.split('|'),u=U(k);u.nat=n;if((n==='擴充'||n==='維運')&&!u.base.from)u.base.from=V3.fromOf(P);save();renderSys();toast('案件性質改為「'+n+'」'+((n==='擴充'||n==='維運')?'：請設定既有系統基準':'：沒有既有系統基準'))});
+ $$('[data-from]').forEach(s=>s.onchange=()=>{U(s.dataset.from).base.from=s.value;save();toast('基準來源改為「'+s.value+'」')});
+ $$('[data-lock]').forEach(c=>c.onchange=()=>{U(c.dataset.lock).base.lock=c.checked;save()});
+ $$('[data-url]').forEach(i=>i.onchange=()=>{U(i.dataset.url).base.url=i.value;save()});
+ $$('[data-bs]').forEach(c=>c.onchange=()=>{const [k,x]=c.dataset.bs.split('|');U(k).base.mod[x]=c.checked;save();renderSys()});
+ $$('[data-up]').forEach(b=>b.onclick=()=>toast('開啟檔案選擇視窗（示意）：上傳的截圖會成為基準畫面'));
+ $$('[data-fetch]').forEach(b=>b.onclick=()=>toast('AI 正在抓取系統網址的畫面（示意）'))}
+window.pageInit=function(){
+ P=DB.cur();if(location.hash==='#contract'){location.replace(DB.href(PAGES.contract2));return}
+ $('#lk').innerHTML=ic('lock');$('#nm').textContent=P.members.length;$('#mi').innerHTML=ic('users');$('#ms').innerHTML=ic('search');
+ roles=P.members.map(m=>m[3]==='PM'?(m[6]?'主 PM':'協同 PM'):m[3]);if(!roles.includes('主 PM')){const k=roles.findIndex(r=>r==='協同 PM');if(k>-1)roles[k]='主 PM'}
+ const drawM=()=>{const mp=P.members[roles.indexOf('主 PM')];$('#mb').innerHTML=P.members.map((m,i)=>`<tr><td><div class="row"><div class="avatar ${m[5]}">${m[4]}</div><b>${m[0]}</b> ${m[6]?'<span class="chip brand xs">專案建立者</span>':''}</div></td><td class="mono sm">${m[1]}</td><td>${m[2]}</td><td><select class="fsel on" data-role="${i}">${ROLES.map(r=>'<option'+(roles[i]===r?' selected':'')+'>'+r+'</option>').join('')}</select></td><td>${m[6]?'':'<button class="btn ghost sm">'+ic('x')+'</button>'}</td></tr>`).join('');
+  $('#mrev').innerHTML=mp?'本專案的主 PM 是 <b>'+mp[0]+'</b>：負責維護 <b>'+P.client+'</b> 的單位知識（免事前審核，可隨時修改，每月抽查）。':'請指定一位主 PM。';
+  $$('[data-role]').forEach(s=>s.onchange=()=>{const i=+s.dataset.role,v=s.value;if(v==='主 PM'){const o=roles.indexOf('主 PM');if(o>-1&&o!==i)roles[o]='協同 PM'}else if(roles[i]==='主 PM'){toast('專案要有一位主 PM，請改指定另一位為主 PM');drawM();return}roles[i]=v;drawM();toast(P.members[i][0]+' 的角色改為「'+v+'」')})};drawM();
+ $('#adq').oninput=e=>$('#adres').classList.toggle('hide',e.target.value.length<1);
+ $('#addm').onclick=()=>{$('#adres').classList.add('hide');$('#adq').value='';toast('已加入 Yvonne Chen（權限同其他成員）')};
+ $('#sn').value=P.name;$('#sc').value=P.client;const sd0=V3.aiDomain(P);$('#sdom').innerHTML=V3.domains.filter(d=>d!=='未分類').map(d=>'<button type="button" class="sbtn'+(sd0.includes(d)?' on':'')+'" data-d="'+d+'">'+d+'</button>').join('');
+ $$('#sdom .sbtn').forEach(b=>b.onclick=()=>{const d=b.dataset.d;curDoms=(curDoms||V3.aiDomain(P)).slice();const i=curDoms.indexOf(d);if(i>-1)curDoms.splice(i,1);else curDoms.push(d);b.classList.toggle('on',curDoms.includes(d));draw();toast('領域已調整，參考的領域知識跟著更新')});
+ const pick=V3.prodPick(P);
+ $('#prods').innerHTML=V3.products.map(p=>`<label class="opt ${pick.includes(p.name)?'on':''}"><input type="checkbox" data-pn="${p.name}" ${pick.includes(p.name)?'checked':''}><div><b>${p.name} <span class="chip sun xs">示意</span></b><span>${p.desc}${pick.includes(p.name)?'　<b style="color:var(--brand)">AI 依合約建議</b>':''}</span></div></label>`).join('');
+ $$('#prods input').forEach(c=>c.onchange=()=>{c.closest('.opt').classList.toggle('on',c.checked);V3.setProdPick(P,$$('#prods input').filter(x=>x.checked).map(x=>x.dataset.pn));toast('已更新要用的公司產品')});
+ $('#mt').onchange=fillMan;fillMan();$('#madd').onclick=()=>{const t=$('#mt').value,L=manOpts(t),x=L[+$('#mi').value];if(!x){toast('沒有可加入的項目');return}extra.push([t,x[0],x[1]]);draw();fillMan();toast('已手動加入「'+x[0]+'」，AI 之後會參考')};
+ S=V3.getSys(P);types=S.split&&S.list.length?[...new Set([].concat(...S.list.map(x=>x.aud)))]:S.main.aud.slice();renderSys();draw();
+ const cl0=DB.isClosed(P);$('#closeBtn').textContent=cl0?'重新開啟專案':'結案專案';$('#closeBtn').style.color=cl0?'var(--brand)':'var(--coral)';
+ $('#closeBtn').onclick=()=>{const c=DB.isClosed(P);$('#ct').textContent=c?'重新開啟專案':'結案專案';$('#cs').textContent=P.client+' · '+P.name;$('#cok').textContent=c?'重新開啟':'確認結案';
+  $('#cb').innerHTML=c?`<div class="banner">${ic('lock')}<span>目前已結案（${c}），內容唯讀。重新開啟後成員可繼續編輯。</span></div>`:`<div class="field" style="margin-bottom:12px"><label>結案原因</label><select class="select"><option>已完成</option><option>未得標</option><option>其他終止</option></select></div><div class="banner warn" style="margin-bottom:12px">${ic('alert')}<span>結案後，本專案預設不再顯示在專案列表，內容改為唯讀；之後可用列表的「狀態」篩選找回，也可重新開啟。</span></div><label class="row" style="margin-bottom:8px"><input type="checkbox" class="check" checked> 把本專案的成果提取進公司知識庫（結案兜底）<span class="chip xs">建議</span></label><div class="xs muted" style="margin:-2px 0 10px 26px">AI 會把還沒提取的候選彙整到「待提取」，依類型分級審核；未得標的專案不做功能卡。</div>`;
+  $('#m-close').classList.add('open')};
+ $('#cok').onclick=()=>{const was=DB.isClosed(P);DB.setClosed(P,!was);$('#m-close').classList.remove('open');toast(was?'已重新開啟':'已結案，將回到專案列表');setTimeout(()=>{location.href=was?location.href:PAGES.projects},900)};
+ $('#sv').onclick=()=>{V3.markSetup(P);toast('專案設定已儲存')};
+};
+</script>
+<script>
+/* 新專案起點：合約拖進來 → AI 預填 → 拆工項（示意資料）；既有專案不顯示 */
+(function(){const _p=window.pageInit;
+ function drawStart(){const box=document.getElementById('start');if(!box)return;if(!P.isNew){box.innerHTML='';return}
+  const files=V3.contractFiles(P),n=P.contract.length;
+  if(!files.length){
+   box.innerHTML='<div class="card" id="dz" style="max-width:760px;margin-bottom:16px;border:2px dashed var(--brand);background:var(--brand-bg);text-align:center;padding:26px 20px;cursor:pointer"><div style="color:var(--brand)">'+ic('upload')+'</div><h2 style="margin:8px 0 4px">把合約拖到這裡，或點一下選檔</h2><div class="sm muted" style="max-width:480px;margin:0 auto">AI 會讀合約，預填下面的領域、使用對象、案件性質，接著幫你拆工項。沒有合約也可以先填下面的基本資料，之後到「素材」上傳。</div><input type="file" id="dzf" style="display:none"></div>';
+   const dz=document.getElementById('dz'),f=document.getElementById('dzf');
+   dz.onclick=()=>f.click();f.onchange=()=>{if(f.files[0])got(f.files[0].name)};
+   dz.ondragover=e=>{e.preventDefault();dz.style.background='#fff'};dz.ondragleave=()=>{dz.style.background='var(--brand-bg)'};
+   dz.ondrop=e=>{e.preventDefault();const x=e.dataTransfer.files[0];if(x)got(x.name)};return}
+  const nm=files[0].name,done=n>0;
+  box.innerHTML='<div class="card" style="max-width:760px;margin-bottom:16px;border:1px solid var(--brand)"><div class="row spread" style="flex-wrap:wrap;gap:8px"><div><span class="ai-badge">'+ic('spark')+'AI 已讀完合約</span> <b class="sm" style="word-break:break-all">'+nm+'</b></div><span class="chip mint xs">'+(done?'已拆出 '+n+' 項':'已預填下方欄位')+'</span></div>'+
+   '<div class="sm" style="margin-top8px;margin-top:8px">預填了：領域「'+(V3.aiDomain(P).join('、')||'未判斷')+'」、使用對象「'+V3.getSys(P).main.aud.join('、')+'」、案件性質「'+V3.getSys(P).main.nat+'」（示意判斷，請確認下方欄位，不對就直接改）。</div>'+
+   '<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">'+(done?'<a class="btn primary" href="'+DB.href(PAGES.items)+'">看工項清單（'+P.items.length+' 項功能開發）</a><span class="xs muted">合約變更時到「工項 › 合約」更新。</span>':'<button class="btn primary" id="gosplit">'+ic('spark')+'請 AI 拆工項</button><span class="xs muted">拆完會直接帶你到工項清單；也可以先確認下方欄位。</span>')+'</div></div>';
+  const g=document.getElementById('gosplit');if(g)g.onclick=()=>{V3.splitItems(P,nm,'契約');toast('AI 已依條文拆出 '+P.contract.length+' 項工項（示意）');setTimeout(()=>{location.href=DB.href(PAGES.items)},700)}}
+ function got(name){const c=V3.matClassify(name);V3.addMaterial(P,{name,ext:c.ext,cat:'合約與需求書',conf:Math.max(c.conf,90),sens:true,meta:'剛上傳・EvieLiu'});
+  const r=V3.prefill(P,name);curDoms=r.doms.slice();$$('#sdom .sbtn').forEach(b=>b.classList.toggle('on',curDoms.includes(b.dataset.d)));S=V3.getSys(P);renderSys();draw();drawStart();toast('AI 已讀完「'+name+'」並預填欄位')}
+ window.pageInit=function(){_p();V3.markSetup(P);
+  if(P.isNew){const sn=$('#sn'),sc=$('#sc');sc.disabled=false;sc.placeholder='客戶單位';sn.onchange=()=>{P.name=sn.value.trim()||P.name;V3.saveNew()};sc.onchange=()=>{P.client=sc.value.trim()||P.client;V3.saveNew()}}
+  drawStart()}})();
+</script>
+</body></html>

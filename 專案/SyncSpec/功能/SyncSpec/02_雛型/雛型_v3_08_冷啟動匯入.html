@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜補第一批知識（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.stp{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.stp .s{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink2)}.stp i{width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700}.stp .s.off i{background:#C3CBE0}.stp .s.on{font-weight:700;color:var(--ink)}
+.ci{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.ci:first-of-type{border-top:0}
+.qa{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--line)}.qa:first-of-type{border-top:0}
+</style></head>
+<body data-nav="home" data-crumb="補第一批知識">
+<script>window.NOTES=[
+ {id:'Q-42',text:'冷啟動匯入的範圍：只做「本次擴充功能周邊」（建議），還是整個既有系統？',who:'PM'},
+ {id:'Q-43',text:'舊專案不在系統內時，哪些舊文件算必備（需求文件、規格、成果報告書、操作手冊）？由誰提供？',who:'PM／Shirley'},
+ {id:'Q-38',text:'各類知識的審核人是誰？目前只有建議，需跟團隊確認。',who:'主管'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page"><div id="root"></div>
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>用途</td><td>延續案的第一批知識：新專案的單位知識是空的，或延續案要接續既有系統時使用。不求完整，只做「本次要擴充的功能周邊」</td></tr>
+<tr><td>來源</td><td>優先用舊專案的專案記憶（確認事項、決議、AI 整理說明、規格與驗收）；舊專案不在系統內（過去用 gdoc、md 做的）時，匯入舊需求文件、規格、成果報告書、操作手冊；加上既有系統畫面（舊專案雛型、上傳截圖、系統網址抓圖）</td></tr>
+<tr><td>AI 解析結果</td><td>三組候選：單位知識初版、既有功能清單（標「關聯功能」避免 PG 重做已有的功能）、功能卡（只收有實作過的）；每筆有信心與來源，PM 勾選要收的</td></tr>
+<tr><td>歷史淵源補問</td><td>AI 補問約 5～8 題（為什麼有這功能、改過什麼、已知限制、承辦偏好、不接受的修改、曾被退件的設計），可稍後再答</td></tr>
+<tr><td>送審</td><td>確認後進公司知識庫「待提取」，依類型由不同的人審核（各類型審核人待確認）；PM 約花 30～60 分鐘確認，PG 補既有系統的功能關聯</td></tr></table></section></div>
+<script>
+let P,step=1,src=V3.cold.sources.map(s=>s[2]),scope=true,sel={};
+function draw(){
+ P=DB.cur();const org=V2.originOf(P),C=V3.cold,done=step>=2;
+ const U=V3.unit(P.client);
+ $('#root').innerHTML=`<div class="page-head"><div><div class="sm muted">${P.client} · ${P.name}（${org}）</div><h1>補第一批知識</h1><p>延續案或新單位的第一批知識。不求完整，先做這次要擴充的功能周邊，其餘之後再補。</p></div><a class="btn sm" href="${DB.href(PAGES.home)}">回專案總覽</a></div>
+ <div class="stp"><span class="s ${step===1?'on':''}"><i>1</i>選來源</span><span class="s ${step===2?'on':'off'}"><i>2</i>確認 AI 解析結果</span><span class="s ${step===3?'on':'off'}"><i>3</i>補問歷史淵源</span><span class="s ${step===4?'on':'off'}"><i>4</i>送審核</span></div>
+ ${step===1?s1(C):step===2?s2(C):step===3?s3(C):s4()}`;
+ bind(C)}
+function s1(C){const U=V3.unit(P.client);return `<div class="card"><h2>要用哪些來源？</h2><div class="sub">優先用舊專案已在系統內的記憶；舊專案不在系統內時，才需要上傳舊文件</div>
+ ${C.sources.map((s,i)=>`<label class="opt ${src[i]?'on':''}" style="margin-bottom:8px"><input type="checkbox" data-s="${i}" ${src[i]?'checked':''}><div><b>${s[0]}</b><span>${s[1]}</span></div></label>`).join('')}
+ <div class="row" style="gap:8px;margin:6px 0 10px"><button class="btn sm" type="button">${ic('upload')}選擇舊文件</button><span class="xs muted">需求文件、規格、成果報告書、操作手冊；Word、PDF、odt 都可以</span></div>
+ <label class="row sm"><input type="checkbox" class="check" id="scope" ${scope?'checked':''}> 只做「本次要擴充的功能周邊」（建議）</label>
+ <div class="hr"></div><div class="row spread"><span class="xs muted">${P.client}目前有 ${V3.unitKb(U)} 條單位知識</span><button class="btn primary" id="go">${ic('spark')}開始解析</button></div></div>`}
+function chk(k,i,c){const id=k+i;if(sel[id]===undefined)sel[id]=c;return sel[id]}
+function s2(C){const rows=(k,arr,fn)=>arr.map((x,i)=>{const on=chk(k,i,scope&&x[3]==='範圍外'?false:true);return `<label class="ci"><input type="checkbox" data-c="${k}${i}" ${on?'checked':''}><div class="grow">${fn(x)}</div></label>`}).join('');
+ return `<div class="banner" style="margin-bottom:12px">${ic('spark')}<span>AI 解析完成。勾選要收的，確認後會送進公司知識庫「待提取」審核；信心偏低的建議你先看過原文。</span></div>
+ <div class="card" style="margin-bottom:12px"><div class="row spread"><h2>單位知識初版</h2><span class="chip violet xs">單位</span></div>${rows('u',C.unit,x=>`<b>${x[0]}</b><div class="sm muted">${x[1]}</div><span class="chip ${x[2]>=85?'mint':'sun'} xs">信心 ${x[2]}%</span>`)}</div>
+ <div class="card" style="margin-bottom:12px"><div class="row spread"><h2>既有系統功能清單</h2><span class="chip xs">避免 PG 重做已有的功能</span></div>${rows('f',C.funcs,x=>`<b>${x[0]}</b> <span class="chip ${x[3]==='範圍外'?'':'brand'} xs">${x[3]}</span><div class="sm muted">${x[1]}</div><span class="chip ${x[2]>=85?'mint':'sun'} xs">信心 ${x[2]}%</span>`)}</div>
+ <div class="card" style="margin-bottom:12px"><div class="row spread"><h2>功能卡</h2><span class="chip brand xs">功能</span></div><div class="xs muted" style="margin-bottom:6px">只收有實作過的功能。</div>${rows('k',C.cards,x=>`<b>${x[0]}</b> <span class="chip brand xs">${x[3]}</span><div class="sm muted">${x[1]}</div><span class="chip mint xs">信心 ${x[2]}%</span>`)}</div>
+ <div class="row" style="gap:8px"><button class="btn" id="back">上一步</button><button class="btn primary" id="go">下一步：補問歷史淵源</button></div>`}
+function s3(C){return `<div class="card"><h2>歷史淵源補問</h2><div class="sub">AI 補問 ${C.asks.length} 題，可以只答你知道的，其餘稍後再補</div>${C.asks.map((q,i)=>`<div class="qa"><b class="sm">${i+1}. ${q}</b><textarea class="input" rows="2" placeholder="直接輸入，或留白稍後再答"></textarea></div>`).join('')}<div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="back">上一步</button><button class="btn" id="later">稍後再答，先送審</button><button class="btn primary" id="go">送審核</button></div></div>`}
+function s4(){const n=Object.keys(sel).filter(k=>sel[k]).length;return `<div class="card"><div class="empty"><div class="art">${ic('check')}</div><h2 style="color:var(--ink)">已送進「待提取」</h2><div class="sm" style="max-width:480px;margin:6px auto 14px">共 ${n} 筆候選。單位知識、功能知識由不同的人審核（各類型審核人待跟團隊確認）；核准後會自動帶入這個專案。</div><div class="row" style="justify-content:center;gap:8px"><a class="btn" href="${DB.href(PAGES.library)}#cand">看待提取</a><a class="btn primary" href="${DB.href(PAGES.home)}">回專案總覽</a></div></div></div>`}
+function bind(C){
+ $$('input[data-s]').forEach(c=>c.onchange=()=>{src[+c.dataset.s]=c.checked;c.closest('.opt').classList.toggle('on',c.checked)});
+ const sc=$('#scope');if(sc)sc.onchange=()=>{scope=sc.checked;sel={}};
+ $$('input[data-c]').forEach(c=>c.onchange=()=>{sel[c.dataset.c]=c.checked});
+ const g=$('#go');if(g)g.onclick=()=>{if(step===1&&!src.some(Boolean)){toast('請至少選一個來源');return}if(step===1)sel={};step++;draw();window.scrollTo(0,0)};
+ const b=$('#back');if(b)b.onclick=()=>{step--;draw()};
+ const l=$('#later');if(l)l.onclick=()=>{step=4;draw()}}
+window.pageInit=function(){draw()};
+</script>
+</body></html>

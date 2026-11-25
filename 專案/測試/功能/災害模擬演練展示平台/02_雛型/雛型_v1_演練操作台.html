@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>演練操作台｜災害模擬演練展示平台</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+/* 本畫面專屬（少量，通用樣式仍在 _shared.css） */
+.mapsvg.d3{transform:perspective(900px) rotateX(52deg) scale(1.04);transform-origin:center 70%;transition:.4s}
+.mapwrap.basemap-ortho .land{fill:#c9cbb6}
+.mapwrap.basemap-ortho .water{fill:#7fa9b8}
+.mapwrap.basemap-admin .land{fill:#eef1f4}
+.hidelayer{display:none}
+body.view-student .panel.right{display:none}
+body.view-student .editonly{display:none!important}
+body.view-student .studentwatch{display:inline-flex!important}
+.studentwatch{display:none;background:#e5f5ec;color:#1c6b4a}
+</style>
+</head>
+<body>
+<div class="spec-hint">📋 規格檢視模式（?spec=1）— 給 PL／PG／設計。移除 ?spec=1 回到乾淨畫面。</div>
+
+<!-- ================= 頂列 ================= -->
+<div class="topbar">
+  <span class="logo"><span class="dot">⛑</span> 智慧災害模擬演練平台</span>
+  <span class="proj" style="color:#fff;margin-left:6px">115年 北北基豪雨淹水應變演練
+    <span class="badge live" style="background:rgba(255,255,255,.16);color:#c9f0d8">演練中</span>
+    <span class="studentwatch badge">👁 學員檢視中</span>
+  </span>
+  <span class="spacer"></span>
+  <!-- SPEC: 2D/3D 切換 F-03 型別:切換 預設:2D 來源:地圖核心(Mapbox) -->
+  <div class="map-tools" style="position:static;box-shadow:none">
+    <div class="grp">
+      <button id="d2" class="on" onclick="setDim('2d')">2D</button>
+      <button id="d3" onclick="setDim('3d')">3D</button>
+    </div>
+  </div>
+  <span class="who">👤 王教官（教官）</span>
+</div>
+
+<!-- ================= 操作台三欄 ================= -->
+<div class="console">
+
+  <!-- ---------- 左：圖層面板 F-04 ---------- -->
+  <!-- F-04 圖層套疊面板【明確】＋PM / F-05 外部圖層 CSV/KML/SHP【明確】 -->
+  <div class="panel left">
+    <div class="phead">🗂 圖層 <span class="pill">套疊</span></div>
+    <div class="pbody">
+
+      <!-- EMIC 災情：唯一綁時間軸 F-06 -->
+      <div class="layer-group">
+        <div class="lg-head">🚨 EMIC 災情 <span class="tag time">⏱ 綁時間軸</span></div>
+        <!-- SPEC: EMIC災情圖層 F-06 型別:圖層(時間序列) 來源:消防署EMIC介接 行為:隨時間軸重播出現/消失 -->
+        <label class="layer-item"><input type="checkbox" checked data-layer="emic"><span class="name">淹水通報</span><span class="src">EMIC</span><span class="swatch" style="background:#1f6feb"></span></label>
+        <label class="layer-item"><input type="checkbox" checked data-layer="emic"><span class="name">道路中斷</span><span class="src">EMIC</span><span class="swatch" style="background:#d64545"></span></label>
+        <label class="layer-item"><input type="checkbox" checked data-layer="emic"><span class="name">民眾受困</span><span class="src">EMIC</span><span class="swatch" style="background:#e0a100"></span></label>
+      </div>
+
+      <!-- 外部上架圖層 F-05 -->
+      <div class="layer-group">
+        <div class="lg-head">📎 外部上架圖層</div>
+        <!-- SPEC: 外部圖層套疊 F-05 型別:圖層 來源:使用者上架(CSV/KML/SHP) 行為:靜態套疊,無時間維度,可調透明度 -->
+        <label class="layer-item"><input type="checkbox" checked data-layer="shelter"><span class="name">疏散避難處所</span><span class="src">CSV</span><input type="range" value="90"></label>
+        <label class="layer-item"><input type="checkbox" data-layer="rivergauge"><span class="name">河川水位站</span><span class="src">KML</span><input type="range" value="80"></label>
+        <label class="layer-item"><input type="checkbox" data-layer="liborder"><span class="name">里界範圍</span><span class="src">SHP</span><input type="range" value="60"></label>
+      </div>
+
+      <!-- 公開資料介接 F-07 -->
+      <div class="layer-group">
+        <div class="lg-head">🌐 公開資料介接</div>
+        <!-- SPEC: TERIA地震 F-07 型別:圖層 來源:NCDR TERIA介接 行為:靜態套疊,無時間維度 -->
+        <label class="layer-item"><input type="checkbox" data-layer="teria"><span class="name">TERIA 地震事件</span><span class="src">TERIA</span><span class="swatch" style="background:#8e44ad"></span></label>
+      </div>
+
+      <!-- 分析圖層 F-08 -->
+      <div class="layer-group">
+        <div class="lg-head">📊 分析圖層</div>
+        <!-- SPEC: 人口密度 F-08 型別:圖層(網格) 來源:人口密度分析工具 行為:靜態套疊,可調透明度 -->
+        <label class="layer-item"><input type="checkbox" data-layer="popdensity"><span class="name">人口密度網格</span><span class="src">分析</span><input type="range" value="55"></label>
+      </div>
+
+      <!-- 現場繪記圖層 F-09 -->
+      <div class="layer-group editonly">
+        <div class="lg-head">✏️ 現場標記 <span class="tag">繪圖</span></div>
+        <label class="layer-item"><input type="checkbox" checked data-layer="draw"><span class="name">教官現場標記</span><span class="src">繪圖</span><span class="swatch" style="background:#0f8a7e"></span></label>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ---------- 中：地圖 ---------- -->
+  <div class="mapwrap" id="mapwrap">
+    <!-- 篩選定位 F-11 -->
+    <!-- SPEC: 篩選定位 F-11 型別:定位 方式:行政區/地址/座標(≥3種) 來源:使用者輸入 行為:定位並縮放到目標 -->
+    <div class="map-search editonly">
+      <select><option>行政區</option><option>地址</option><option>座標</option></select>
+      <input placeholder="新北市板橋區" style="width:130px">
+      <button class="btn sm primary">定位</button>
+    </div>
+
+    <!-- 圖台工具（底圖切換） -->
+    <div class="map-tools" style="top:auto;bottom:14px">
+      <div class="grp">
+        <!-- SPEC: 底圖切換 F-03 型別:切換 選項:通用電子地圖/正射影像/行政區 預設:通用電子地圖 -->
+        <button class="on" onclick="setBase('map',this)">通用電子地圖</button>
+        <button onclick="setBase('ortho',this)">正射影像</button>
+        <button onclick="setBase('admin',this)">行政區</button>
+      </div>
+    </div>
+
+    <div class="map-scale">1:50,000 <span class="bar"></span></div>
+
+    <!-- ============ 示意地圖（向量，離線；正式系統用 Mapbox 核心） ============ -->
+    <svg class="mapsvg" id="mapsvg" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid slice">
+      <!-- 陸地底 -->
+      <rect class="land" width="1000" height="640" fill="#e4eae0"/>
+      <!-- 海 / 河 -->
+      <path class="water" d="M0 0 H1000 V70 Q820 120 660 90 Q520 66 430 130 L430 0 Z" fill="#bcd7e2"/>
+      <path class="water" d="M430 130 Q520 66 660 90 Q720 250 640 430 Q600 560 660 640 L560 640 Q520 470 540 340 Q470 220 430 130 Z" fill="#bcd7e2"/>
+      <path class="water" d="M160 640 Q210 470 300 420 Q360 388 360 300 L410 300 Q410 400 340 450 Q250 500 240 640 Z" fill="#bcd7e2" opacity=".9"/>
+      <!-- 主要道路 -->
+      <g stroke="#cdd6cf" stroke-width="9" fill="none" opacity=".9">
+        <path d="M60 560 L280 470 L520 470 L760 380 L980 360"/>
+        <path d="M120 120 L200 300 L300 470 L360 640"/>
+        <path d="M700 120 L680 300 L720 470 L760 640"/>
+        <path d="M280 470 L500 300 L740 300"/>
+      </g>
+      <g stroke="#dbe2db" stroke-width="4" fill="none">
+        <path d="M200 300 L500 300 L680 300"/>
+        <path d="M300 470 L520 470"/>
+        <path d="M60 400 L980 470"/>
+      </g>
+      <!-- 行政界（虛線） -->
+      <g stroke="#a9b7a4" stroke-width="1.6" stroke-dasharray="7 6" fill="none" opacity=".8">
+        <path d="M380 160 L360 640"/><path d="M560 160 L620 640"/><path d="M120 380 L980 400"/>
+      </g>
+      <!-- 地名 -->
+      <g class="mk-label">
+        <text x="250" y="380">新莊區</text>
+        <text x="470" y="380">板橋區</text>
+        <text x="470" y="540">中和區</text>
+        <text x="700" y="360">臺北市</text>
+        <text x="300" y="230">三重區</text>
+        <text x="770" y="200">內湖區</text>
+      </g>
+
+      <!-- ===== 圖層：里界 (SHP，預設關) ===== -->
+      <g id="L-liborder" class="hidelayer" fill="none" stroke="#7b8a99" stroke-width="1.4" opacity=".7">
+        <path d="M400 320 L470 300 L520 340 L500 420 L420 430 Z"/>
+        <path d="M420 430 L500 420 L520 500 L440 520 Z"/>
+        <path d="M470 300 L560 300 L590 380 L520 340 Z"/>
+      </g>
+
+      <!-- ===== 圖層：人口密度網格 (分析，預設關) ===== -->
+      <g id="L-popdensity" class="hidelayer" opacity=".55">
+        <rect x="380" y="300" width="60" height="60" fill="#d64545" opacity=".55"/>
+        <rect x="440" y="300" width="60" height="60" fill="#e0722f" opacity=".5"/>
+        <rect x="500" y="300" width="60" height="60" fill="#e0a100" opacity=".45"/>
+        <rect x="380" y="360" width="60" height="60" fill="#e0722f" opacity=".5"/>
+        <rect x="440" y="360" width="60" height="60" fill="#d64545" opacity=".6"/>
+        <rect x="500" y="360" width="60" height="60" fill="#e0a100" opacity=".4"/>
+        <rect x="440" y="420" width="60" height="60" fill="#e0a100" opacity=".4"/>
+      </g>
+
+      <!-- ===== 圖層：疏散避難處所 (CSV，預設開) ===== -->
+      <g id="L-shelter">
+        <g transform="translate(330,420)"><path d="M0 -12 L11 8 L-11 8 Z" fill="#0f8a7e" stroke="#fff" stroke-width="1.5"/><text class="mk-label" x="14" y="6">板橋國小</text></g>
+        <g transform="translate(600,420)"><path d="M0 -12 L11 8 L-11 8 Z" fill="#0f8a7e" stroke="#fff" stroke-width="1.5"/><text class="mk-label" x="14" y="6">中和運動中心</text></g>
+      </g>
+
+      <!-- ===== 圖層：河川水位站 (KML，預設關) ===== -->
+      <g id="L-rivergauge" class="hidelayer">
+        <g transform="translate(560,250)"><rect x="-7" y="-7" width="14" height="14" rx="3" fill="#2e86c1" stroke="#fff" stroke-width="1.5"/><text class="mk-label" x="12" y="4">忠孝橋水位站</text></g>
+      </g>
+
+      <!-- ===== 圖層：TERIA 地震 (預設關) ===== -->
+      <g id="L-teria" class="hidelayer">
+        <g transform="translate(780,470)"><circle r="18" fill="#8e44ad" opacity=".18"/><circle r="10" fill="#8e44ad" opacity=".3"/><circle r="4" fill="#8e44ad"/><text class="mk-label" x="16" y="4">規模 5.2 震央</text></g>
+      </g>
+
+      <!-- ===== 圖層：EMIC 災情（綁時間軸，預設開；淹水面 + 事件點） ===== -->
+      <g id="L-emic">
+        <!-- 淹水範圍面 -->
+        <path d="M360 380 Q430 350 500 380 Q540 420 500 470 Q430 500 380 470 Q350 420 360 380 Z" fill="#1f6feb" opacity=".22" stroke="#1f6feb" stroke-width="1.5" stroke-opacity=".5"/>
+        <!-- 事件點（可點） -->
+        <g class="emic-pt" data-t="1" transform="translate(430,420)" style="cursor:pointer" onclick="showCard(event,'淹水通報','積水約 45cm','新北市板橋區文化路','14:30','已派遣')">
+          <circle r="13" fill="#1f6feb" opacity=".2"/><circle r="6" fill="#1f6feb" stroke="#fff" stroke-width="2"/></g>
+        <g class="emic-pt" data-t="1" transform="translate(520,360)" style="cursor:pointer" onclick="showCard(event,'道路中斷','路樹倒塌阻斷雙向','新北市板橋區縣民大道','14:45','處理中')">
+          <circle r="13" fill="#d64545" opacity=".2"/><circle r="6" fill="#d64545" stroke="#fff" stroke-width="2"/></g>
+        <g class="emic-pt future" data-t="2" transform="translate(470,300)" style="cursor:pointer;opacity:.35" onclick="showCard(event,'民眾受困','1 樓住戶 3 人待救','新北市三重區重新路','15:30','未處理')">
+          <circle r="13" fill="#e0a100" opacity=".2"/><circle r="6" fill="#e0a100" stroke="#fff" stroke-width="2"/></g>
+      </g>
+
+      <!-- ===== 圖層：教官現場標記（繪圖，預設開） ===== -->
+      <g id="L-draw">
+        <path d="M300 500 L360 480 L400 520" fill="none" stroke="#0f8a7e" stroke-width="3" stroke-dasharray="2 0"/>
+        <circle cx="300" cy="500" r="5" fill="#0f8a7e"/>
+        <text class="mk-label" x="366" y="474" style="fill:#0f8a7e">疏散動線</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ---------- 右：繪圖 + AI（教官專用；學員視角隱藏） ---------- -->
+  <div class="panel right editonly">
+    <div class="phead">🛠 工具</div>
+    <div class="pbody">
+
+      <!-- 繪圖 F-09 -->
+      <!-- SPEC: 線上繪圖 F-09 型別:繪圖工具 選項:點/線/面 行為:於地圖繪製並存為可開關圖層「現場標記」 來源:教官 -->
+      <div class="tool-block">
+        <div class="tb-head">✏️ 線上繪圖</div>
+        <div class="tb-body">
+          <div class="draw-tools">
+            <button onclick="pickDraw(this)"><span class="ic">📍</span>點</button>
+            <button onclick="pickDraw(this)"><span class="ic">〰️</span>線</button>
+            <button onclick="pickDraw(this)"><span class="ic">⬡</span>面</button>
+            <button onclick="pickDraw(this)"><span class="ic">🗑</span>清除</button>
+          </div>
+          <p class="ai-hint">繪製結果自動存入左側「現場標記」圖層，可開關與調整樣式。</p>
+        </div>
+      </div>
+
+      <!-- AI 生成地圖 F-10 -->
+      <!-- SPEC: AI空間解析生成地圖 F-10 型別:AI功能 輸入:災情文本 行為:解析文本→時間回溯+套疊對應圖層+產出可點空間資訊 來源:AI模組 -->
+      <div class="tool-block">
+        <div class="tb-head">🤖 AI 生成地圖 <span class="pill">空間解析</span></div>
+        <div class="tb-body">
+          <textarea class="ai">08/14 14:30 板橋區文化路一段積水約45公分，車輛受困；縣民大道路樹倒塌雙向阻斷。</textarea>
+          <p class="ai-hint">貼上災情描述文字，AI 自動解析地點、時間並在地圖套疊對應災害圖層。</p>
+          <button class="btn primary" style="width:100%" onclick="aiGen()">⚡ 解析並生成地圖</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= 時間軸（只綁 EMIC 災情） F-06 ================= -->
+<!-- SPEC: EMIC災情時間軸 F-06 型別:時間軸 綁定:僅EMIC災情圖層 行為:拖曳/播放重播災情隨時間出現;其他圖層不受影響 -->
+<div class="timeline">
+  <div class="tl-title">⏱ 演練時間軸 <span class="tag">僅 EMIC 災情</span></div>
+  <button class="play" onclick="this.textContent=this.textContent==='▶'?'⏸':'▶'">▶</button>
+  <div class="tl-track">
+    <div class="tl-line"></div><div class="tl-fill"></div>
+    <div class="tl-node" style="left:0%"><span class="lbl">14:00</span></div>
+    <div class="tl-node" style="left:25%"><span class="lbl">14:30</span></div>
+    <div class="tl-node" style="left:46%"><span class="lbl">15:00</span></div>
+    <div class="tl-node future" style="left:70%"><span class="lbl">15:30</span></div>
+    <div class="tl-node future" style="left:100%"><span class="lbl">16:00</span></div>
+    <div class="tl-cursor"></div>
+  </div>
+  <div class="tl-time">115/08/14 15:00</div>
+</div>
+
+<!-- ================= 規格檢視圖層 ?spec=1 ================= -->
+<div class="spec-block">
+  <h2>📋 演練操作台 — 本畫面規格</h2>
+  <table>
+    <tr><th>元素</th><th>F 編號</th><th>型別</th><th>資料來源</th><th>互動行為</th></tr>
+    <tr><td>地圖底圖切換</td><td class="fcode">F-03</td><td>切換</td><td>國土測繪中心（正式系統 Mapbox 核心）</td><td>通用電子地圖／正射影像／行政區</td></tr>
+    <tr><td>2D／3D 切換</td><td class="fcode">F-03</td><td>切換</td><td>地圖核心</td><td>切換平面／立體視角</td></tr>
+    <tr><td>圖層套疊面板</td><td class="fcode">F-04</td><td>清單</td><td>各圖層來源</td><td>勾選開關、拖桿調透明度</td></tr>
+    <tr><td>外部上架圖層</td><td class="fcode">F-05</td><td>圖層</td><td>使用者上架 CSV／KML／SHP</td><td>靜態套疊，無時間維度</td></tr>
+    <tr><td>EMIC 災情圖層</td><td class="fcode">F-06</td><td>圖層(時序)</td><td>消防署 EMIC 介接</td><td><b>唯一綁時間軸</b>，隨時間出現/消失</td></tr>
+    <tr><td>TERIA 地震</td><td class="fcode">F-07</td><td>圖層</td><td>NCDR TERIA 介接</td><td>靜態套疊，無時間維度</td></tr>
+    <tr><td>人口密度網格</td><td class="fcode">F-08</td><td>圖層(網格)</td><td>人口密度分析工具</td><td>靜態套疊，可調透明度</td></tr>
+    <tr><td>線上繪圖</td><td class="fcode">F-09</td><td>工具</td><td>教官</td><td>點/線/面 → 存為「現場標記」圖層</td></tr>
+    <tr><td>AI 生成地圖</td><td class="fcode">F-10</td><td>AI</td><td>災情文本</td><td>解析地點/時間→套疊對應圖層</td></tr>
+    <tr><td>篩選定位</td><td class="fcode">F-11</td><td>定位</td><td>使用者輸入</td><td>行政區/地址/座標≥3種，定位縮放</td></tr>
+    <tr><td>時間軸</td><td class="fcode">F-06</td><td>時間軸</td><td>EMIC</td><td>拖曳/播放重播，僅影響 EMIC 圖層</td></tr>
+  </table>
+
+  <h2>業務規則</h2>
+  <div class="rule"><ul>
+    <li><b>時間軸綁定唯一</b>：時間軸只驅動 EMIC 災情圖層的出現/消失；外部圖層、TERIA、人口密度、現場標記皆為靜態，不隨時間變化。<span class="fcode">F-06</span></li>
+    <li><b>可編輯性依狀態</b>：待演練=可編排全部圖層；演練中=可推進時間軸/開關圖層/繪圖，不改編排骨架；演練結束=全唯讀、僅可重播時間軸。<span class="fcode">F-02</span></li>
+    <li><b>學員檢視 F-12</b>：學員選同一專案進入，看到專案最新狀態；可自行縮放/平移/開關圖層，<b>不能</b>繪圖、AI 生成、改編排或推進時間軸（右側工具與定位列隱藏）。</li>
+    <li><b>圖層透明度</b>：具面狀/網格的圖層提供透明度拖桿（0–100%）。</li>
+  </ul></div>
+
+  <h2>例外流程</h2>
+  <div class="rule"><ul>
+    <li>EMIC／TERIA 介接失敗 → 該圖層顯示「資料來源連線失敗，顯示最後一次同步資料（時間）」，不阻斷其他圖層。<span class="fcode">F-06 F-07</span></li>
+    <li>AI 解析不到地點/時間 → 提示「無法從文字辨識出位置，請補充地址或直接於地圖標記」，不產生錯誤圖層。<span class="fcode">F-10</span></li>
+    <li>篩選定位查無結果 → 提示「查無此行政區/地址」，地圖維持原位。<span class="fcode">F-11</span></li>
+    <li>學員嘗試編輯 → 工具本就隱藏；若以網址直入，後端仍拒絕寫入。<span class="fcode">F-12</span></li>
+  </ul></div>
+</div>
+
+<!-- ================= 討論模式圖層（只放未決 + 情境切換器） ================= -->
+<div class="layer-toggle">
+  <button class="lt-btn notes" onclick="toggleNotes()">💬 討論模式</button>
+</div>
+<div class="notes-panel">
+  <div class="np-head">💬 今天要決定的事（本畫面）</div>
+
+  <div class="np-sec">
+    <h4>情境切換器（給會議展示）</h4>
+    <div class="scenario">
+      <button class="on" onclick="setView('teacher',this)">教官視角</button>
+      <button onclick="setView('student',this)">學員視角</button>
+    </div>
+    <p class="np-collapsed" style="margin:8px 0 0">切「學員視角」會隱藏繪圖/AI/定位等編輯工具，示範學員只能檢視。</p>
+  </div>
+
+  <div class="np-sec">
+    <h4>① 待技術主管確認（2 項）</h4>
+    <div class="qitem tech"><span class="qid">Q-01</span>學員端「看到最新狀態」要即時自動同步，還是重新整理才更新？（影響是否需即時推播）
+      <span class="who">▸ 決策者：技術主管｜帶此畫面口頭討論</span></div>
+    <div class="qitem tech"><span class="qid">Q-02</span>EMIC／TERIA 的介接方式（拉取頻率、認證、資料格式）？
+      <span class="who">▸ 決策者：技術主管</span></div>
+  </div>
+
+  <div class="np-sec">
+    <details class="np-collapsed"><summary>② 已定案摘要（點開）</summary>
+      <p>• 時間軸只綁 EMIC，其他圖層靜態　• 學員可縮放/平移/開關圖層、不可編輯　• 底圖：通用電子地圖/正射/行政區　• 正式系統用 Mapbox（雛型為離線示意底圖）</p>
+    </details>
+  </div>
+</div>
+
+<!-- 資訊卡容器 -->
+<div id="infocard"></div>
+
+<script src="_layers.js"></script>
+<script>
+/* 2D/3D */
+function setDim(d){
+  document.getElementById('mapsvg').classList.toggle('d3', d==='3d');
+  document.getElementById('d2').classList.toggle('on', d==='2d');
+  document.getElementById('d3').classList.toggle('on', d==='3d');
+}
+/* 底圖 */
+function setBase(b,btn){
+  var w=document.getElementById('mapwrap');
+  w.classList.remove('basemap-ortho','basemap-admin');
+  if(b==='ortho') w.classList.add('basemap-ortho');
+  if(b==='admin') w.classList.add('basemap-admin');
+  btn.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on');
+}
+/* 圖層開關 */
+document.querySelectorAll('input[data-layer]').forEach(function(cb){
+  cb.addEventListener('change',function(){
+    var g=document.getElementById('L-'+cb.dataset.layer);
+    if(g) g.classList.toggle('hidelayer', !cb.checked);
+  });
+});
+/* 事件資訊卡 */
+function showCard(e,title,desc,addr,time,status){
+  e.stopPropagation();
+  var c=document.getElementById('infocard');
+  var r=document.getElementById('mapwrap').getBoundingClientRect();
+  c.innerHTML='<div class="info-card" style="left:'+(e.clientX-r.left+14)+'px;top:'+(e.clientY-r.top-10)+'px">'
+    +'<div class="ic-head">🚨 '+title+' <span style="margin-left:auto;font-weight:400;color:#5b6b7a;font-size:11px">EMIC</span></div>'
+    +'<div class="ic-body"><span>狀況</span><b>'+desc+'</b><span>地點</span><b>'+addr+'</b><span>時間</span><b>'+time+'</b><span>處置</span><b>'+status+'</b></div></div>';
+}
+document.getElementById('mapwrap').addEventListener('click',function(){document.getElementById('infocard').innerHTML='';});
+/* 繪圖工具（示意） */
+function pickDraw(b){document.querySelectorAll('.draw-tools button').forEach(x=>x.classList.remove('on'));b.classList.add('on');}
+/* AI 生成（示意）：打開人口密度示意生成結果 */
+function aiGen(){alert('（雛型示意）AI 已解析文本：\n• 板橋區文化路一段 — 淹水 45cm（14:30）\n• 縣民大道 — 道路中斷（路樹倒塌）\n已在地圖套疊對應 EMIC 災情圖層並定位。');}
+/* 情境視角切換（討論用） */
+function setView(v,btn){
+  document.body.classList.toggle('view-student', v==='student');
+  btn.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on');
+}
+</script>
+</body>
+</html>

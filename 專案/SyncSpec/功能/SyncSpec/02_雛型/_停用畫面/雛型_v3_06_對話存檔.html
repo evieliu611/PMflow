@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜對話存檔（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.split{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
+.det{position:sticky;top:0;padding:20px;display:flex;flex-direction:column;gap:12px}
+.ar{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer}.ar:first-child{border-top:0}.ar:hover{background:var(--bg)}.ar.on{background:var(--brand-bg)}
+.ar .ti{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--bg);color:var(--ink2);flex:none}
+.ichip{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:99px;padding:1px 9px;font-size:12px;background:#fff}.ichip a{cursor:pointer;color:var(--muted)}
+@media(max-width:1000px){.split{grid-template-columns:1fr}}
+</style></head>
+<body data-nav="archive" data-crumb="對話存檔">
+<script>window.NOTES=[
+ {id:'Q-30',text:'對話存檔轉成知識並刪除原文：刪除前怎麼確認、機敏資料怎麼去識別？（目前：預設保留到結案；轉知識後可選擇刪除，須二次確認）',who:'PM／主管'},
+ {id:'Q-34',text:'存檔的可見範圍：專案成員都看得到原文，還是只看整理後的摘要？機敏的逐字稿要不要另外限制？',who:'主管'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page"><div id="root"></div>
+<div class="modal-back" id="m-k"><div class="modal wide">
+  <div class="mh"><div><h2>轉成專案知識</h2><div class="sm muted" id="kt"></div></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="mb" id="kb"></div>
+  <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="kgo">送審核（依類型由不同人審）</button></div>
+</div></div>
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>範圍</td><td>全站 AI 對話、工項內的對話、匯入的會議紀錄與檔案，都會存進這裡；AI 平常只讀「整理後的記憶」，不回頭讀原文，需要時才回來查證（避免記憶太多而錯亂）</td></tr>
+<tr><td>狀態</td><td>未整理、已整理進記憶、已轉知識、專案層級（沒對應到特定工項）</td></tr>
+<tr><td>對應工項</td><td>AI 自動對應，可在右側增減；對應錯了，記憶也跟著改</td></tr>
+<tr><td>知識候選（v3）</td><td>AI 在對話或回填訪談時，順手把「單位、領域、功能」性質的資訊標成知識候選（列表上的紫色標籤）；PM 不需另外做事，轉成專案知識時才集中確認。審核人依知識類型區分，各類型是誰尚待確認</td></tr><tr><td>重新整理</td><td>AI 重新讀原文，逐條對應到工項並更新記憶</td></tr>
+<tr><td>轉成專案知識</td><td>AI 擬出知識候選（單位知識、功能卡等），含機敏資料的先去識別，PM 勾選後送公司知識庫由管理員審核。轉入後可選擇刪除原文</td></tr>
+<tr><td>刪除</td><td>預設保留到專案結案；結案前只有「已轉知識」的存檔可以刪除，且須二次確認（刪除後無法回頭對照原文，知識會保留來源名稱與日期）</td></tr></table></section></div>
+<script>
+let P,A,sel=null,ft='全部',fs='全部',fq='';
+const tg=a=>a.state==='已整理進記憶'?(a.id==='A2'?2:1):0;
+const TI={對話:'msg',會議紀錄:'doc',檔案:'files'};
+const SC={'已整理進記憶':'mint','未整理':'sun','已轉知識':'brand','專案層級':'','已轉知識（原文已刪除）':'brand'};
+function list(){return A.filter(a=>(ft==='全部'||a.type===ft)&&(fs==='全部'||a.state===fs)&&(!fq||(a.title+a.summary).includes(fq)))}
+function draw(){
+ const L=list(),R=$('#root'),st=V2.stageOf(P),done=V2.isDone(P);
+ const cnt=s=>A.filter(a=>a.state===s).length;
+ R.innerHTML=`<div class="page-head"><div><h1>對話存檔</h1><p>對話、會議紀錄、檔案的原文都存在這裡；AI 平常只讀整理過的記憶，要查證時才回來看原文。</p></div><div class="row"><button class="btn">${ic('upload')}匯入會議紀錄或檔案</button></div></div>
+ <div class="row wrap" style="gap:8px;margin-bottom:12px"><div class="seg" id="ft">${['全部','對話','會議紀錄','檔案'].map(t=>`<button class="${ft===t?'on':''}" data-t="${t}">${t}</button>`).join('')}</div>
+  <select class="fsel ${fs!=='全部'?'on':''}" id="fs"><option>全部</option>${['未整理','已整理進記憶','已轉知識','專案層級'].map(s=>`<option ${fs===s?'selected':''}>${s}</option>`).join('')}</select>
+  <div class="search" style="width:240px"><span id="s1"></span><input class="input" id="q" placeholder="搜尋標題或摘要" value="${fq}"></div><span class="grow"></span>
+  <span class="sm muted">共 ${A.length} 份　未整理 ${cnt('未整理')}　已轉知識 ${cnt('已轉知識')+cnt('已轉知識（原文已刪除）')}</span></div>
+ <div class="split"><div class="card" style="padding:0;overflow:hidden">${L.length?L.map(a=>`<div class="ar ${sel===a.id?'on':''}" data-id="${a.id}"><span class="ti">${ic(TI[a.type])}</span><div class="grow" style="min-width:0"><div class="row spread" style="gap:8px"><b>${a.title}</b><span class="xs muted">${a.date}</span></div><div class="xs muted" style="margin:2px 0 6px">${a.type} · 來自 ${a.src}</div><div class="row wrap" style="gap:6px"><span class="chip ${SC[a.state]||''}">${a.state}</span>${tg(a)?`<span class="chip violet xs">知識候選 ${tg(a)}</span>`:''}${a.items.map(i=>`<span class="ichip">${i}</span>`).join('')||'<span class="xs muted">未對應到工項</span>'}</div></div></div>`).join(''):'<div class="empty sm" style="padding:30px">沒有符合的存檔</div>'}</div>
+ <div class="card det" id="det"></div></div>`;
+ $('#s1').outerHTML=ic('search');
+ $$('#ft button').forEach(b=>b.onclick=()=>{ft=b.dataset.t;draw()});$('#fs').onchange=e=>{fs=e.target.value;draw()};$('#q').oninput=e=>{fq=e.target.value.trim();draw();$('#q').focus()};
+ $$('.ar').forEach(r=>r.onclick=()=>{sel=r.dataset.id;draw()});
+ detail(done);
+}
+function detail(done){const a=A.find(x=>x.id===sel),d=$('#det');
+ if(!a){d.innerHTML=`<div class="empty sm"><div class="art">${ic('files')}</div>選一份存檔看原文摘要、對應的工項，以及能做什麼。</div>`;return}
+ const canDel=a.state.indexOf('已轉知識')===0||done;
+ d.innerHTML=`<div class="row spread"><h2 style="margin:0;font-size:17px">${a.title}</h2></div><div class="row wrap" style="gap:6px"><span class="chip">${a.type}</span><span class="chip ${SC[a.state]||''}">${a.state}</span><span class="xs muted">${a.date}・來自 ${a.src}</span></div>
+ <div><div class="xs muted" style="margin-bottom:4px">原文摘要（示意）</div><div class="quote" style="background:#FAFBFE;border-left:4px solid var(--brand);border-radius:0 10px 10px 0;padding:10px 12px;font-size:13.5px">${a.summary}</div></div>
+ <div><div class="xs muted" style="margin-bottom:6px">AI 對應到的工項（可調整）</div><div class="row wrap" style="gap:6px">${a.items.map(i=>`<span class="ichip">${i} <a data-rm="${i}" title="移除">✕</a></span>`).join('')||'<span class="xs muted">專案層級</span>'}<select class="fsel" id="add"><option value="">＋加入工項</option>${P.items.filter(i=>!a.items.includes(i.no)).map(i=>`<option value="${i.no}">${i.no} ${i.name}</option>`).join('')}</select></div></div>
+ <div class="hr"></div>
+ <div class="col" style="gap:8px"><button class="btn" id="re">${ic('refresh')}重新整理（AI 重新對應）</button>
+  <button class="btn primary" id="tk" ${a.state==='已轉知識（原文已刪除）'?'disabled':''}>${ic('spark')}轉成專案知識</button>
+  <button class="btn" id="del" style="color:var(--coral)" ${canDel?'':'disabled'}>${ic('trash')}刪除原文</button>
+  <div class="xs muted">${canDel?'刪除前會再確認一次；刪除後無法回頭對照原文。':'結案後才能刪除；或先轉成專案知識，轉入後可以選擇刪除原文。'}</div></div>`;
+ $$('[data-rm]',d).forEach(x=>x.onclick=()=>{a.items=a.items.filter(i=>i!==x.dataset.rm);draw();toast('已移除對應；相關記憶也同步更新')});
+ $('#add').onchange=e=>{if(e.target.value){a.items.push(e.target.value);draw();toast('已加入對應；AI 會把相關內容補進該工項的說明')}};
+ $('#re').onclick=()=>{if(a.state==='未整理'){a.state='已整理進記憶';a.items=a.items.length?a.items:['2.5','2.6'];a.summary='AI 已整理：決議 3 條，已逐條對應到工項。';draw();toast('已整理，對應到 '+a.items.join('、'))}else toast('已重新讀取原文並更新記憶')};
+ $('#tk').onclick=()=>openK(a);
+ $('#del').onclick=()=>{if(!canDel)return;if(a.state.indexOf('已轉知識')===0){toast('已刪除原文，知識保留來源名稱與日期','復原',()=>{})}else toast('專案已結案，確認後才會刪除')};
+}
+function openK(a){const cands={A2:[['單位知識','台灣韋能能源：點位圖徵的顏色需先經客戶確認','不含機敏資料'],['功能卡','—（會議紀錄沒有可做成功能卡的實作內容）','']],A4:[['功能卡','KML 範圍查詢：欄位、驗證規則與錯誤訊息','含客戶名 1 處，會先去識別'],['單位知識','台灣韋能能源：偏好沿用既有「空間分析」版型','不含機敏資料']]}[a.id]||[['知識候選','AI 依這份存檔擬一則知識（示意）','需確認是否含機敏資料']];
+ $('#kt').textContent=a.title;
+ $('#kb').innerHTML=`<div class="banner" style="margin-bottom:12px">${ic('spark')}<span>AI 擬了下面的知識候選。勾選要送審的，含機敏資料的會先去識別；送出後進公司知識庫「待提取」，由管理員審核。</span></div>
+ ${cands.filter(c=>c[1].indexOf('—')!==0).map((c,i)=>`<label class="opt on" style="margin-bottom:8px"><input type="checkbox" checked><div><b><span class="chip brand xs">${c[0]}</span> ${c[1]}</b><span>去識別：${c[2]||'—'}　審核人：${V3.reviewerOf(c[0])}</span></div></label>`).join('')}
+ <div class="hr"></div><label class="row"><input type="checkbox" class="check" id="kdel"> 送出後刪除這份存檔的原文</label>
+ <div class="banner warn hide" id="kw" style="margin-top:8px">${ic('alert')}<span>刪除後無法回頭對照原文；如果知識有誤，只能重新蒐集。知識會保留來源名稱與日期。</span></div>`;
+ $('#kdel').onchange=e=>$('#kw').classList.toggle('hide',!e.target.checked);
+ $('#kgo').onclick=()=>{const del=$('#kdel').checked;$('#m-k').classList.remove('open');a.state=del?'已轉知識（原文已刪除）':'已轉知識';draw();toast('已送公司知識庫審核'+(del?'，原文已刪除':''))};
+ $('#m-k').classList.add('open')}
+window.pageInit=function(){P=DB.cur();A=(V2.archive[P.id]||[]).map(x=>Object.assign({},x,{items:x.items.slice()}));const h=location.hash.slice(1);if(A.find(a=>a.id===h))sel=h;draw()};
+</script>
+</body></html>

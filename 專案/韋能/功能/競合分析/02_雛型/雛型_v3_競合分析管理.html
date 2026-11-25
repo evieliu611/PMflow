@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>競合分析管理 — 土地評估圖台系統（雛型 v3）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40"><path d="M20 3C10 12 7 22 14 31c3 4 9 6 14 3 6-4 8-14-8-31z" fill="#1c6fb0"/><path d="M14 31c6-2 10-8 6-16-6 8-9 12-6 16z" fill="#8bc34a"/></svg>
+      <div><div class="en">VENA<br>ENERGY<br>韋能能源</div></div>
+      <h1>土地評估圖台系統</h1>
+    </div>
+    <div class="top-right"><span>後台管理</span><span class="user-chip" id="uc"></span></div>
+  </header>
+  <div class="body">
+    <nav class="rail" id="rail"></nav>
+    <aside class="panel" id="panel"></aside>
+    <main class="map" id="map">
+      <canvas id="cv"></canvas>
+      <div id="markers"></div>
+      <div class="infowin" id="infowin"></div>
+      <div class="mapbadge" id="mapbadge"></div>
+      <div class="pickbar" id="pickbar">請點擊地圖標記案場位置（Esc 取消）</div>
+      <div class="mk draft" id="draftpin" style="display:none"><svg viewBox="0 0 26 34"><path d="M13 0C6 0 1 5 1 12c0 9 12 22 12 22s12-13 12-22C25 5 20 0 13 0z" fill="#e91e63" stroke="#fff" stroke-width="1.5"/><circle cx="13" cy="12" r="4.5" fill="#fff"/></svg><span class="lab" style="display:block">案場位置（未儲存）</span></div>
+      <div class="map-tools"><button onclick="zoomBy(1)">＋</button><button onclick="zoomBy(-1)">－</button></div>
+      <button class="legend-btn" onclick="document.getElementById('legend').classList.toggle('on')">🗺 圖例</button>
+      <div class="legend" id="legend"></div>
+      <div class="zoomtag" id="zoomtag"></div>
+      <div class="scale" id="scale">500 m</div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modal"><div class="modal" id="modalbox"></div></div>
+
+<button class="notes-fab" onclick="toggleNotes()">討論模式</button>
+<div class="notes-panel" id="notes"></div>
+
+<section id="spec"></section>
+
+<script>
+/* ===== 假資料（形式仿韋能現有競合表；內容為示意） ===== */
+/* 欄位定義：依 2026-10-13 客戶訪談欄位表（原 Excel 分類／欄位 → 調整後名稱、格式、必填、規則） */
+const TOWNS={'澎湖縣':['馬公市','湖西鄉'],'台中市':['清水區','大甲區'],'桃園市':['大園區','觀音區'],'台東縣':['成功鎮'],'苗栗縣':['通霄鎮','後龍鎮'],'宜蘭縣':['五結鄉'],'新北市':['金山區'],'新竹縣':['新豐鄉'],'台南市':['七股區','北門區','學甲區','將軍區','佳里區','官田區','麻豆區','新營區','後壁區','白河區'],'嘉義縣':['義竹鄉','布袋鎮','東石鄉','六腳鄉','朴子市','太保市'],'雲林縣':['古坑鄉','四湖鄉','口湖鄉','麥寮鄉','元長鄉','崙背鄉'],'屏東縣':['高樹鄉','內埔鄉','新園鄉','林邊鄉','佳冬鄉','崁頂鄉'],'高雄市':['岡山區','路竹區','茄萣區','永安區','彌陀區'],'彰化縣':['大城鄉','芳苑鄉','二林鎮','竹塘鄉'],'花蓮縣':['吉安鄉','壽豐鄉']}; /* 示意：正式版為全台縣市鄉鎮市區清單 */
+const TYPE_ZH={'Ground Mounted':'地面型','Outdoor Fishery Solar':'漁電共生(室外)','Indoor Fishery Solar':'漁電共生(室內)','Rooftop':'屋頂型','Floating':'水面型','Agri-solar':'農電共生'}; /* 以 Excel 範本「下拉選單」分頁為準（2026-11-12） */
+const OWNER_ZH={'Private':'私人','Taisugar':'台糖','Public':'地方政府'};
+const FIELDS=[
+ {sec:'',k:'pic',l:'案場編號',orig:'PIC No.',f:'數值',t:'auto',rule:'系統自動編號，不提供編輯'},
+ {sec:'',k:'name',l:'案場名稱',orig:'案場名稱',f:'文字',t:'text',req:1,max:20,rule:'字數上限 20 字'},
+ {sec:'土地基礎資訊',k:'county',l:'縣市',orig:'County',f:'選單',t:'select',o:Object.keys(TOWNS),req:1,rule:'自選，不以坐標自動判斷'},
+ {sec:'土地基礎資訊',k:'town',l:'鄉鎮市區',orig:'Township',f:'選單',t:'select',req:1,rule:'自選（依縣市連動選單），不以坐標自動判斷'},
+ {sec:'土地基礎資訊',k:'csys',l:'坐標系統',orig:'座標',f:'選單',t:'select',o:['WGS84 經緯度','TWD97 TM2 121分帶'],rule:'坐標必填；可於地圖上點選或輸入坐標設定，需支援 WGS84、TWD97'},
+ {sec:'土地基礎資訊',k:'lat',l:'緯度',orig:'座標',f:'數值',t:'coord',req:1,hint:'十進位度，如 23.1557',rule:'同上'},
+ {sec:'土地基礎資訊',k:'lng',l:'經度',orig:'座標',f:'數值',t:'coord',req:1,hint:'十進位度，如 120.0982',rule:'同上'},
+ {sec:'土地基礎資訊',k:'type',l:'光電類型',orig:'Type',f:'選單',t:'select',o:Object.values(TYPE_ZH),rule:'選填；選項以 Excel 範本為準（水面型、農電共生、漁電共生(室外)、地面型、漁電共生(室內)、屋頂型）【PM確認 2026-11-12】'},
+ {sec:'土地基礎資訊',k:'landuse',l:'專區/分區/編訂',orig:'土地類型',f:'選單',t:'select',o:['一般農業區','38區不利耕作區','水利用地','工業用地','殯葬用地','漁-先行/優先區','漁-優先區','漁-關注減緩區','漁-自提專區','丁種建築用地','特定目的事業用地','特定專用區(特目)','農地','非農地','特定農業區養殖用地','一般農業區養殖用地','一般農業區 農牧用地','都計-農','小兩甲-一般農','尚無分區類別'],rule:'選填；選項取自線上版 Excel 實際值（20 種），待韋能確認整併'},
+ {sec:'土地基礎資訊',k:'owner',l:'土地權屬',orig:'土地權屬',f:'選單',t:'select',o:['私人','國產署','台糖','工業局','地方政府'],rule:'選填；選項以 Excel 範本為準（私人、國產署、台糖、工業局、地方政府）【PM確認 2026-11-12】'},
+ {sec:'投資市場',k:'major',l:'集團',orig:'Major Fund/ Player',f:'文字',t:'text',rule:'選填'},
+ {sec:'投資市場',k:'partner',l:'公司名稱',orig:'Partnering Fund/ Player2',f:'文字',t:'text',rule:'選填'},
+ {sec:'投資市場',k:'start',l:'開始日期',orig:'START',f:'日期',t:'month',rule:'選填；只記錄到年月，不需要日'},
+ {sec:'裝置容量',k:'cap',l:'裝置容量（MW）',orig:'Capacity',f:'數值',t:'num',rule:'選填；單位統一為 MW（舊資料混用 MW、kW，請韋能協助統一，Q-17）'},
+ {sec:'裝置容量',k:'tcap',l:'目標裝置容量（MW）',orig:'Target capacity',f:'數值',t:'num',rule:'選填；舊資料無單位，請韋能確認，建議與裝置容量同為 MW（Q-17）'},
+ {sec:'裝置容量',k:'area',l:'面積（公頃）',orig:'Area(Ha)',f:'數值',t:'num',rule:'選填'},
+ {sec:'開發進度',k:'stage',l:'開發階段',orig:'Stage',f:'文字',t:'auto',rule:'系統自動判斷帶入：依已達成的開發進度項目對應；開發進度至少須勾選一項'},
+ {sec:'',k:'remarks',l:'備註',orig:'Remarks',f:'文字輸入',t:'area',max:500,rule:'選填；字數上限 500 字'}
+];
+/* 開發進度項目（原 Excel 16–21 列）：勾選＝已達成，各附年月（選填、不作為狀態判斷依據）。map＝對應狀態（暫定，待韋能提供對照） */
+const PH=[
+ {k:'dev',l:'開發階段註記',orig:'Developing',map:'開發中'},
+ {k:'ep',l:'興辦事業計畫',orig:'EP',map:'籌設中'},
+ {k:'ap',l:'地目變更',orig:'AP/ Rezoned',map:'容許/變更中'},
+ {k:'cp',l:'籌設許可',orig:'CP',map:'施工中'},
+ {k:'cod',l:'併聯發電日',orig:'COD',map:'已併網'}
+];
+function calcStage(d){for(let i=PH.length-1;i>=0;i--)if(d['ph_'+PH[i].k]==='1')return PH[i].map;return '';}
+const ALLK=[...FIELDS.map(F=>[F.k,F.l]),...PH.flatMap(p=>[['ph_'+p.k,p.l+'（已達成）'],['ym_'+p.k,p.l+'（年月）']])];
+let cases=[
+ {id:1,name:'麗升四方（下山子寮段漁電共生）',pic:'',county:'台南市',town:'七股區',lat:'23.1557',lng:'120.0982',type:'Indoor Fishery Solar',landuse:'',owner:'Private',major:'麗升能源(華鎂鑫)',partner:'',cap:'',tcap:'',area:'',stage:'開發中',permit:'[1]Developing',cod:'',remarks:'七股區鹽埕里下山子寮段 76-1、76-3、77-1 等 23 筆地號，室內屋頂型漁電共生。',src:'2024/7/8 Julia',x:18,y:44,upd:'Ian 2025/12/31',lock:null},
+ {id:2,name:'(華美鑫)屏東高樹溫室光電',pic:'',county:'屏東縣',town:'高樹鄉',lat:'22.8231',lng:'120.6048',type:'Agri-solar',landuse:'農地',owner:'Private',major:'華美鑫',partner:'',cap:'0.4998',tcap:'',area:'',stage:'開發中',permit:'[1]Developing',cod:'',remarks:'結構型溫室農電共生，499.8 瓩。',src:'2025/4/23 Betty',x:48,y:60,upd:'Ian 2025/11/21',lock:null},
+ {id:3,name:'向陽義竹1-1期溫室科技養殖結合太陽光電',pic:'',county:'嘉義縣',town:'義竹鄉',lat:'23.3362',lng:'120.2034',type:'Outdoor Fishery Solar',landuse:'',owner:'Private',major:'Sunny Rich(向陽優能)',partner:'',cap:'7.7452',tcap:'',area:'',stage:'施工中',permit:'[4]CP',cod:'2026/Q4',remarks:'',src:'',x:32,y:30,upd:'Betty 2025/11/22',lock:null},
+ {id:4,name:'雲林古坑台糖標案（康德）',pic:'',county:'雲林縣',town:'古坑鄉',lat:'23.6103',lng:'120.5987',type:'Ground Mounted',landuse:'一般農業區',owner:'Taisugar',major:'HDRE',partner:'AcBel Polytech',cap:'29.36',tcap:'',area:'',stage:'開發中',permit:'[3]AP/Rezone',cod:'',remarks:'',src:'2024/10/29 Betty',x:70,y:38,upd:'Betty 2024/10/29',lock:{by:'王小明',since:'14:32'}},
+ {id:5,name:'嘉義布袋鹽灘地光電',pic:'',county:'嘉義縣',town:'布袋鎮',csys:'WGS84 經緯度',lat:'23.3781',lng:'120.1688',type:'Floating',landuse:'水利用地',owner:'Public',major:'台灣農林公司標案',partner:'',cap:'12',tcap:'20',area:'26',stage:'籌設中',permit:'[2]EP',cod:'',remarks:'',src:'',x:26,y:60,upd:'Ian 2025/11/23',lock:null},
+ {id:6,name:'彰化大城地面型光電',pic:'',county:'彰化縣',town:'大城鄉',lat:'23.8564',lng:'120.3212',type:'Ground Mounted',landuse:'38區不利耕作區',owner:'Private',major:'向陽優能',partner:'',cap:'18',tcap:'',area:'20',stage:'容許/變更中',permit:'[4]CP',cod:'2027/Q1',remarks:'',src:'',x:60,y:18,upd:'Betty 2025/11/21',lock:null},
+ {id:7,name:'高雄岡山屋頂型光電',pic:'',county:'高雄市',town:'岡山區',lat:'22.7951',lng:'120.2961',type:'Rooftop',landuse:'工業用地',owner:'Private',major:'城市發展',partner:'',cap:'3.2',tcap:'',area:'',stage:'已併網',permit:'[5]COD',cod:'2025/06',remarks:'',src:'',x:84,y:70,upd:'Ian 2025/11/21',lock:null}
+];
+cases.forEach(c=>c.csys='WGS84 經緯度');
+const c4=cases.find(c=>c.id===4);c4.csys='TWD97 TM2 121分帶';c4.lat='201459.0';c4.lng='2613047.1';
+const GEO={1:[23.1557,120.0982],2:[22.8231,120.6048],3:[23.3362,120.2034],4:[23.6103,120.5987],5:[23.3781,120.1688],6:[23.8564,120.3212],7:[22.7951,120.2961]};
+cases.forEach(c=>{c.gl=GEO[c.id][0];c.gn=GEO[c.id][1];});
+/* 示意用：依縣市鄉鎮分布補足案場（真實競合表約 520 筆，集中在台南、嘉義、屏東、雲林） */
+(function(){let sd=7;const rnd=()=>(sd=(sd*9301+49297)%233280)/233280;
+ const T=[['七股區','台南市',23.14,120.10,5],['北門區','台南市',23.27,120.12,3],['學甲區','台南市',23.23,120.18,3],['將軍區','台南市',23.20,120.12,3],['佳里區','台南市',23.17,120.18,2],['官田區','台南市',23.19,120.32,2],['義竹鄉','嘉義縣',23.34,120.25,4],['布袋鎮','嘉義縣',23.38,120.17,3],['東石鄉','嘉義縣',23.45,120.15,3],['六腳鄉','嘉義縣',23.49,120.29,2],['高樹鄉','屏東縣',22.83,120.60,3],['內埔鄉','屏東縣',22.61,120.57,2],['新園鄉','屏東縣',22.54,120.46,3],['林邊鄉','屏東縣',22.43,120.51,3],['佳冬鄉','屏東縣',22.42,120.55,2],['古坑鄉','雲林縣',23.64,120.56,2],['四湖鄉','雲林縣',23.63,120.22,3],['口湖鄉','雲林縣',23.58,120.18,3],['麥寮鄉','雲林縣',23.75,120.25,2],['大城鄉','彰化縣',23.85,120.32,2],['芳苑鄉','彰化縣',23.92,120.32,2],['路竹區','高雄市',22.86,120.26,2],['茄萣區','高雄市',22.90,120.18,2],['永安區','高雄市',22.82,120.20,2],['吉安鄉','花蓮縣',23.97,121.57,1]];
+ const DEV=['麗升','向陽','城市發展','華美鑫','力暘','三地','寶島','怡華'],SUF=['漁電共生','地面型光電','屋頂型光電','水面型光電','農電共生'],TY=['Outdoor Fishery Solar','Ground Mounted','Rooftop','Floating','Agri-solar'],ST=['開發中','開發中','開發中','籌設中','籌設中','容許/變更中','施工中','施工中','已併網'];
+ let id=8;T.forEach(t=>{for(let i=0;i<t[4];i++){const k=Math.floor(rnd()*SUF.length),d=DEV[Math.floor(rnd()*DEV.length)];
+  cases.push({id:id++,name:d+t[0].replace(/[區鄉鎮]$/,'')+SUF[k],pic:'',county:t[1],town:t[0],csys:'WGS84 經緯度',lat:(t[2]+(rnd()-.5)*.06).toFixed(4),lng:(t[3]+(rnd()-.5)*.06).toFixed(4),type:TY[k],landuse:'',owner:'Private',major:d,partner:'',cap:(1+rnd()*35).toFixed(1),tcap:'',area:'',stage:ST[Math.floor(rnd()*ST.length)],permit:'[1]Developing',cod:'',remarks:'',src:'',upd:'Ian 2025/11/2'+Math.floor(rnd()*4),lock:null});
+  const c=cases[cases.length-1];c.gl=+c.lat;c.gn=+c.lng;}});})();
+let nextId=cases.length+1;
+/* 依訪談欄位表整理資料：類型／權屬改中文、案場編號、開發進度項目（由原狀態反推）、狀態由項目計算 */
+cases.forEach(c=>{c.type=TYPE_ZH[c.type]||c.type;c.owner=OWNER_ZH[c.owner]||c.owner||'';c.pic=String(1000+c.id);c.start='';
+ const lv={'開發中':1,'籌設中':2,'容許/變更中':3,'施工中':4,'已併網':5}[c.stage]||1;
+ c.ph_dev='1';if(lv>=2)c.ph_ep='1';if(lv>=3)c.ph_ap='1';if(lv>=4)c.ph_cp='1';if(lv>=5)c.ph_cod='1';
+ PH.forEach(p=>{c['ph_'+p.k]=c['ph_'+p.k]||'';c['ym_'+p.k]=c['ym_'+p.k]||'';});
+ if(c.id===3){c.ym_ep='2025-06';c.ym_ap='2025-11';c.ym_cp='2026-03';}if(c.id===5){c.ym_ep='2026-05';}
+ if(!FIELDS.find(F=>F.k==='landuse').o.includes(c.landuse))c.landuse='';c.stage=calcStage(c);delete c.permit;delete c.cod;delete c.src;});
+let traces=[
+ {id:1,t:'2026/10/05 16:40',u:'Ian',a:'編輯',cid:2,cn:'(華美鑫)屏東高樹溫室光電',diff:[['Capacity（MW）','0.499','0.4998'],['開發階段','—','開發中']]},
+ {id:2,t:'2026/10/05 11:12',u:'王小明',a:'編輯',cid:4,cn:'雲林古坑台糖標案（康德）',diff:[['Permit 進度','[2]EP','[3]AP/Rezone']]},
+ {id:3,t:'2026/10/03 09:05',u:'Betty',a:'新增',cid:7,cn:'高雄岡山屋頂型光電',diff:[]},
+ {id:4,t:'2026/10/02 15:48',u:'Ian',a:'刪除',cid:99,cn:'（重複）台南七股麗升五福',diff:[]},
+ {id:5,t:'2026/09/30 10:21',u:'Betty',a:'編輯',cid:3,cn:'向陽義竹1-1期溫室科技養殖結合太陽光電',diff:[['COD（預計／實際）','2026/Q3','2026/Q4'],['Remarks','（空）','施工進度落後約一季']]}
+];
+let traceSeq=6;
+const ME='測試使用者';
+const S={secClosed:{},prev:null,view:'layers',manage:false,sel:null,editId:null,draft:null,orig:null,gov:true,vena:true,lf:{stage:[],county:'',town:'',q:''},popup:null,tf:{stage:[],county:'',town:'',q:'',act:'all'},empty:false,traceBack:'list',traceOpen:false,spatialOpen:false};
+
+/* ===== 左側圖示列 ===== */
+const IC={
+ layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 3 8l9 5 9-5-9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5"/></svg>',
+ spatial:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="11" r="3"/><path d="M12 14v4"/></svg>',
+ locate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+ manage:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
+};
+function renderRail(){
+ const b=(v,t,svg)=>`<button class="${S.view===v||(v==='manage'&&['list','medit','mtrace'].includes(S.view))?'active':''}" onclick="goRail('${v}')" data-tip="${t}" aria-label="${t}">${svg}${v==='manage'&&S.editId&&S.view!=='medit'?'<i class="dot"></i>':''}</button>`;
+ /* SPEC: F-02 競合分析管理入口 位置:左側圖示列「定位工具」下方；圖示用 Material Icons Outlined「article」，懸停顯示「競合分析管理」 */
+ document.getElementById('rail').innerHTML=b('layers','圖層套疊',IC.layers)+b('spatial','空間分析',IC.spatial)+b('locate','定位工具',IC.locate)+b('manage','競合分析管理',MI.article);
+}
+function goRail(v){
+ if(v==='manage'){enterManage();return;}
+ if(S.view==='medit'&&v!=='manage'){/* 編輯中仍可切去看其他圖層，鎖定保留 */}
+ S.view=v;render();
+}
+/* ===== 進出管理（F-07 圖層互斥） ===== */
+function enterManage(){
+ if(!S.manage){
+  S.manage=true;S.prev={gov:S.gov,vena:S.vena};
+  if(S.gov||S.vena){S.gov=false;S.vena=false;toast('已自動移除圖層套疊中的「競合分析」圖層，地圖改顯示管理清單的案場');}
+ }
+ S.view=S.editId?'medit':'list';render();
+}
+function closeManage(){
+ if(S.editId){modal(`<h3>尚有編輯中的案場</h3><p>離開管理將放棄未儲存的變更，並解除「${esc(curName())}」的鎖定。</p><div class="mf"><button class="btn" onclick="closeModal()">繼續編輯</button><button class="btn danger" onclick="releaseEdit();closeModal();doClose()">放棄並離開</button></div>`);return;}
+ doClose();
+}
+function doClose(){S.manage=false;S.sel=null;S.popup=null;S.view='layers';const p=S.prev||{};S.gov=!!p.gov;S.vena=!!p.vena;render();toast(p.gov||p.vena?'已離開競合分析管理，並還原進入前的競合分析圖層勾選':'已離開競合分析管理');}
+function curName(){return S.editId==='new'?'新案場':(cases.find(c=>c.id===S.editId)||{}).name||'';}
+
+/* ===== 面板 ===== */
+function render(){renderUser();renderRail();renderPanel();renderMap();renderNotes();}
+function renderPanel(){
+ const p=document.getElementById('panel');
+ if(S.view==='layers')p.innerHTML=viewLayers();
+ else if(S.view==='spatial'||S.view==='locate')p.innerHTML=viewStub();
+ else if(S.view==='list')p.innerHTML=viewList();
+ else if(S.view==='medit')p.innerHTML=viewEdit();
+ else if(S.view==='mtrace')p.innerHTML=viewTrace();
+ if(S.view==='medit')wireEdit();
+}
+function viewStub(){const n=S.view==='spatial'?'空間分析':'定位工具';return `<div class="panel-head"><h2>${n}</h2><button class="x" onclick="S.view=S.manage?(S.editId?'medit':'list'):'layers';render()">✕</button></div><div class="panel-body"><div class="empty"><b>（沿用現有畫面，本次不變動）</b>${S.manage?'目前仍在競合分析管理中，按 ✕ 回到管理面板。':''}</div></div>`;}
+
+function grp(ic,t,open=false,body=''){return `<div class="group ${open?'open':''}"><div class="gh" onclick="this.parentNode.classList.toggle('open')"><span class="gi">${ic}</span><span>${t}</span><span class="sp"></span><span>⌄</span></div><div class="gb">${body}</div></div>`;}
+function viewLayers(){
+ const dis=S.manage;
+ /* SPEC: F-01 圖層套疊新增分類「競合分析」；F-07 管理模式中本分類停用 */
+ const comp=`<div class="group open ${dis?'disabled':''}"><div class="gh" onclick="this.parentNode.classList.toggle('open')"><span class="gi">⚔</span><span>競合分析</span><span class="tag edit" style="margin-left:6px">新增</span><span class="sp"></span><span>⌃</span></div><div class="gb">
+ ${dis?'<div class="callout info">ℹ️ 競合分析管理使用中，此分類由管理功能提供地圖顯示，暫時無法勾選。其他分類的圖層仍可自由疊加。</div>':''}
+ <div class="layer-row"><input type="checkbox" ${S.gov?'checked':''} ${dis?'disabled':''} onchange="S.gov=this.checked;renderMap()"><div class="nm">能源署核准案場</div></div>
+ <div class="layer-row"><input type="checkbox" ${S.vena?'checked':''} ${dis?'disabled':''} onchange="S.vena=this.checked;renderMap()"><div class="nm">韋能調查案場</div></div>
+ </div></div>`;
+ return `<div class="panel-head"><h2>圖層套疊</h2><button class="x" onclick="S.view=S.manage?(S.editId?'medit':'list'):'layers';if(!S.manage){}render()">✕</button></div><div class="panel-body">
+ <div class="search">🔍<input placeholder="搜尋圖層名稱"></div>
+ ${grp('🗺','基本圖資')}${grp('☀','日照與風力條件')}${grp('⚡','光電特定區位')}${grp('🏛','公有及台糖土地')}${grp('🔌','電路基礎設施')}${comp}${grp('📋','環境影響評估法')}${grp('🌊','海岸特定區位')}${grp('⚠','環境敏感地區一級')}
+ </div>`;
+}
+
+/* Material Icons（Outlined）24px，單色 currentColor */
+const SV=p=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="${p}"/></svg>`;
+const MI={
+ article:SV('M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z'),
+ add:SV('M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'),
+ download:SV('M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3h-2zm-1-4l-1.41-1.41L13 11.17V4h-2v7.17L8.41 9.59 7 11l5 5 5-5z'),
+ history:SV('M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'),
+ edit:SV('M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z'),
+ del:SV('M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z'),
+ lock:SV('M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM8.9 6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H8.9V6zM18 20H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z')
+};
+const KWF=c=>[c.name,c.pic,c.type,c.landuse,c.owner,c.major,c.partner,c.remarks].join('\u0001').toLowerCase();
+function caseMatch(c,o){const kw=(o.q||'').trim().toLowerCase();return (!o.stage.length||o.stage.includes(c.stage))&&(!o.county||c.county===o.county)&&(!o.town||c.town===o.town)&&(!kw||KWF(c).includes(kw));}
+function filtered(){return cases.filter(c=>caseMatch(c,S.lf));}
+const FO=k=>k==='tf'?S.tf:S.lf;
+function setF(k,f,v,keep){const o=FO(k);if(f==='stage'){const i=o.stage.indexOf(v);if(i>=0)o.stage.splice(i,1);else o.stage.push(v);}else{o[f]=v;if(f==='county')o.town='';}
+ if(keep){const el=document.activeElement,pos=el&&el.selectionStart;renderPanel();renderMap();const n=document.querySelector('.fbody .search input');if(n){n.focus();if(pos!=null)n.setSelectionRange(pos,pos);}}else render();}
+/* 篩選條件卡片：清單與編輯軌跡共用同一組條件控制項（開發階段多選、縣市＋鄉鎮市區、關鍵字）；footer 放該頁依條件提供的動作 */
+function filterCard(o,k,count,footer){
+ const chips=['開發中','籌設中','容許/變更中','施工中','已併網'].map(x=>`<button class="chip ${o.stage.includes(x)?'on':''}" onclick="setF('${k}','stage','${x}')">${x}</button>`).join('');
+ const cOpts=`<option value="">全部</option>`+Object.keys(TOWNS).map(c=>`<option ${c===o.county?'selected':''}>${c}</option>`).join('');
+ const tOpts=`<option value="">全部</option>`+(TOWNS[o.county]||[]).map(c=>`<option ${c===o.town?'selected':''}>${c}</option>`).join('');
+ const ck='closed_'+k,closed=S[ck]===true;
+ return `<div class="fcard"><div class="fbar" onclick="S['${ck}']=${!closed};render()"><span>篩選條件</span><span class="grow"></span><span class="chev">${closed?SV('M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z'):SV('M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z')}</span></div>
+  ${closed?'':`<div class="fbody">
+   <div class="fl">開發階段</div><div class="chips">${chips}</div>
+   <div class="fgrid"><div><div class="fl">縣市</div><select class="fsel" onchange="setF('${k}','county',this.value)">${cOpts}</select></div><div><div class="fl">鄉鎮市區</div><select class="fsel" onchange="setF('${k}','town',this.value)">${tOpts}</select></div></div>
+   <div class="fl">關鍵字查詢</div><div class="search"><input placeholder="輸入關鍵字" value="${esc(o.q)}" oninput="setF('${k}','q',this.value,true)"></div></div>`}
+  <div class="factions"><span class="stat">${count}</span><span class="grow"></span>${footer}</div></div>`;
+}
+function viewList(){
+ const L=S.empty?[]:filtered();
+ /* SPEC: F-02 案場清單（精簡版）— 每筆兩行：第一行為案場名稱（預留 20 字），被鎖定時鎖頭圖示固定在行尾、位於刪除按鈕正上方；第二行為開發階段、縣市 鄉鎮市區、圖示操作鈕。篩選條件卡片（預設展開、可收合），卡片底部列出符合筆數與依條件提供的「匯出」「編輯軌跡」；「新增案場」放標題列 */
+ const rows=L.map(c=>{
+  const lockedOther=c.lock&&c.lock.by!==ME, mine=c.lock&&c.lock.by===ME;
+  const btns=`<button class="ib" data-tip="編輯軌跡" onclick="event.stopPropagation();openTrace(${c.id},'list')">${MI.history}</button><button class="ib" data-tip="編輯" ${lockedOther?'disabled':''} onclick="event.stopPropagation();startEdit(${c.id})">${MI.edit}</button><button class="ib" data-tip="刪除" ${lockedOther?'disabled':''} onclick="event.stopPropagation();askDelete(${c.id})">${MI.del}</button>`;
+  return `<div class="case cp ${S.sel===c.id?'sel':''} ${lockedOther?'locked':''}" onclick="selCase(${c.id})">
+  <div class="r1"><span class="name" title="${esc(c.name)}">${esc(lockedOther&&[...c.name].length>18?[...c.name].slice(0,-3).join('')+'...':c.name)}</span>${lockedOther?`<span class="lockic" data-tip="編輯中，暫時無法編輯與刪除">${MI.lock}</span>`:''}</div>
+  <div class="r2"><span class="stage ${SCLS[c.stage]}">${c.stage}</span><span class="loc">${c.county} ${c.town}</span>${mine?'<span class="minebadge">編輯中</span>':''}<span class="grow"></span>${btns}</div></div>`;}).join('');
+ const foot=`<button class="btn sm withic" onclick="askExport()">${MI.download}匯出</button><button class="btn sm withic" onclick="openTrace('all','list')">${MI.history}編輯軌跡</button>`;
+ return `<div class="panel-head"><h2>競合分析管理</h2><div class="hbtns"><button class="btn sm primary withic" onclick="startEdit('new')">${MI.add}新增案場</button><button class="x" onclick="closeManage()">✕</button></div></div>
+ <div class="panel-body tight">
+  ${filterCard(S.lf,'lf',`共 <b>${L.length}</b> 筆`,foot)}
+  ${rows||`<div class="empty"><b>目前沒有案場資料</b>${S.empty?'按「新增案場」建立第一筆，或日後由匯入功能帶入（待定）。':'沒有符合條件的案場。'}</div>`}
+ </div>`;
+}
+function selCase(id){S.sel=id;if(!S.editId)S.popup=id;render();const c=cases.find(x=>x.id===id);if(c)flyTo(c.gl,c.gn,Math.max(M.z,12.2));}
+
+/* ===== 編輯（F-03、F-04） ===== */
+function startEdit(id){
+ if(id!=='new'){
+  const c=cases.find(x=>x.id===id);
+  if(c.lock&&c.lock.by!==ME){toast(`🔒 ${c.lock.by} 於 ${c.lock.since} 起正在編輯「${c.name}」，請待對方儲存或取消後再編輯`);return;}
+  if(S.editId&&S.editId!==id){toast('您正在編輯另一筆案場，請先儲存或取消');return;}
+  c.lock={by:ME,since:'現在'};
+  S.orig=JSON.parse(JSON.stringify(c));S.draft=JSON.parse(JSON.stringify(c));S.draft.posMode='coord';S.secClosed={};S.sel=id;flyTo(c.gl,c.gn,Math.max(M.z,12.2));
+ }else{
+  if(S.editId){toast('您正在編輯另一筆案場，請先儲存或取消');return;}
+  S.orig=null;S.draft={csys:'WGS84 經緯度',name:'',pic:'',county:'',town:'',lat:'',lng:'',type:'',landuse:'',owner:'',major:'',partner:'',start:'',cap:'',tcap:'',area:'',stage:'',remarks:'',posMode:'map'};PH.forEach(p=>{S.draft['ph_'+p.k]='';S.draft['ym_'+p.k]='';});
+ }
+ S.editId=id;S.popup=null;S.view='medit';S.traceOpen=false;S.pick=false;syncDraftPos();render();
+}
+function toggleSec(s){S.secClosed[s]=S.secClosed[s]===false?true:(S.secClosed[s]===true?false:true);rerenderEdit();}
+function phaseHtml(d){return `<div class="fld"><label>開發進度項目 <span class="req">*</span></label>`+PH.map(p=>{const on=d['ph_'+p.k]==='1';return `<div class="ph ${on?'on':''}"><label class="phl"><input type="checkbox" data-k="ph_${p.k}" ${on?'checked':''}> ${p.l}</label><input type="month" data-k="ym_${p.k}" value="${esc(d['ym_'+p.k]||'')}" ${on?'':'disabled'} title="達成年月（選填）"><span class="to">${p.map}</span></div>`;}).join('')+`</div>`;}
+function fieldHtml(F,d){
+ const tw=isTW(d),v=d[F.k]??'';let inp;
+ if(F.k==='pic')return `<div class="fld inl"><label>案場編號</label><span>${esc(v)||'儲存後由系統自動編號'}</span></div>`;
+ const lbl=F.k==='lat'?(tw?'Y（N，公尺）':F.l):F.k==='lng'?(tw?'X（E，公尺）':F.l):F.l;
+ const hnt=F.k==='lat'?(tw?'TWD97 TM2，如 2613047.1':F.hint):F.k==='lng'?(tw?'TWD97 TM2，如 201459.0':F.hint):(F.hint||(F.max&&F.t!=='area'?`最多 ${F.max} 字`:''));
+ if(F.t==='auto'){
+  if(F.k==='pic')inp=`<input readonly value="${esc(v)}" placeholder="儲存後由系統自動編號">`;
+  else{const ch=S.orig&&S.orig.stage!==v;inp=`<div class="autov ${ch?'changed':''}">${v?`<span class="stage ${SCLS[v]}">${v}</span>`:'<span class="hint">—</span>'} <span class="hint">依已達成開發進度項目自動判斷</span></div>`;}
+ }else if(F.t==='select'){
+  const opts=F.k==='town'?(TOWNS[d.county]||[]):F.o;
+  inp=`<select data-k="${F.k}">${F.req||F.k==='town'?'':''}<option value="">${F.k==='town'&&!d.county?'請先選縣市':'請選擇'}</option>${opts.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+  if(F.k==='csys')inp=`<select data-k="${F.k}">${F.o.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
+ }else if(F.t==='area')inp=`<textarea data-k="${F.k}" maxlength="${F.max}" placeholder="最多 ${F.max} 字">${esc(v)}</textarea>`;
+ else if(F.t==='num')inp=`<input type="number" step="any" min="0" data-k="${F.k}" value="${esc(v)}">`;
+ else if(F.t==='month')inp=`<input type="month" data-k="${F.k}" value="${esc(v)}">`;
+ else inp=`<input data-k="${F.k}" value="${esc(v)}" ${F.max?`maxlength="${F.max}"`:''} ${F.t==='coord'&&d.posMode==='map'?'readonly':''}>`;
+ return (F.k==='csys'?'<div class="subh">坐標 <span class="req">*</span><span class="hint">　可於地圖上點選或輸入坐標，支援 WGS84、TWD97</span></div>':'')+`<div class="fld"><label>${lbl}${F.req?' <span class="req">*</span>':''}</label>${inp}${hnt?`<div class="hint">${hnt}</div>`:''}</div>`;
+}
+function viewEdit(){
+ const isNew=S.editId==='new',d=S.draft;
+ /* SPEC: F-03 編輯欄位依分類呈現，分類可收合（土地基礎資訊／投資市場／裝置容量／開發進度）；案場名稱、案場編號、備註無分類、不收合 */
+ const secs=secs0();
+ const top=FIELDS.filter(F=>!F.sec&&F.k!=='remarks').map(F=>fieldHtml(F,d)).join(''),bottom=FIELDS.filter(F=>!F.sec&&F.k==='remarks').map(F=>fieldHtml(F,d)).join('');
+ const f=secs.map(sec=>{const open=S.secClosed[sec]!==true;
+  let inner=FIELDS.filter(F=>F.sec===sec).map(F=>F.k==='county'?`<div class="fgrid">${fieldHtml(F,d)}${fieldHtml(FIELDS.find(x=>x.k==='town'),d)}</div>`:(F.k==='town'||F.k==='lat'||F.k==='lng')?'':F.k==='csys'?coordBlock(d):fieldHtml(F,d)).join('');
+  if(sec==='開發進度')inner+=phaseHtml(d);
+  return `<div class="sec ${open?'open':''}"><div class="fsec acc" onclick="toggleSec('${sec}')"><span>${sec}</span><span class="chev">${open?SV('M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z'):SV('M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z')}</span></div><div class="secbody">${inner}</div></div>`;}).join('');
+ const ev=isNew?[]:traces.filter(t=>t.cid===S.editId).slice(0,3);
+ /* SPEC: F-04 共編鎖定提示；F-05 編輯畫面內嵌「此案場編輯軌跡」 */
+ return `<div class="panel-head"><h2>${isNew?'新增案場':'編輯案場'}</h2><button class="x" onclick="closeManage()">✕</button></div>
+ <div class="panel-body"><button class="back" onclick="backList()">‹ 返回</button>
+  ${isNew?'':'<div class="callout lock">編輯中：其他人暫時無法編輯此案場；閒置 30 分鐘將自動解除鎖定。</div>'}
+  ${top}${f}${bottom}
+  ${isNew?'':`<div class="inline-trace ${S.traceOpen?'open':''}"><div class="th" onclick="S.traceOpen=!S.traceOpen;this.parentNode.classList.toggle('open')">${MI.history} 此案場編輯軌跡（${traces.filter(t=>t.cid===S.editId).length}）<span class="sp"></span><span class="chevs">${SV('M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z')}</span></div><div class="tb">${ev.map(evHtml).join('')||'<div class="stat">尚無紀錄</div>'}</div></div>`}
+ </div>
+ <div class="panel-foot"><button class="btn" onclick="backList()">取消</button><button class="btn primary" onclick="saveEdit()">儲存</button></div>`;
+}
+function secs0(){return [...new Set(FIELDS.filter(F=>F.sec).map(F=>F.sec))];}
+function wireEdit(){
+ document.querySelectorAll('#panel [data-k]').forEach(el=>{
+  const k=el.dataset.k;
+  const h=()=>{const oldCs=S.draft.csys;S.draft[k]=el.type==='checkbox'?(el.checked?'1':''):el.value;
+   if(k==='csys'){convertCs(oldCs,el.value);rerenderEdit();syncDraftPos();drawMap();return;}
+   if(k==='county'){S.draft.town='';rerenderEdit();return;}
+   if(k.startsWith('ph_')){S.draft.stage=calcStage(S.draft);rerenderEdit();return;}
+   if(k==='lat'||k==='lng'){syncDraftPos();drawMap();}
+   const o=S.orig?S.orig[k]:'';el.classList.toggle('changed',el.value!==(o??'')&&(S.orig||el.value!==''));};
+  el.addEventListener('input',h);el.addEventListener('change',h);
+  if(el.type!=='checkbox'){const o0=S.orig?S.orig[k]:'';el.classList.toggle('changed',el.value!==(o0??'')&&(S.orig||el.tagName!=='SELECT'&&el.value!==''));}
+ });
+}
+/* ===== 位置設定：輸入坐標 或 地圖點選（F-03） ===== */
+function toTWD97(lat,lng){const a=6378137,e2=0.00669438002290,k0=0.9999,lon0=121*Math.PI/180,phi=lat*Math.PI/180,lam=lng*Math.PI/180;
+ const ep2=e2/(1-e2),N=a/Math.sqrt(1-e2*Math.sin(phi)**2),T=Math.tan(phi)**2,C=ep2*Math.cos(phi)**2,A=(lam-lon0)*Math.cos(phi),e4=e2*e2,e6=e4*e2;
+ const Mr=a*((1-e2/4-3*e4/64-5*e6/256)*phi-(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)+(15*e4/256+45*e6/1024)*Math.sin(4*phi)-(35*e6/3072)*Math.sin(6*phi));
+ return [k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120)+250000,k0*(Mr+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720))];}
+function fromTWD97(x,y){let la=y/110950,ln=121+(x-250000)/102000;for(let i=0;i<8;i++){const p=toTWD97(la,ln);la+=(y-p[1])/110950;ln+=(x-p[0])/(111320*Math.cos(la*Math.PI/180));}return [la,ln];}
+const isTW=d=>(d.csys||'').startsWith('TWD97');
+function parsePos(d){const a=parseFloat(d.lat),b=parseFloat(d.lng);if(isNaN(a)||isNaN(b))return null;return isTW(d)?fromTWD97(b,a):[a,b];}
+function fmtPos(la,ln,tw){if(tw){const p=toTWD97(la,ln);return {lat:p[1].toFixed(1),lng:p[0].toFixed(1)};}return {lat:la.toFixed(5),lng:ln.toFixed(5)};}
+function syncDraftPos(){S.draftPos=S.draft?parsePos(S.draft):null;}
+function convertCs(oldCs,newCs){if(oldCs===newCs)return;const p=parsePos({lat:S.draft.lat,lng:S.draft.lng,csys:oldCs});if(p)Object.assign(S.draft,fmtPos(p[0],p[1],newCs.startsWith('TWD97')));}
+function rerenderEdit(){const b=document.querySelector('#panel .panel-body'),y=b?b.scrollTop:0;renderPanel();const b2=document.querySelector('#panel .panel-body');if(b2)b2.scrollTop=y;}
+function setPosFromWgs(la,ln){Object.assign(S.draft,fmtPos(la,ln,isTW(S.draft)));S.pick=false;syncDraftPos();rerenderEdit();drawMap();toast('已帶入坐標：'+S.draft.lat+', '+S.draft.lng+'（可再點選修正）');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.pick){S.pick=false;rerenderEdit();drawMap();}});
+function renderUser(){const u=document.getElementById('uc');if(u)u.innerHTML='👤 '+ME+' <a href="#">登出</a>';}
+/* ===== 坐標設定：輸入坐標（預設）／地圖點選（標記完自動切回輸入坐標）（F-03） ===== */
+const CSYS=['WGS84 經緯度','TWD97 TM2 121分帶'];
+function coordBlock(d){const tw=isTW(d),pk=!!S.pick;
+ const head=`<div class="coordhead"><span class="lbl">坐標 <span class="req">*</span></span><div class="seg"><button class="${pk?'':'on'}" onclick="setPosMode('coord')">輸入坐標</button><button class="${pk?'on':''}" onclick="setPosMode('map')">地圖點選</button></div></div>`;
+ if(pk)return `<div class="fld">${head}<div class="hint" style="margin-top:6px">請在地圖上點一下標記位置（Esc 取消）；標記完成後會自動切回「輸入坐標」。</div></div>`;
+ const ph=(k)=>({lat:tw?'例：2613047.1':'例：23.1557',lng:tw?'例：201459.0':'例：120.0982'})[k];
+ return `<div class="fld">${head}<div class="fld"><label>坐標系統</label><select data-k="csys">${CSYS.map(o=>`<option ${o===d.csys?'selected':''}>${o}</option>`).join('')}</select></div>
+  <div class="fgrid"><div class="fld"><label>${tw?'Y 坐標':'緯度'}</label><input data-k="lat" inputmode="decimal" placeholder="${ph('lat')}" value="${esc(d.lat||'')}"></div><div class="fld"><label>${tw?'X 坐標':'經度'}</label><input data-k="lng" inputmode="decimal" placeholder="${ph('lng')}" value="${esc(d.lng||'')}"></div></div></div>`;}
+function coordCheck(d){const a=parseFloat(d.lat),b=parseFloat(d.lng);if(isNaN(a)||isNaN(b))return '請輸入完整的坐標（'+(isTW(d)?'Y、X 坐標':'緯度、經度')+'）';
+ if(isTW(d)){if(b<100000||b>400000)return 'X 坐標需介於 100000～400000';if(a<2400000||a>2900000)return 'Y 坐標需介於 2400000～2900000';}
+ else{if(a<21||a>26)return '緯度需介於 21～26';if(b<118||b>123)return '經度需介於 118～123';}return '';}
+function setPosMode(m){if(m==='map'){S.pick=true;if(M.z<12)flyTo(M.lat,M.lng,12);}else S.pick=false;rerenderEdit();drawMap();}
+function pickToggle(){setPosMode(S.pick?'coord':'map');}
+function showPop(id){if(S.editId)return;S.popup=id;S.sel=id;if(S.view==='list')renderPanel();drawMap();}
+function infoHtml(c){return `<button class="x" onclick="S.popup=null;drawMap()">✕</button><div class="ttl">${esc(c.name)}</div><div class="row"><span>案場編號</span><b>${esc(c.pic)}</b></div><div class="row"><span>縣市／鄉鎮市區</span><b>${c.county} ${c.town}</b></div><div class="row"><span>光電類型</span><b>${esc(c.type||'—')}</b></div><div class="row"><span>開發階段</span><b><span class="stage ${SCLS[c.stage]}">${c.stage}</span></b></div><div class="row"><span>裝置容量（MW）</span><b>${esc(c.cap||'—')}</b></div>`;}
+function showIdleWarn(){modal(`<h3>即將解除編輯鎖定</h3><p>您已閒置將近 30 分鐘，約 5 分鐘後將自動解除此案場的鎖定，讓其他人可以編輯。</p><p style="font-size:13px;color:#666">系統不會自動儲存您目前的修改，請先儲存，或繼續編輯。</p><div class="mf"><button class="btn" onclick="closeModal();backList()">放棄並離開</button><button class="btn primary" onclick="closeModal()">繼續編輯</button></div>`);}
+function releaseEdit(){if(S.editId&&S.editId!=='new'){const c=cases.find(x=>x.id===S.editId);if(c)c.lock=null;}S.editId=null;S.draft=null;S.orig=null;S.pick=false;S.draftPos=null;drawMap();}
+function backList(){releaseEdit();S.view='list';render();}
+function saveEdit(){
+ const d=Object.assign({},S.draft);delete d.posMode;d.stage=calcStage(d);
+ for(const F of FIELDS){if(F.req&&F.t!=='coord'&&!String(d[F.k]||'').trim()){toast(`請填寫「${F.l}」`);return;}}
+ for(const F of FIELDS){if(F.t==='num'&&d[F.k]&&isNaN(+d[F.k])){toast(`「${F.l}」需為數字`);return;}}
+ {const ce=coordCheck(d);if(ce){toast(ce);return;}}
+ if(!PH.some(p=>d['ph_'+p.k]==='1')){S.secClosed['開發進度']=false;rerenderEdit();toast('請至少勾選一項開發進度項目');return;}
+ if(!S.draftPos){toast('請設定案場位置：輸入坐標，或在地圖上點選');return;}
+ const now='2026/10/13 '+new Date().toTimeString().slice(0,5);
+ if(S.editId==='new'){
+  const c=Object.assign({id:nextId++,gl:S.draftPos[0],gn:S.draftPos[1],upd:ME+' '+now.slice(0,10),lock:null},d);c.pic=String(1000+c.id);cases.push(c);
+  traces.unshift({id:traceSeq++,t:now,u:ME,a:'新增',cid:c.id,cn:c.name,diff:[]});S.sel=c.id;toast('已新增案場並寫入編輯軌跡');
+ }else{
+  const fm=(k,v)=>k.startsWith('ph_')?(v==='1'?'已達成':'未達成'):(v||'（空）');
+  const diff=[];ALLK.forEach(([k,l])=>{const a=S.orig[k]||'',b=d[k]||'';if(a!==b)diff.push([l,fm(k,a),fm(k,b)]);});
+  if(!diff.length){toast('沒有任何變更，已解除鎖定');backList();return;}
+  const c=cases.find(x=>x.id===S.editId);Object.assign(c,d,{upd:ME+' '+now.slice(0,10),gl:S.draftPos[0],gn:S.draftPos[1]});
+  traces.unshift({id:traceSeq++,t:now,u:ME,a:'編輯',cid:c.id,cn:c.name,diff});toast(`已儲存 ${diff.length} 項變更並寫入編輯軌跡`);
+ }
+ document.getElementById('infowin').dataset.id='';releaseEdit();S.view='list';render();
+}
+/* ===== 刪除 ===== */
+function askDelete(id){const c=cases.find(x=>x.id===id);modal(`<h3>刪除案場</h3><p>確定刪除「${esc(c.name)}」？</p><p style="font-size:13px;color:#666">案場會從清單與地圖移除；刪除動作會留在編輯軌跡中。刪除後不可復原（PM 已確認）。</p><div class="mf"><button class="btn" onclick="closeModal()">取消</button><button class="btn danger" onclick="doDelete(${id})">確定刪除</button></div>`);}
+function doDelete(id){const c=cases.find(x=>x.id===id);traces.unshift({id:traceSeq++,t:'2026/10/13 '+new Date().toTimeString().slice(0,5),u:ME,a:'刪除',cid:c.id,cn:c.name,diff:[]});cases=cases.filter(x=>x.id!==id);if(S.sel===id)S.sel=null;closeModal();render();toast('已刪除，並寫入編輯軌跡');}
+/* ===== 匯出（F-06） ===== */
+/* SPEC: F-06 匯出 — 點擊後直接產出 Excel（.xlsx），不再跳出選項視窗；檔名「競合分析管理_yyyymmdd.xlsx」；範圍＝清單目前篩選條件的結果 */
+function askExport(){const d=new Date(),ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');toast(`已匯出「競合分析管理_${ymd}.xlsx」（共 ${filtered().length} 筆，依目前篩選條件）`);}
+/* ===== 編輯軌跡（F-05） ===== */
+function openTrace(cid,back){if(cid==='all'){const o=S.lf;S.tf={stage:[...o.stage],county:o.county,town:o.town,q:o.q,act:'all'};}else{const c=cases.find(x=>x.id===cid),t=traces.find(x=>x.cid===cid);S.tf={stage:[],county:'',town:'',q:c?c.name:(t?t.cn:''),act:'all'};}S.traceBack=back;S.view='mtrace';if(!S.manage)S.manage=true;render();}
+function evHtml(e){
+ return `<div class="ev ${e.a}"><div class="eh"><span class="act ${e.a}">${e.a}</span><span class="meta">${e.t}・${e.u}</span></div>
+ ${cases.some(c=>c.id===e.cid)?`<div class="cn link" onclick="startEdit(${e.cid})" title="前往編輯此案場">${esc(e.cn)}</div>`:`<div class="cn">${esc(e.cn)}</div>`}
+ ${e.a==='編輯'&&e.diff.length?`<table class="diff"><tr><th>欄位</th><th>修改前</th><th>修改後</th></tr>${e.diff.map(d=>`<tr><td>${d[0]}</td><td class="old">${esc(d[1])}</td><td class="new">${esc(d[2])}</td></tr>`).join('')}</table>`:''}
+ ${e.a==='新增'?'<div class="meta">建立案場資料</div>':''}${e.a==='刪除'?'<div class="meta">案場已刪除</div>':''}</div>`;
+}
+function filterSummary(o){o=o||S.lf;const p=[];if(o.stage.length)p.push('開發階段：'+o.stage.join('、'));if(o.county)p.push('縣市：'+o.county);if(o.town)p.push('鄉鎮市區：'+o.town);if((o.q||'').trim())p.push('關鍵字：'+esc(o.q.trim()));return p.join('｜')||'無（全部案場）';}
+function traceByName(cid){const t=traces.find(x=>x.cid===cid);S.tf={stage:[],county:'',town:'',q:t?t.cn:'',act:S.tf.act};render();}
+function viewTrace(){
+ const kw=(S.tf.q||'').trim().toLowerCase();
+ const L=traces.filter(t=>{const c=cases.find(x=>x.id===t.cid);const ok=c?caseMatch(c,S.tf):(!S.tf.stage.length&&!S.tf.county&&!S.tf.town&&(!kw||t.cn.toLowerCase().includes(kw)));const dd=t.t.slice(0,10).split('/').join('-');return ok&&(!S.tf.from||dd>=S.tf.from)&&(!S.tf.to||dd<=S.tf.to)&&(S.tf.act==='all'||t.a===S.tf.act);});
+ /* SPEC: F-05 編輯軌跡查詢 — 頁面顯示完整的篩選條件（開發階段／縣市／鄉鎮市區／關鍵字）＋動作篩選。從清單進入時預帶清單目前的篩選條件；從單一案場進入時，案場名稱帶入關鍵字查詢（其餘條件清空）；軌跡頁的「異動時間區間」（兩個日期欄位，中間以「~」連接，不標示「起」「迄」文字）與「動作」篩選放在同一區塊（卡片下半部，不在案場篩選條件內）；點軌跡中的案場名稱＝以該名稱查詢。軌跡頁的條件獨立於清單，可再調整 */
+ const acts=['all','新增','編輯','刪除'].map(a=>`<button class="chip ${S.tf.act===a?'on':''}" onclick="S.tf.act='${a}';render()">${a==='all'?'全部':a}</button>`).join('');
+ const foot=`<div style="width:100%"><div class="fl" style="margin-top:4px">動作</div><div class="chips">${acts}</div><div class="fl">異動時間區間</div><div class="drange"><input type="date" class="fsel" value="${S.tf.from||''}" onchange="setF('tf','from',this.value)"><span>~</span><input type="date" class="fsel" value="${S.tf.to||''}" onchange="setF('tf','to',this.value)"></div></div>`;
+ return `<div class="panel-head"><h2>編輯軌跡</h2><button class="x" onclick="closeManage()">✕</button></div>
+ <div class="panel-body"><button class="back" onclick="S.view='${S.traceBack}';render()">‹ 返回</button>
+  ${filterCard(S.tf,'tf',`共 <b>${L.length}</b> 筆紀錄`,foot)}
+  <div class="tl">${L.map(evHtml).join('')||'<div class="empty"><b>沒有符合條件的紀錄</b></div>'}</div></div>`;
+}
+/* ===== 地圖 ===== */
+const PIN=(c)=>`<svg viewBox="0 0 26 34"><path d="M13 0C6 0 1 5 1 12c0 9 12 22 12 22s12-13 12-22C25 5 20 0 13 0z" fill="${c}" stroke="#fff" stroke-width="1.5"/><circle cx="13" cy="12" r="4.5" fill="#fff"/></svg>`;
+const SC={開發中:'#30C0B1',籌設中:'#2BB0EC',"容許/變更中":'#3F76ED',施工中:'#645CE8',已併網:'#8C52EF'}; /* 科技感冷色漸進，底色再刷白約 28%；點位色＝同色系略深（2026-11-13 第二次調整） */
+const SCLS={'開發中':'s1','籌設中':'s2','容許/變更中':'s3','施工中':'s4','已併網':'s5'};
+/* 底圖為離線示意（簡化台灣輪廓）；正式版改用 Mapbox GL，熱區用其 heatmap layer，點位用 circle/symbol layer（規格 F-08） */
+const TW=[[121.6,25.3],[121.95,25.05],[121.85,24.6],[121.85,24.1],[121.62,23.5],[121.35,22.95],[120.9,22.35],[120.85,21.9],[120.7,22.05],[120.3,22.45],[120.2,22.8],[120.08,23.05],[120.1,23.5],[120.2,23.9],[120.45,24.2],[120.65,24.5],[120.85,24.95],[121.2,25.2]];
+const CITY=[['台北',25.04,121.52],['台中',24.15,120.67],['台南',22.99,120.2],['高雄',22.63,120.3],['花蓮',23.98,121.6]];
+const GOV=[[23.20,120.28,23.30,120.40],[23.58,120.10,23.68,120.20],[22.45,120.44,22.57,120.58],[23.95,120.28,24.05,120.38]];
+const M={lat:23.6,lng:120.95,z:8.4,w:0,h:0};S.govOp=.55;
+const HEAT_END=11.8,HEAT_START=10.6;
+function proj(lat,lng,z){const s=256*Math.pow(2,z??M.z),sn=Math.sin(lat*Math.PI/180);return [(lng+180)/360*s,(0.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*s];}
+function unproj(x,y){const s=256*Math.pow(2,M.z);return [Math.atan(Math.sinh(Math.PI*(1-2*y/s)))*180/Math.PI,x/s*360-180];}
+function toScr(lat,lng){const p=proj(lat,lng),c=proj(M.lat,M.lng);return [M.w/2+p[0]-c[0],M.h/2+p[1]-c[1]];}
+function setCenterFromScr(lat,lng,mx,my){const p=proj(lat,lng);const c=unproj(p[0]-(mx-M.w/2),p[1]-(my-M.h/2));M.lat=c[0];M.lng=c[1];}
+const LUT=(function(){const st=[[0,[59,111,212]],[.25,[41,182,200]],[.45,[126,217,87]],[.65,[255,212,0]],[.85,[255,138,0]],[1,[229,37,31]]],L=[];for(let i=0;i<256;i++){const t=i/255;let a=st[0],b=st[st.length-1];for(let j=0;j<st.length-1;j++)if(t>=st[j][0]&&t<=st[j+1][0]){a=st[j];b=st[j+1];break;}const f=(t-a[0])/((b[0]-a[0])||1);L.push(a[1].map((v,k)=>Math.round(v+(b[1][k]-v)*f)));}return L;})();
+const hc=document.createElement('canvas');
+let raf=0;function drawMap(){if(!raf)raf=requestAnimationFrame(()=>{raf=0;drawNow();});}
+function heatOp(){return Math.min(1,Math.max(0,(HEAT_END-M.z)/(HEAT_END-HEAT_START)));}
+function visibleCases(){if(S.empty)return[];if(S.manage)return filtered();return S.vena?cases:[];}
+function drawNow(){
+ const mp=document.getElementById('map'),r=mp.getBoundingClientRect();M.w=Math.round(r.width);M.h=Math.round(r.height);
+ const cv=document.getElementById('cv');if(cv.width!==M.w||cv.height!==M.h){cv.width=M.w;cv.height=M.h;hc.width=M.w;hc.height=M.h;}
+ const g=cv.getContext('2d');g.fillStyle='#a9c7ec';g.fillRect(0,0,M.w,M.h);
+ g.beginPath();TW.forEach((p,i)=>{const q=toScr(p[1],p[0]);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);});g.closePath();g.fillStyle='#f2ede8';g.fill();g.strokeStyle='#8fa6c6';g.lineWidth=1.5;g.stroke();
+ g.strokeStyle='rgba(120,140,170,.18)';g.lineWidth=1;for(let la=21;la<=26;la+=.5){const a=toScr(la,119),b=toScr(la,123);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}for(let ln=119;ln<=123;ln+=.5){const a=toScr(26,ln),b=toScr(21,ln);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}
+ g.fillStyle='#8a8f98';g.font='15px sans-serif';g.textAlign='center';CITY.forEach(c=>{const q=toScr(c[1],c[2]);g.fillRect(q[0]-2,q[1]-2,4,4);g.fillText(c[0],q[0],q[1]-8);});
+ const showG=!S.manage&&S.gov;
+ if(showG){g.fillStyle='rgba(230,91,91,'+S.govOp+')';g.strokeStyle='rgba(183,28,28,'+Math.min(1,S.govOp+.3)+')';g.lineWidth=2;GOV.forEach(b=>{const a=toScr(b[0],b[1]),c=toScr(b[2],b[3]);g.fillRect(a[0],c[1],c[0]-a[0],a[1]-c[1]);g.strokeRect(a[0],c[1],c[0]-a[0],a[1]-c[1]);});}
+ const V=visibleCases(),ho=heatOp();
+ if(ho>0&&V.length){
+  const h2=hc.getContext('2d');h2.clearRect(0,0,M.w,M.h);const R=Math.max(16,46-(M.z-8)*9);
+  V.forEach(c=>{const q=toScr(c.gl,c.gn);if(q[0]<-R||q[1]<-R||q[0]>M.w+R||q[1]>M.h+R)return;const gr=h2.createRadialGradient(q[0],q[1],0,q[0],q[1],R);gr.addColorStop(0,'rgba(0,0,0,.14)');gr.addColorStop(1,'rgba(0,0,0,0)');h2.fillStyle=gr;h2.beginPath();h2.arc(q[0],q[1],R,0,7);h2.fill();});
+  const im=h2.getImageData(0,0,M.w,M.h),d=im.data;for(let i=0;i<d.length;i+=4){const a=d[i+3];if(a){const c=LUT[Math.min(255,Math.round(a*2.2))];d[i]=c[0];d[i+1]=c[1];d[i+2]=c[2];d[i+3]=Math.min(255,a*3)*ho*.9;}}
+  h2.putImageData(im,0,0);g.drawImage(hc,0,0);
+ }
+ const po=1-ho;document.querySelectorAll('#markers .mk').forEach(m=>{const c=cases.find(x=>x.id===+m.dataset.id);if(!c)return;const q=toScr(c.gl,c.gn);m.style.left=q[0]+'px';m.style.top=q[1]+'px';const sel=m.classList.contains('sel');m.style.opacity=sel?1:po;m.style.pointerEvents=(sel||po>.3)?'auto':'none';m.style.display=(q[0]<-40||q[1]<-60||q[0]>M.w+40||q[1]>M.h+40)?'none':'block';});
+ const iw=document.getElementById('infowin'),pc=(S.popup&&!S.editId)?cases.find(x=>x.id===S.popup):null;
+ if(pc&&visibleCases().includes(pc)){if(iw.dataset.id!==String(pc.id)){iw.innerHTML=infoHtml(pc);iw.dataset.id=String(pc.id);}const pq=toScr(pc.gl,pc.gn);iw.style.display='block';iw.style.left=pq[0]+'px';iw.style.top=(pq[1]-40)+'px';}else iw.style.display='none';
+ const dp=document.getElementById('draftpin');if(S.draftPos&&S.editId){const q=toScr(S.draftPos[0],S.draftPos[1]);dp.style.display='block';dp.style.left=q[0]+'px';dp.style.top=q[1]+'px';}else dp.style.display='none';
+ mp.classList.toggle('pick',!!S.pick);document.getElementById('pickbar').classList.toggle('on',!!S.pick);
+ document.getElementById('zoomtag').textContent='縮放 '+M.z.toFixed(1)+'｜'+(ho>.5?'熱區模式（案場密度）':ho>0?'熱區↔點位切換中':'點位模式');
+ const mpp=156543.03*Math.cos(M.lat*Math.PI/180)/Math.pow(2,M.z),steps=[100,200,500,1000,2000,5000,10000,20000,50000,100000];let dist=steps[0];for(const s of steps){if(s/mpp<=140)dist=s;}
+ const sc=document.getElementById('scale');sc.style.width=Math.round(dist/mpp)+'px';sc.textContent=dist>=1000?dist/1000+' km':dist+' m';
+}
+function renderMap(){
+ const V=visibleCases(),showG=!S.manage&&S.gov;
+ document.getElementById('markers').innerHTML=V.map(c=>`<div class="mk ${S.sel===c.id?'sel':''} ${c.lock&&c.lock.by!==ME?'lockedmk':''}" data-id="${c.id}" onclick="${S.manage&&S.view==='list'?`selCase(${c.id})`:`showPop(${c.id})`}">${PIN(SC[c.stage])}<span class="lab">${esc(c.name)}</span>${c.lock?'<span class="lk">🔒</span>':''}</div>`).join('');
+ const b=document.getElementById('mapbadge');
+ b.className='mapbadge'+(S.manage?' on':'');b.textContent=`競合分析管理中：地圖顯示韋能調查案場（${V.length} 筆）；可於「圖層套疊」疊加其他圖層`;
+ /* SPEC: F-07 管理中隱藏能源署面圖層；F-08 縮小呈熱區、放大呈點位 */
+ const heatBar='<span style="display:inline-block;width:120px;height:10px;vertical-align:middle;background:linear-gradient(90deg,#3b6fd4,#29b6c8,#7ed957,#ffd400,#ff8a00,#e5251f)"></span>';
+ document.getElementById('legend').innerHTML='<b>競合分析</b><br>'+(showG?'<i style="background:#e65b5b"></i>能源署核准案場<br>':'')+'熱區：疏 '+heatBar+' 密<br><span style="color:#888">放大到約 z11 以上顯示個別點位</span><br>'+Object.keys(SC).map(k=>`<i style="background:${SC[k]}"></i>韋能調查案場・${k}`).join('<br>');
+ drawMap();
+}
+function zoomBy(d){flyTo(M.lat,M.lng,Math.min(16,Math.max(6.5,M.z+d)));}
+let anim=0;function flyTo(lat,lng,z){const a=[M.lat,M.lng,M.z],t0=performance.now(),D=450;cancelAnimationFrame(anim);const step=t=>{const f=Math.min(1,(t-t0)/D),e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2;M.lat=a[0]+(lat-a[0])*e;M.lng=a[1]+(lng-a[1])*e;M.z=a[2]+(z-a[2])*e;drawNow();if(f<1)anim=requestAnimationFrame(step);};anim=requestAnimationFrame(step);}
+(function(){const mp=document.getElementById('map');let drag=null;
+ mp.addEventListener('pointerdown',e=>{if(e.target.closest('.mk,.map-tools,.legend-btn,.legend'))return;cancelAnimationFrame(anim);drag={x:e.clientX,y:e.clientY,moved:0};mp.setPointerCapture(e.pointerId);mp.classList.add('grab');});
+ mp.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);drag.x=e.clientX;drag.y=e.clientY;const c=proj(M.lat,M.lng),n=unproj(c[0]-dx,c[1]-dy);M.lat=n[0];M.lng=n[1];drawMap();});
+ const up=e=>{const d0=drag;drag=null;mp.classList.remove('grab');if(d0&&e.type==='pointerup'&&d0.moved<4&&S.pick){const r=mp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,c=proj(M.lat,M.lng),p=unproj(c[0]+mx-M.w/2,c[1]+my-M.h/2);setPosFromWgs(p[0],p[1]);}};mp.addEventListener('pointerup',up);mp.addEventListener('pointercancel',up);
+ mp.addEventListener('wheel',e=>{e.preventDefault();cancelAnimationFrame(anim);const r=mp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,c=proj(M.lat,M.lng),cur=unproj(c[0]+mx-M.w/2,c[1]+my-M.h/2);M.z=Math.min(16,Math.max(6.5,M.z-e.deltaY*.0025));setCenterFromScr(cur[0],cur[1],mx,my);drawMap();},{passive:false});
+ mp.addEventListener('dblclick',e=>{if(e.target.closest('.mk,.map-tools,.legend-btn,.legend'))return;zoomBy(1);});
+ window.addEventListener('resize',drawMap);})();
+/* ===== 共用 ===== */
+function esc(s){return String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),4200);}
+function modal(h){document.getElementById('modalbox').innerHTML=h;document.getElementById('modal').classList.add('on');}
+function closeModal(){document.getElementById('modal').classList.remove('on');}
+/* ===== 討論模式：只放未決 ===== */
+const QS=[
+ ['Q-01','開發階段改為 5 種（開發中／籌設中／容許/變更中／施工中／已併網）後，與合約「點：開發中、程序中／面：施工中、已併網」的對應：哪些階段的案場屬「點」（韋能整理）、哪些屬「面」（瑞竣數化）？已併網案場是否仍在管理清單編輯？','客戶'],
+ ['Q-15','「專區/分區/編訂」選項仍在與客戶確認中（雛型為暫擬 20 項）；欄位更名（專區/分區/編訂、集團、公司名稱）待客戶確認。光電類型、土地權屬已以 Excel 範本為準','客戶'],
+ ['Q-16','開發階段與開發進度項目對應已由 PM 定案（v3）：開發階段註記→開發中、興辦事業計畫→籌設中、地目變更→容許/變更中、籌設許可→施工中、併聯發電日→已併網；已移除「許可狀態」；階段名稱不顯示數值。開發進度項目至少須勾選一項（必填）。請韋能確認','韋能'],
+ ['Q-18','舊資料匯入／轉換（線上版 Excel 520 筆）：①原 Stage（Development／Construction／Operational）與新 5 種開發階段的對應，以及「許可狀態（Permit）」欄位的舊資料如何處理；②案場名稱超過 20 字 51 筆、備註超過 500 字 4 筆；③開發進度原為 v／Processing／Target 日期等混合文字，如何轉成勾選＋年月；④縣市有 [4]Tainan 與 台南市 兩種寫法','客戶／PM'],
+ ['Q-17','裝置容量單位統一為 MW（舊資料混用 MW、kW，請韋能協助統一）；目標裝置容量舊資料無單位，請韋能確認，建議與裝置容量同為 MW；面積有少數文字值需清理','韋能'],
+ ['Q-19','點位圖徵與熱區配色（雛型為暫定）待與客戶確認','客戶'],
+ ['Q-20','點位資訊視窗要顯示哪些欄位（雛型暫畫：案場名稱、案場編號、縣市／鄉鎮市區、光電類型、開發階段、裝置容量）；進入編輯狀態時不顯示','客戶／PM'],
+ ['Q-21','坐標輸入的防呆與限制需同現有「坐標定位」功能（雛型暫以台灣範圍設定，需對齊其實際規則）','技術／PM'],
+ ['Q-02','鎖定閒置時間暫定 30 分鐘（PM 確認），解除前跳提示、不自動存檔（雛型已畫）；待定：提醒的時間點（雛型暫畫剩 5 分鐘）、是否需管理者強制解鎖','PM／客戶'],
+ ['Q-10','熱區圖在縮放到第幾級後切換為點位？熱區權重是案場筆數還是裝置容量？（雛型暫設 z10.6→11.8 漸變、權重＝筆數）','PM／客戶'],
+ ['Q-07','匯出的欄位範圍（雛型暫含全部編輯欄位與坐標）？匯出動作是否也要記錄？（格式已定：直接產出 Excel，檔名「競合分析管理_yyyymmdd」，不提供 CSV 與選項視窗）','客戶'],
+ ['Q-08','審核確認功能已取消；是否仍需區分角色權限（例如只有部分人能刪除）？雛型暫畫：所有登入且可進入管理的使用者皆可新增／編輯／刪除','客戶'],
+ ['Q-09','⚠️ 待技術確認：共編鎖定如何即時同步（他人鎖定的狀態多快反映在清單）？','技術主管']
+];
+function renderNotes(){
+ document.getElementById('notes').innerHTML=`<h4>① 今天要決定的（${QS.length} 項）</h4>`+QS.map(q=>`<div class="q"><b>${q[0]}</b> ${q[1]}<div class="own">決策者：${q[2]}</div></div>`).join('')+
+ `<div class="sw"><b>情境切換</b><label><input type="checkbox" ${S.empty?'checked':''} onchange="S.empty=this.checked;S.view=S.manage?'list':S.view;render()"> 清單為空（尚無案場）</label><label>他人鎖定：「雲林古坑台糖標案」目前被鎖定（清單以鎖頭圖示標示，編輯與刪除不可用）</label><label><button class="btn sm" onclick="if(!S.editId)startEdit(2);showIdleWarn()">預覽閒置解鎖提醒</button></label></div>`;
+}
+function toggleNotes(){document.body.classList.toggle('notes');}
+/* ===== 規格檢視 ===== */
+document.getElementById('spec').innerHTML=`<h2>📋 本畫面規格（競合分析管理・雛型 v3）</h2>
+<p>狀態：初稿，未對外。F-編號見需求摘要；<b>待定</b>項目見討論模式。</p>
+<h3>F-01／F-07 圖層套疊「競合分析」分類</h3>
+<table><tr><th>元素</th><th>說明</th><th>互動</th></tr>
+<tr><td>能源署核准案場</td><td>不特別標示點／面資料；固定資料，唯讀；不提供透明度調整【PM確認 2026-10-07】</td><td>勾選顯示於地圖</td></tr>
+<tr><td>韋能調查案場</td><td>不特別標示點／面資料；圖層說明不標示資料來源【PM確認 2026-10-07】；點位顏色依開發階段（圖徵、熱區配色待客戶確認，Q-19）；縮小時以熱區呈現</td><td>勾選顯示於地圖</td></tr>
+<tr><td>進入管理時</td><td>兩個圖層自動取消勾選並顯示提示；分類在圖層面板中停用</td><td>管理中仍可勾選其他分類疊圖（供編輯對照）</td></tr></table>
+<h3>權限與欄位說明</h3>
+<ul><li>審核確認功能已取消（與業務討論後決定，PM 2026-10-08）；清單不顯示確認狀態，也沒有確認篩選。</li><li>所有可進入管理的登入使用者皆可新增、編輯、刪除案場（是否需要角色區分：Q-08）。</li><li>入口：圖層套疊「競合分析」分類內的連結，與左側圖示列「定位工具」下方的「競合分析」按鈕並存。</li><li>欄位調整：移除「Note / source / web」【PM確認 2026-10-06】。</li></ul>
+<h3>F-08 地圖互動與熱區</h3>
+<table><tr><th>項目</th><th>說明</th></tr>
+<tr><td>地圖操作</td><td>可拖曳平移、滾輪／＋－／雙擊縮放；點清單案場會飛到該案場並放大到點位層級。正式版採 Mapbox GL（雛型為離線示意底圖）。</td></tr>
+<tr><td>熱區模式</td><td>縮放小於約 z10.6：以案場密度熱區呈現（藍→綠→黃→橘→紅，類似 OpenInfraMap 的縮小檢視）；熱區半徑隨縮放縮小。</td></tr>
+<tr><td>點位模式</td><td>縮放大於約 z11.8：顯示個別點位（依狀態配色），中間為淡入淡出過渡；切換門檻與權重待定（Q-10）。</td></tr>
+<tr><td>開發階段</td><td>開發中／籌設中／容許/變更中／施工中／已併網（PM 2026-11-11 確認，v3；顯示與篩選皆不顯示數值）。原欄位 Stage 更名為「開發階段」。</td></tr></table>
+<h3>F-02／F-05 清單、篩選、點位資訊視窗、軌跡</h3>
+<ul><li>「新增案場」放在面板標題列；「匯出」「編輯軌跡」收在「篩選條件」卡片底部（與符合筆數同一列），因為兩者都依該條件提供結果。三個按鈕皆為圖示＋文字（PM 2026-11-02）；清單每筆的操作為圖示（編輯軌跡、編輯、刪除），懸停顯示名稱。圖示採 Material Icons Outlined。</li><li>篩選條件（預設展開、可收合）：開發階段（按鈕、可多選）、縣市＋鄉鎮市區（下拉，鄉鎮市區依縣市更新）、關鍵字查詢（可查案場名稱、案場編號、光電類型、專區/分區/編訂、土地權屬、集團、公司名稱、備註）。</li><li>點擊清單案場：地圖飛到該點並開啟點位資訊視窗；進入編輯狀態時不提供資訊視窗。</li><li>編輯軌跡頁顯示完整的篩選條件（開發階段、縣市、鄉鎮市區、關鍵字）加「動作」篩選（全部／新增／編輯／刪除），條件可在軌跡頁再調整（獨立於清單）。從清單進入時預帶清單目前的條件；從單一案場進入時，案場名稱帶入關鍵字查詢；點軌跡裡的案場名稱＝前往該案場的編輯頁面（已刪除的案場只顯示文字、不可點；被他人鎖定的案場會提示無法編輯）。</li><li>面板寬度固定 350px（PM 2026-11-02）；清單每筆第一行僅案場名稱（名稱上限 20 字，預留整行寬度），第二行依序為開發階段、縣市 鄉鎮市區、操作圖示；鎖定時鎖頭圖示固定在第一行行尾（刪除按鈕正上方）。</li><li>被鎖定的案場，名稱超過 18 字時，最後 3 個字以「...」取代（完整名稱在滑鼠懸停時顯示）；名稱字級 14px。</li><li>編輯畫面：案場編號在案場名稱之前；不放「黃底欄位＝已修改」說明（已修改欄位仍以黃底標示）；鎖定提醒精簡為「編輯中：其他人暫時無法編輯此案場；閒置 30 分鐘將自動解除鎖定。」；開發階段提示僅「依已達成開發進度項目自動判斷」；「此案場編輯軌跡」圖示同工具按鈕（history），不提供「在軌跡頁檢視全部」。</li><li>開發階段標題不標示「可多選」；匯出前清單統計文字為「共 N 筆」。</li><li>鎖定：清單以鎖頭圖示標示，鎖定時不能編輯與刪除；閒置 30 分鐘解除鎖定，解除前提醒，不自動存檔。</li></ul>
+<h3>F-02 案場清單</h3>
+<table><tr><th>欄位</th><th>型別</th><th>說明</th></tr>
+<tr><td>案場名稱／縣市／鄉鎮市區／開發階段</td><td>文字</td><td>清單只列這四項【PM確認 2026-10-07】，每筆兩行、操作鈕集中在同一列；其餘資訊進入下一層才看得到。篩選區（名稱查詢、狀態）可收合，預設收合，收合時顯示目前篩選條件摘要【PM確認 2026-10-07】</td></tr>
+<tr><td>鎖定狀態</td><td>標籤</td><td>他人鎖定：開發階段標籤前顯示鎖頭圖示（不顯示是誰鎖定），編輯與刪除不可用；自己編輯中顯示「編輯中」</td></tr></table>
+<h3>F-03 編輯欄位（2026-10-13 客戶訪談：欄位表）</h3>
+<p>編輯畫面依分類呈現，各分類可收合；案場名稱、案場編號、備註不屬於任何分類，固定顯示、不收合（案場名稱與編號在最上方，備註在最下方）。必填：案場名稱、縣市、鄉鎮市區、坐標。</p>
+<table><tr><th>分類</th><th>欄位（原 Excel 欄位）</th><th>格式</th><th>必填</th><th>規則</th></tr>
+${FIELDS.filter(F=>F.k!=='lng'&&F.k!=='csys').map(F=>`<tr><td>${F.sec||'（無分類，不收合）'}</td><td>${F.k==='lat'?'坐標（Coordinate）':F.l}（${F.orig}）</td><td>${F.f}</td><td>${F.k==='lat'||F.req?'必填':F.t==='auto'?'系統自動':'選填'}</td><td>${F.k==='lat'?FIELDS.find(x=>x.k==='csys').rule:F.rule}</td></tr>`).join('')}
+${PH.map(p=>`<tr><td>開發進度</td><td>${p.l}（${p.orig}）：勾選＋年月</td><td>勾選／年月</td><td>選填</td><td>勾選＝已達成；對應狀態「${p.map}」（暫定，Q-16）；年月只記到年月、選填，不作為狀態判斷依據</td></tr>`).join('')}
+</table>
+<p>開發階段判斷：取已達成項目中最後一項所對應的開發階段。<b>開發進度項目至少要勾選一項（必填）</b>，未勾選不可儲存（PM 2026-11-12）；Excel 匯入時，有案場名稱但全未勾選的列視為不完整。</p>
+<h3>業務規則</h3><ul>
+<li>F-04 鎖定以「單一案場」為單位；A 編輯某案場時，該案場對他人唯讀（編輯／刪除不可用），其他案場不受影響。釋放條件：儲存、取消、離開管理（放棄）、閒置逾時自動解除（【PM 傾向】閒置判定；時間長度與強制解鎖＝Q-02）。</li>
+<li>F-03 位置設定：使用者可自選「輸入坐標」或「地圖點選」。輸入坐標時地圖同步顯示粉紅暫存點；地圖點選時點擊地圖自動帶入坐標（依所選坐標系統，WGS84 與 TWD97 互相換算），坐標欄位唯讀，可重新點選修正；Esc 取消點選。新增案場必須有位置才能儲存。</li><li>F-05 軌跡於「新增／儲存編輯／刪除」時產生；編輯記錄欄位修改前後值【PM確認 2026-10-06】。可由清單單筆 ⏱、編輯畫面內嵌區塊、或管理工具列進入，並可切換「全部案場／特定案場」。</li>
+<li>F-06 匯出：點擊「匯出」後直接產出 Excel（.xlsx），檔名「競合分析管理_yyyymmdd.xlsx」（yyyymmdd 為匯出當日），不跳出視窗、不提供 CSV；範圍為清單目前篩選條件的結果；含坐標（WGS84 經緯度）。欄位範圍待確認（Q-07）。</li>
+<li>F-07 管理與圖層互斥：進入管理自動移除競合分析圖層，避免同時套疊兩層；離開管理時自動還原進入前的競合分析圖層勾選狀態【PM確認 2026-10-06】。</li><li>F-03 刪除後不可復原，僅在軌跡留紀錄【PM確認 2026-10-06】。坐標系統可選 WGS84 經緯度或 TWD97 TM2，與定位工具一致【PM確認 2026-10-06】。</li></ul>
+<h3>例外流程</h3><ul><li>點擊他人鎖定案場的編輯：提示鎖定者與起始時間，不進入編輯。</li><li>必填未填儲存：提示欄位名稱。</li><li>無變更儲存：提示並解除鎖定，不產生軌跡。</li><li>編輯中離開管理：確認是否放棄。</li><li>坐標系統切換為 TWD97 時，坐標欄位標籤與提示改為 X／Y。</li><li>清單為空：顯示空狀態與新增引導。</li></ul>`;
+/* ===== 啟動 ===== */
+const qp=new URLSearchParams(location.search);
+if(qp.get('notes')==='1')document.body.classList.add('notes');
+if(qp.get('spec')==='1')document.body.classList.add('spec');
+if(qp.get('fopen'))S.fopen=true;
+if(qp.get('fcounty'))S.lf.county=decodeURIComponent(qp.get('fcounty'));if(qp.get('fstage'))S.lf.stage=decodeURIComponent(qp.get('fstage')).split(',');
+const st=qp.get('state');
+if(st){ if(st==='list'||st==='editlayers'||st==='managelayers'||st==='trace1'||st==='popup'||st==='idle'||st==='pick'||st==='picked'||st==='edit'||st==='trace'||st==='export'){S.manage=true;S.gov=S.vena=false;S.view='list';}
+ if(st==='edit')startEdit(2); if(st==='trace')openTrace('all','list');if(st==='trace1')openTrace(4,'list'); if(st==='export')setTimeout(askExport,50);if(st==='pick'){startEdit('new');S.pick=true;flyTo(23.3,120.2,11.5);rerenderEdit();}if(st==='managelayers'){S.view='layers';}if(st==='editlayers'){startEdit(2);S.view='layers';}if(st==='popup'){selCase(1);}if(st==='idle'){startEdit(2);setTimeout(showIdleWarn,80);}if(st==='picked'){startEdit('new');S.draft.name='示範新案場';setPosFromWgs(23.3,120.2);flyTo(23.3,120.2,11.8);}}
+if(qp.get('closed'))qp.get('closed').split(',').forEach(s=>S.secClosed[decodeURIComponent(s)]=true);
+if(qp.get('tfrom'))S.tf.from=qp.get('tfrom');if(qp.get('tto'))S.tf.to=qp.get('tto');
+if(qp.get('z')){M.z=+qp.get('z');M.lat=+(qp.get('lat')||M.lat);M.lng=+(qp.get('lng')||M.lng);}
+render();
+</script>
+</body>
+</html>

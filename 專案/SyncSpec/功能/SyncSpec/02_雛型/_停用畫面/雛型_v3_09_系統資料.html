@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜系統資料（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.ssplit{display:grid;grid-template-columns:290px minmax(0,1fr);gap:16px;align-items:start}@media(max-width:900px){.ssplit{grid-template-columns:1fr}}
+.tl{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ti{display:flex;gap:10px;align-items:center;padding:10px 14px;cursor:pointer;border-top:1px solid var(--line)}.ti:first-child{border-top:0}.ti:hover{background:var(--bg)}.ti.on{background:var(--brand-bg)}
+.lg{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.fl{display:grid;grid-template-columns:150px 150px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:13px}.fl:first-of-type{border-top:0}.fl.h{font-size:12px;color:var(--muted)}
+</style></head>
+<body data-nav="sysdata" data-crumb="系統資料">
+<script>window.NOTES=[
+ {id:'Q-44',text:'系統資料（schema）誰負責維護（建議 PG）、用什麼格式匯入（DDL 檔，或唯讀連線）、要不要做技術文件產出？連線字串與帳密不入庫。',who:'PG／主管',tech:true},
+ {id:'Q-50',text:'「已實作」的認定：PG 匯入實際 DDL 且與規格比對完成，就把功能卡升為已實作？與 Q-40「已上線」狀態一起決定。',who:'PM／PG',tech:true}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page"><div id="root"></div>
+
+<div class="modal-back" id="m-imp"><div class="modal">
+ <div class="mh"><div><h2>匯入實際 DDL</h2><div class="sm muted">由 PG 提供；只匯入結構，不含資料、連線字串與帳密</div></div><button class="btn ghost sm" data-close>✕</button></div>
+ <div class="mb" id="impb"></div>
+ <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="impgo">開始比對</button></div>
+</div></div>
+<div class="modal-back" id="m-doc"><div class="modal">
+ <div class="mh"><div><h2>產出技術文件</h2><div class="sm muted">後續階段才會做・示意</div></div><button class="btn ghost sm" data-close>✕</button></div>
+ <div class="mb">
+  <div class="banner warn" style="margin-bottom:12px"><span id="dwi"></span><span>文件內容以「實際 DDL 與程式碼萃取的資料」為準，不是 AI 推測；產出後需 PG 確認。連線字串、帳密、真實資料不會出現在文件裡。</span></div>
+  <div class="col" style="gap:8px"><label class="row sm"><input type="checkbox" class="check" checked> 資料表說明與欄位字典</label><label class="row sm"><input type="checkbox" class="check" checked> API 清單</label><label class="row sm"><input type="checkbox" class="check" checked> ER 圖</label><label class="row sm"><input type="checkbox" class="check"> 模組關係與權限對照</label></div>
+ </div>
+ <div class="mf"><button class="btn" data-close>先不要</button><button class="btn primary" data-close id="dgo">產出（示意）</button></div>
+</div></div>
+
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>用途</td><td>專案的技術資料入口：資料表（schema）、欄位字典、API 清單、模組對照、權限。開發完成後可直接在系統查看，之後可產出技術文件</td></tr>
+<tr><td>資料來源</td><td>延續案：開案時由 PG 匯出既有 schema（DDL，只含結構），AI 解析後也放進該單位知識的「既有系統」，供整體規劃、細拆工項時標出關聯功能、避免重做。新案：由工項雛型的 SPEC（欄位、型別、驗證規則）抽取「預計 schema 草稿」；開發完成後 PG 匯入實際 DDL，系統比對規劃與實際</td></tr>
+<tr><td>狀態</td><td>既有（匯入）、規劃（由 SPEC 抽取）、已實作（實際 DDL 對上）、有差異（規劃與實際不一致，需 PG 確認並回寫功能卡）</td></tr>
+<tr><td>差異</td><td>列出每一處不一致：規格怎麼寫、實際怎麼做、誰確認；PG 確認後回寫該工項的功能卡，功能卡可升為「已實作」（認定方式待 Q-50）</td></tr>
+<tr><td>技術文件</td><td>後續階段：資料表說明、欄位字典、API 清單、ER 圖、模組與權限對照。事實來源是實際 DDL，需 PG 確認；本次只做示意按鈕</td></tr>
+<tr><td>依系統切換（v3）</td><td>專案拆成多個系統時，上方出現系統篩選，資料表依所屬系統分開看；沒拆系統的專案不顯示篩選（整個專案視為一個系統）</td></tr>
+<tr><td>權限與保密</td><td>只對專案成員與 PG 開放；連線字串、帳密、真實資料不入庫。維護人、匯入格式待確認（Q-44）</td></tr>
+<tr><td>示範資料</td><td>下方內容是 AI 編的示範值（只有韋能二階有），不是真實 schema</td></tr></table></section>
+</div>
+<script>
+let P,S,tab='tables',selT=null,fst='全部',sysF='全部';
+function TB(){const nm=V3.sysNames(P);return S.tables.filter(t=>sysF==='全部'||!nm.length||(V3.sysOfTable[t.name]||nm[0])===sysF)}
+function sysBar(){const nm=V3.sysNames(P);if(!nm.length)return '';return '<div class="row wrap" style="gap:6px;margin-bottom:10px"><span class="xs muted">系統：</span>'+['全部'].concat(nm).map(n=>'<button class="fchip '+(sysF===n?'on':'')+'" data-sf="'+n+'">'+n+'</button>').join('')+'<span class="xs muted">專案拆成多個系統，資料表依系統分開看</span></div>'}
+const SC=st=>V3.sysStatus[st][0];
+function empty(){return `<div class="page-head"><div><h1>系統資料</h1><p>專案的資料表、API、模組與權限。開發完成後在這裡查看；之後可產出技術文件。</p></div></div>
+ <div class="card"><div class="empty"><div class="art">${ic('table')}</div><h2 style="color:var(--ink)">這個專案還沒有系統資料</h2><div class="sm" style="max-width:460px;margin:6px auto 14px">延續案請 PG 匯入既有系統的 DDL（只含結構）；新案在工項產出雛型 SPEC 後，AI 會抽取預計 schema 草稿，開發完成再匯入實際 DDL 比對。</div><div class="row" style="justify-content:center;gap:8px"><button class="btn" id="e1">${ic('upload')}匯入既有 DDL</button><button class="btn primary" id="e2">${ic('spark')}由雛型 SPEC 產預計 schema</button></div></div></div>`}
+function draw(){
+ if(!S){$('#root').innerHTML=empty();$('#e1').onclick=openImp;$('#e2').onclick=()=>toast('已請 AI 由各工項的雛型 SPEC 抽取預計 schema 草稿（示意；有雛型 SPEC 的工項才抽得到）');return}
+ const cnt={};TB().forEach(t=>cnt[t.st]=(cnt[t.st]||0)+1);const diffs=TB().filter(t=>t.diff);
+ const T=[['tables','資料表 '+TB().length],['apis','API '+S.apis.length],['modules','模組對照 '+S.modules.length],['perms','權限 '+S.perms.length],['diff','差異'+(diffs.length?' <span class="tn">'+diffs.length+'</span>':'')]];
+ $('#root').innerHTML=`<div class="page-head"><div><h1>系統資料 <span class="chip sun xs">示範資料</span></h1><p>${P.name}的資料表、API、模組與權限。${S.source}</p></div><div class="row" style="gap:8px"><button class="btn" id="bimp">${ic('upload')}匯入實際 DDL</button><button class="btn" id="bspec">${ic('spark')}由 SPEC 更新預計 schema</button><button class="btn primary" id="bdoc">${ic('doc')}產出技術文件</button></div></div>
+ <div class="lg"><span class="xs muted">狀態：</span>${Object.keys(V3.sysStatus).map(k=>`<span class="chip ${SC(k)} xs" title="${V3.sysStatus[k][1]}">${k} ${cnt[k]||0}</span>`).join('')}<span class="xs muted">既有＝匯入　規劃＝由 SPEC 抽取　已實作＝實際 DDL 對上　有差異＝需 PG 確認</span></div>
+ ${sysBar()}<div class="tabs2">${T.map(t=>`<button data-t="${t[0]}" class="${tab===t[0]?'on':''}">${t[1]}</button>`).join('')}</div><div id="tb"></div>`;
+ $$('.tabs2 button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});$$('[data-sf]').forEach(b=>b.onclick=()=>{sysF=b.dataset.sf;selT=null;draw()});
+ $('#bimp').onclick=openImp;$('#bspec').onclick=()=>toast('已由各工項的雛型 SPEC 更新預計 schema（示意）');$('#bdoc').onclick=()=>{$('#dwi').innerHTML=ic('alert');$('#m-doc').classList.add('open')};
+ $('#tb').innerHTML=({tables,apis,modules,perms,diff})[tab]();
+ if(tab==='tables')$$('.ti').forEach(r=>r.onclick=()=>{selT=r.dataset.n;draw()});
+ $$('[data-fix]').forEach(b=>b.onclick=()=>{const t=TB().find(x=>x.name===b.dataset.fix);t.st='已實作';delete t.diff;draw();toast('PG 已確認，已回寫「'+t.name+'」相關功能卡，狀態改為已實作')})}
+function tables(){const t=TB().find(x=>x.name===selT)||TB()[0];selT=t.name;
+ return `<div class="ssplit"><div class="tl">${TB().map(x=>`<div class="ti ${x.name===t.name?'on':''}" data-n="${x.name}"><div class="grow"><b class="mono sm">${x.name}</b><div class="xs muted">${x.cn}${x.item?'・工項 '+x.item:''}</div></div><span class="chip ${SC(x.st)} xs">${x.st}</span></div>`).join('')}</div>
+ <div class="card"><div class="row spread" style="flex-wrap:wrap;gap:8px"><div><h2 style="margin:0" class="mono">${t.name}　<span style="font-family:inherit;font-weight:600">${t.cn}</span></h2><div class="sub" style="margin:2px 0 0">${t.desc}</div></div><span class="chip ${SC(t.st)}">${t.st}</span></div>
+ ${t.diff?`<div class="banner warn" style="margin:10px 0">${ic('alert')}<span>${t.diff}</span></div>`:''}
+ <div style="margin-top:10px"><div class="fl h"><span>欄位</span><span>型別</span><span>說明</span></div>${t.fields.map(f=>`<div class="fl"><span class="mono">${f[0]}</span><span class="mono muted">${f[1]}</span><span>${f[2]}</span></div>`).join('')}</div>
+ <div class="xs muted" style="margin-top:10px">${t.st==='規劃'?'由工項 '+t.item+' 的雛型 SPEC 抽取，尚未開發；開發完成後匯入實際 DDL 比對。':t.st==='既有'?'來自既有系統匯入的 DDL。':'已與實際 DDL 比對。'}</div></div></div>`}
+function apis(){return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:80px">方法</th><th>路徑</th><th>說明</th><th style="width:80px">工項</th><th style="width:90px">狀態</th></tr></thead><tbody>${S.apis.map(a=>`<tr><td><span class="chip xs">${a[0]}</span></td><td class="mono sm">${a[1]}</td><td class="sm">${a[2]}</td><td class="sm">${a[4]}</td><td><span class="chip ${SC(a[3])} xs">${a[3]}</span></td></tr>`).join('')}</tbody></table></div>`}
+function modules(){return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>模組／功能</th><th style="width:90px">狀態</th><th style="width:80px">工項</th><th>說明</th></tr></thead><tbody>${S.modules.map(a=>`<tr><td><b>${a[0]}</b></td><td><span class="chip ${SC(a[1])} xs">${a[1]}</span></td><td class="sm">${a[2]}</td><td class="sm">${a[3]}</td></tr>`).join('')}</tbody></table></div><div class="xs muted" style="margin-top:8px">延續案開案時，這份模組清單會放進單位知識的「既有系統」，讓 AI 拆工項時標出「關聯功能」，避免 PG 重做已有的功能。</div>`}
+function perms(){return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:140px">角色</th><th>可做的事</th><th style="width:90px">狀態</th><th style="width:80px">工項</th></tr></thead><tbody>${S.perms.map(a=>`<tr><td><b>${a[0]}</b></td><td class="sm">${a[1]}</td><td><span class="chip ${SC(a[2])} xs">${a[2]}</span></td><td class="sm">${a[3]}</td></tr>`).join('')}</tbody></table></div>`}
+function diff(){const d=TB().filter(t=>t.diff);return d.length?`<div class="col" style="gap:10px">${d.map(t=>`<div class="card"><div class="row spread"><b class="mono">${t.name}</b><span class="chip coral xs">有差異</span></div><div class="sm" style="margin:6px 0">${t.diff}</div><div class="row spread"><span class="xs muted">工項 ${t.item}・確認人：PG</span><button class="btn sm primary" data-fix="${t.name}">PG 確認並回寫功能卡</button></div></div>`).join('')}</div>`:`<div class="card"><div class="empty sm"><div class="art">${ic('check')}</div>目前規劃與實際沒有差異。開發完成匯入實際 DDL 後，不一致的地方會列在這裡。</div></div>`}
+function openImp(){$('#impb').innerHTML=`<div class="field"><label>DDL 檔案</label><div class="row" style="gap:8px"><button class="btn sm" type="button">${ic('upload')}選擇 .sql 檔</button><span class="xs muted">只含資料表結構；請先移除資料與連線資訊</span></div></div><div class="banner" style="margin-top:8px">${ic('lock')}<span>匯入後 AI 解析成資料表、欄位與關聯，並與規劃中的 schema 比對；不一致處列在「差異」，由 PG 確認。</span></div>`;$('#m-imp').classList.add('open')}
+window.pageInit=function(){P=DB.cur();S=V3.sys[P.id]||null;$('#impgo').onclick=()=>{$('#m-imp').classList.remove('open');toast('已比對（示意）：1 處差異，請到「差異」確認');tab='diff';draw()};draw()};
+</script>
+</body></html>

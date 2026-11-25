@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>養豬場防疫決策輔助平臺 · 雛型 v1</title>
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<!-- 雛型 v1｜對應需求摘要 F-01～F-10｜假資料（3 場取自來源樣本去識別化名稱，其餘為虛構） -->
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">豬</div>
+    <div><h1>養豬場防疫決策輔助平臺</h1><small>豬隻防疫・來源系統整合檢視</small></div>
+  </div>
+  <!-- F-03 牧場搜尋【明確】SPEC: 搜尋框 型別:文字 必填:否 驗證:無 來源:使用者輸入 比對:牧場名稱/防疫統編/縣市 互動:輸入即顯示前8筆，點選進入單場 -->
+  <div class="search">
+    <input id="q" type="search" placeholder="搜尋牧場名稱、防疫統編或縣市，例如：A18038、大甲" autocomplete="off">
+    <div class="search-results" id="results"></div>
+  </div>
+  <div class="meta" id="meta"></div>
+</header>
+
+<!-- F-04 八來源頁籤【明確】計畫書／【待確認】範圍 Q-07 Q-11 -->
+<nav class="tabs" id="tabs" aria-label="資料來源頁籤"></nav>
+
+<main class="page" id="page"></main>
+
+<section class="page spec" id="spec" style="max-width:1400px">
+  <h3>📋 本畫面規格（規格檢視 ?spec=1）</h3>
+  <p>欄位來自 1020 API 介接欄位；型別與驗證為 v1 暫定，待 API 規格確認（⚠️ 待技術確認）。</p>
+  <h4>A. 全台總覽（F-01、F-02、F-03）</h4>
+  <table><thead><tr><th>元素</th><th>欄位</th><th>型別</th><th>來源</th><th>互動／規則</th></tr></thead><tbody>
+    <tr><td>牧場總數</td><td>count(防疫統編)</td><td>整數</td><td>牧場登記</td><td>依目前篩選條件即時計算</td></tr>
+    <tr><td>近期通報場數</td><td>通報日期、牧場防疫統編</td><td>整數</td><td>疫情通報</td><td>近 N 日（暫定 30，Q-10）有通報的不重複統編</td></tr>
+    <tr><td>化製異常場數</td><td>化製原料來源單各頭數欄</td><td>整數</td><td>屠宰衛檢</td><td>異常規則待定（Q-01），暫定：單張來源單流產死胎＞0</td></tr>
+    <tr><td>來源啟用狀況</td><td>—</td><td>文字</td><td>系統設定</td><td>啟用 4／預留 4</td></tr>
+    <tr><td>地圖圖釘</td><td>緯度、經度</td><td>小數</td><td>牧場整合（Q-09）</td><td>顏色＝牧場狀態；點選進入單場；篩選連動</td></tr>
+    <tr><td>狀態</td><td>—</td><td>列舉</td><td>計算</td><td>異常（有未結案通報）＞注意（化製異常）＞正常＞無資料</td></tr>
+    <tr><td>搜尋</td><td>牧場名稱／防疫統編／縣市</td><td>文字</td><td>使用者輸入</td><td>包含比對；顯示前 8 筆；無結果顯示「查無牧場」</td></tr>
+  </tbody></table>
+  <h4>B. 單場各來源頁籤（F-05～F-08）</h4>
+  <table><thead><tr><th>頁籤</th><th>1020 欄位</th></tr></thead><tbody>
+    <tr><td>牧場登記</td><td>所在縣市、所在鄉鎮市、登記證編號、畜牧場名稱、場址、標準地籍址、登記飼養畜禽種類及數量、主要畜牧設施、防疫統編</td></tr>
+    <tr><td>牧場整合</td><td>畜牧場名稱、縣市、鄉鎮、村里、牧場場址、牧場種類、緯度、經度、防疫統編、在養頭數</td></tr>
+    <tr><td>疫情通報</td><td>案號、通報日期、通報人姓名（Q-06）、發病日期、牧場防疫統編、牧場／場所名稱、縣市、鄉鎮市區、經緯度、送檢動物（僅家畜家禽，本平臺篩豬）、數量、檢驗結果綜合判定（確診）、判定日期</td></tr>
+    <tr><td>屠宰衛檢</td><td>化製原料來源單：來源單號、秤重日期、表單日期、防疫統編、化製原料來源場、流產死胎、仔豬、中豬、大豬（牛羊欄位不顯示）。家畜健康聲明書（歸屬 Q-04）：屠宰場縣市、屠宰場（肉品市場）、進場時間、防疫統編、牧場名稱、豬頭數</td></tr>
+  </tbody></table>
+  <h4>C. 例外與狀態</h4>
+  <ul>
+    <li>預留頁籤（畜產行情、豬肉追溯、疾病監測、用藥監測）：灰階、不可點選、標示「規劃中」。</li>
+    <li>某來源查無該場資料：顯示「該來源查無此場資料」，不是空白（可用右下角切換情境查看）。</li>
+    <li>來源逾 7 日未更新：頁籤內顯示黃色提示。</li>
+    <li>個案詳細內容與異動回到原系統，本平臺不提供編輯。</li>
+  </ul>
+</section>
+
+<button class="notes-toggle" id="notesBtn" type="button">討論模式</button>
+<aside class="notes-panel" id="notes">
+  <h4>① 今天要決定的（<span id="qn"></span> 項）</h4>
+  <ul id="qlist"></ul>
+  <div class="states">畫面情境：
+    <select id="mode"><option value="normal">資料正常</option><option value="stale">來源逾期未更新</option><option value="empty">該場查無資料</option></select>
+  </div>
+  <details><summary>② 已定案摘要（點開）</summary>
+    <ul><li>範圍：四個優先來源啟用，其餘四項預留（暫定）</li><li>結構：總覽＋單場兩層</li><li>配色：暖米白＋豬粉玫瑰＋深炭字</li><li>使用者：防疫承辦／決策者</li></ul>
+  </details>
+</aside>
+
+<script>
+/* ===== 假資料 ===== */
+const FARMS=[
+ {id:'A08826',name:'洽O畜牧場',county:'臺中市',town:'梧棲區',village:'大里里',addr:'臺中市梧棲區大里里中央路一段540-1號',cad:'臺中市梧棲區（地籍資料待查）',lat:24.24083,lon:120.53944,owner:'陳O',phone:'04-2630-5290',code:'20019',cert:'登字第1100276號',head:2380,fac:'密閉式豬舍、沼液處理設施',
+  epi:[],rend:[['112A1080301','115/10/21',0,40,8,3],['112A1080288','115/10/03',2,35,6,2],['112A1080271','115/09/16',0,28,5,1]],decl:[['臺中市','臺中市大安區肉品市場','115/10/28 09時',70]]},
+ {id:'A18038',name:'利O畜牧場',county:'臺中市',town:'大甲區',village:'幸福里',addr:'臺中市大甲區幸福里東明路21-1號',cad:'臺中市大甲區日新段6-555地號',lat:24.36278,lon:120.69361,owner:'黃OO',phone:'04-2681-2789',code:'19385',cert:'登字第1090118號',head:3120,fac:'密閉式豬舍、廢水處理設施',
+  epi:[],rend:[['112A1080390','115/11/05',0,0,0,6],['112A1080389','115/10/24',0,88,6,0]],decl:[['新竹縣','新竹肉品市場股份有限公司','115/11/10 11時',60],['南投縣','南投縣農產運銷股份有限公司','115/11/03 08時',70],['臺中市','臺中市大安區肉品市場','115/10/27 07時',70]]},
+ {id:'A07221',name:'世O牧場',county:'宜蘭縣',town:'員山鄉',village:'中華村',addr:'宜蘭縣員山鄉中華村冷水路33號',cad:'宜蘭縣員山鄉中華段（地籍資料待查）',lat:24.698523,lon:121.632508,owner:'周OO',phone:'03-9231-256',code:'24715',cert:'登字第0980442號',head:1650,fac:'開放式豬舍',
+  epi:[['發11502691','115/10/20','115/10/18','115/11/05','豬生殖與呼吸綜合症(乙類)、環狀病毒感染症(N類)','豬',2000,'確診'],['發11502310','115/08/09','115/08/04','115/08/27','其它(N類)','豬',250,'確診']],rend:[['112A1070455','115/10/21',0,10,2,0]],decl:[['宜蘭縣','宜蘭縣肉品市場','115/11/01 06時',70]]},
+ {id:'B10231',name:'金O牧場',county:'屏東縣',town:'佳冬鄉',village:'六根村',addr:'屏東縣佳冬鄉六根村中山路182號',cad:'',lat:22.42,lon:120.55,owner:'林OO',phone:'08-866-1203',code:'31822',cert:'登字第1000377號',head:4280,fac:'密閉式豬舍',
+  epi:[['發11502735','115/11/02','115/10/28','—','環狀病毒感染症(N類)','豬',758,'送檢中']],rend:[['113B2010112','115/11/07',4,22,9,2]],decl:[['高雄市','高雄市肉品市場','115/11/09 10時',80]]},
+ {id:'B11872',name:'方O畜牧場',county:'屏東縣',town:'長治鄉',village:'德和村',addr:'屏東縣長治鄉德和村中興路77號',cad:'',lat:22.68,lon:120.52,owner:'方OO',phone:'08-762-0881',code:'31904',cert:'登字第0990260號',head:3600,fac:'密閉式豬舍、堆肥舍',
+  epi:[['發11503101','115/09/30','115/09/26','115/10/08','放線桿菌症(N類)、環狀病毒感染症(N類)','豬',756,'確診']],rend:[['113B2011206','115/11/08',0,30,6,1]],decl:[['高雄市','高雄市肉品市場','115/11/06 09時',65]]},
+ {id:'C20118',name:'許OO畜牧場',county:'嘉義縣',town:'大林鎮',village:'明華里',addr:'嘉義縣大林鎮明華里中山路501號',cad:'',lat:23.60,lon:120.45,owner:'許OO',phone:'05-265-3321',code:'41377',cert:'登字第0970088號',head:5200,fac:'密閉式豬舍、沼氣發電',
+  epi:[['發11500754','115/09/12','115/08/05','115/10/25','豬生殖與呼吸綜合症(乙類)','仔豬',1197,'確診']],rend:[['114C3020771','115/11/09',6,60,14,5],['114C3020765','115/11/02',3,55,10,4]],decl:[['嘉義市','嘉義市肉品市場','115/11/08 05時',90]]},
+ {id:'C20450',name:'林O牧場',county:'彰化縣',town:'大城鄉',village:'西港村',addr:'彰化縣大城鄉西港村港西路30號',cad:'',lat:23.85,lon:120.30,owner:'林OO',phone:'04-893-1190',code:'42011',cert:'登字第1050301號',head:900,fac:'開放式豬舍',epi:[],rend:[],decl:[['彰化縣','彰化縣肉品市場','115/11/04 06時',40]]},
+ {id:'D31002',name:'春O畜牧場',county:'雲林縣',town:'西螺鎮',village:'振興里',addr:'雲林縣西螺鎮振興里延平路66號',cad:'',lat:23.80,lon:120.46,owner:'蔡OO',phone:'05-586-4472',code:'43120',cert:'登字第1010155號',head:6100,fac:'密閉式豬舍',epi:[],rend:[['114D4030112','115/11/06',0,48,7,2]],decl:[['雲林縣','雲林縣肉品市場','115/11/09 05時',100]]},
+ {id:'D32250',name:'南O養豬場',county:'臺南市',town:'後壁區',village:'後壁里',addr:'臺南市後壁區後壁里後壁路290號',cad:'',lat:23.37,lon:120.36,owner:'吳OO',phone:'06-687-2210',code:'51890',cert:'登字第0960470號',head:2750,fac:'密閉式豬舍',epi:[],rend:[],decl:[]},
+ {id:'E41007',name:'高O畜牧場',county:'高雄市',town:'路竹區',village:'甲南里',addr:'高雄市路竹區甲南里中山路118號',cad:'',lat:22.86,lon:120.26,owner:'蘇OO',phone:'07-697-5521',code:'61230',cert:'登字第1020199號',head:3300,fac:'密閉式豬舍、廢水處理設施',epi:[],rend:[['115E5040033','115/11/05',0,25,4,0]],decl:[['高雄市','高雄市肉品市場','115/11/07 08時',55]]},
+ {id:'F50321',name:'苗O牧場',county:'苗栗縣',town:'銅鑼鄉',village:'中平村',addr:'苗栗縣銅鑼鄉中平村中正路9號',cad:'',lat:24.49,lon:120.79,owner:'徐OO',phone:'037-981-336',code:'71044',cert:'登字第1030242號',head:1200,fac:'開放式豬舍',epi:[],rend:[],decl:[['苗栗縣','苗栗縣肉品市場','115/11/02 06時',45]]},
+ {id:'G60518',name:'新O養殖場',county:'新竹縣',town:'新埔鎮',village:'照門里',addr:'新竹縣新埔鎮照門里新關路201號',cad:'',lat:24.83,lon:121.07,owner:'邱OO',phone:'03-588-7011',code:'72190',cert:'登字第0990517號',head:0,fac:'（暫停養殖）',epi:[],rend:[],decl:[]}
+];
+const TABS=[
+ {k:'overview',n:'總覽'},{sep:1},
+ {k:'reg',n:'牧場登記',sys:'畜牧場登記系統',org:'畜牧司'},
+ {k:'mgmt',n:'牧場整合',sys:'牧場整合管理資訊系統',org:'防檢署'},
+ {k:'epi',n:'疫情通報',sys:'動物疫情通報系統',org:'防檢署'},
+ {k:'slh',n:'屠宰衛檢',sys:'屠宰衛生檢查資訊網',org:'防檢署'},{sep:1},
+ {k:'price',n:'畜產行情',sys:'畜產行情資訊網',org:'畜產會',off:1},
+ {k:'trace',n:'豬肉追溯',sys:'國產生鮮豬肉追溯資訊網',org:'畜產會',off:1},
+ {k:'disease',n:'疾病監測',sys:'家畜疾病監測系統',org:'防檢署',off:1},
+ {k:'drug',n:'用藥監測',sys:'畜牧場用藥監測管理資訊系統',org:'防檢署',off:1}
+];
+const QS=[
+ ['Q-01','「化製異常」要怎麼定義？目前暫定「單張來源單流產死胎＞0」；也可改成死胎比例或頭數門檻','承辦'],
+ ['Q-08','承辦打開儀表板最先想看什麼？（暫定：找場＋全台摘要）','承辦'],
+ ['Q-10','「近期通報」的時間窗？（暫定 30 日）','承辦'],
+ ['Q-07','預留頁籤是灰階不可點，還是點進去看預告頁？','承辦'],
+ ['Q-11','八個頁籤的簡稱是否合適？','承辦'],
+ ['Q-06','通報人姓名、負責人電話是否顯示？（暫定遮罩）','承辦'],
+ ['Q-05','同一統編在各系統名稱、負責人不同時，以哪個系統為主？','承辦'],
+ ['Q-04','健康聲明書放在「屠宰衛檢」是否正確？','承辦／畜牧司'],
+ ['Q-02','疫情通報 API 是否帶防疫統編？','⚠️ 待技術確認'],
+ ['Q-03','化製資料能否提供淨重？','⚠️ 待技術確認'],
+ ['Q-12','首批要納入哪些場？全台或指定縣市？','承辦'],
+ ['Q-09','經緯度來源是牧場整合還是地理資訊清單？','⚠️ 待技術確認'],
+ ['Q-13','資料更新頻率與歷史範圍？','⚠️ 待技術確認'],
+ ['Q-14','健康聲明書缺流水號，如何判斷重複？','⚠️ 待技術確認']
+];
+const REF='115/11/12';
+const state={farm:null,tab:'overview',county:'',flag:'',mode:'normal'};
+const $=s=>document.querySelector(s);
+const sum=a=>a.reduce((x,y)=>x+y,0);
+function recAbn(r){return r[2]>0} // 暫定規則：流產死胎＞0（Q-01）
+function flags(f){
+  const open=f.epi.some(e=>e[1]>='115/10/13'); // 近 30 日（暫定，Q-10）
+  const abn=f.rend.some(recAbn);
+  return {epi:open,abn};
+}
+function status(f){const g=flags(f);if(g.epi)return 'alert';if(g.abn)return 'warn';if(!f.rend.length&&!f.decl.length&&!f.epi.length)return 'none';return 'ok'}
+const STAT={alert:'疫情通報',warn:'化製異常',ok:'正常',none:'無資料'};
+const BADGE={alert:'alert',warn:'warn',ok:'ok',none:'off'};
+const mask=s=>s.replace(/^(.).*$/,'$1○○');
+
+/* ===== 頁籤 ===== */
+function drawTabs(){
+  $('#tabs').innerHTML=TABS.map(t=>t.sep?'<span class="tab-sep"></span>':
+   `<button class="tab ${t.k===state.tab?'active':''} ${t.off?'disabled':''}" data-k="${t.k}" ${t.off?'disabled title="規劃中：本期尚未介接"':`title="${t.sys?t.sys+'（'+t.org+'）':'全台總覽'}"`}>${t.n}${t.off?'<span class="tag">規劃中</span>':''}</button>`).join('');
+  document.querySelectorAll('.tab:not(.disabled)').forEach(b=>b.onclick=()=>{state.tab=b.dataset.k;render()});
+}
+/* ===== 共用片段 ===== */
+function src(t,extra=''){
+  const msg=state.mode==='stale'?'<div class="warn-box">此來源最後更新已超過 7 日，資料可能不是最新。</div>':'';
+  return msg+`<div class="provenance">資料來源：${t.sys}（${t.org}）・更新時間 ${state.mode==='stale'?'115/11/03 02:00':'115/11/12 02:00'}・狀態：${state.mode==='stale'?'逾期':'已取得'} ${extra}</div>`;
+}
+function dl(pairs){return '<dl class="dl">'+pairs.map(([k,v,w])=>`<div class="${w?'wide':''}"><dt>${k}</dt><dd>${v||'—'}</dd></div>`).join('')+'</dl>'}
+function empty(t){return `<div class="empty">${t.sys}查無此場資料</div>`}
+function tabMeta(k){return TABS.find(t=>t.k===k)}
+
+/* ===== 總覽 ===== */
+function list(){return FARMS.filter(f=>(!state.county||f.county===state.county)&&(!state.flag||(state.flag==='epi'?flags(f).epi:flags(f).abn)))}
+function mapSvg(fs){
+  const P=(lon,lat)=>[((lon-119.9)*115).toFixed(1),((25.45-lat)*115).toFixed(1)];
+  const out=[[121.0,25.15],[121.55,25.3],[121.95,25.0],[121.85,24.6],[121.6,23.9],[121.4,23.1],[121.0,22.3],[120.85,21.95],[120.7,22.3],[120.3,22.55],[120.15,23.0],[120.1,23.5],[120.25,24.2],[120.7,24.6],[120.95,24.95]].map(p=>P(...p).join(',')).join(' ');
+  const col={alert:'var(--alert)',warn:'var(--warn)',ok:'var(--ok)',none:'var(--off)'};
+  const pins=fs.map(f=>{const[x,y]=P(f.lon,f.lat);return `<circle class="pin ${state.farm===f.id?'sel':''}" data-id="${f.id}" cx="${x}" cy="${y}" r="8" fill="${col[status(f)]}"><title>${f.name}（${f.county}${f.town}）</title></circle>`}).join('');
+  return `<svg viewBox="0 0 250 430" role="img" aria-label="全台豬場分布"><polygon class="island" points="${out}"/>${pins}</svg>`;
+}
+function overview(){
+  const all=FARMS, fs=list();
+  const nEpi=all.filter(f=>flags(f).epi).length, nAbn=all.filter(f=>flags(f).abn).length;
+  const counties=[...new Set(FARMS.map(f=>f.county))];
+  const rows=fs.filter(f=>status(f)==='alert'||status(f)==='warn').sort((a,b)=>status(a)<status(b)?-1:1);
+  return `
+  <!-- F-01 KPI【推論】SPEC: 4 個指標 來源:各來源 Q-01 Q-10 -->
+  <div class="kpis">
+    <div class="kpi"><div class="label">登記豬場</div><div class="value">${all.length}</div><div class="hint">本雛型示範資料</div></div>
+    <div class="kpi alert"><div class="label">近 30 日有疫情通報<span class="mark-q">Q-10</span></div><div class="value">${nEpi}</div><div class="hint">場</div></div>
+    <div class="kpi warn"><div class="label">化製異常<span class="mark-q">Q-01</span></div><div class="value">${nAbn}</div><div class="hint">場（規則暫定）</div></div>
+    <div class="kpi ok"><div class="label">已啟用來源</div><div class="value">4 / 8</div><div class="hint">其餘四項規劃中</div></div>
+  </div>
+  <div class="grid2">
+    <section class="card"><h2>豬場分布<span class="legend"><span><i class="dot alert"></i>疫情通報</span><span><i class="dot warn"></i>化製異常</span><span><i class="dot ok"></i>正常</span><span><i class="dot none"></i>無資料</span></span></h2>
+      <div class="body"><div class="map-wrap">${mapSvg(fs)}</div></div></section>
+    <section class="card"><h2>需關注牧場（${rows.length}）</h2>
+      <div class="body">
+        <div class="filters">
+          <select class="chip" id="fc"><option value="">全部縣市</option>${counties.map(c=>`<option ${c===state.county?'selected':''}>${c}</option>`).join('')}</select>
+          <button class="chip ${!state.flag?'on':''}" data-f="">全部</button>
+          <button class="chip ${state.flag==='epi'?'on':''}" data-f="epi">疫情通報</button>
+          <button class="chip ${state.flag==='abn'?'on':''}" data-f="abn">化製異常</button>
+        </div>
+        ${rows.length?`<table><thead><tr><th>牧場</th><th>縣市鄉鎮</th><th>狀態</th><th>最近事件</th></tr></thead><tbody>${rows.map(f=>{const g=flags(f);const ev=g.epi?`通報 ${f.epi[0][1]}`:`化製 ${f.rend[0][1]}`;return `<tr class="click" data-id="${f.id}"><td><b>${f.name}</b><br><small>${f.id}</small></td><td>${f.county}${f.town}</td><td>${g.epi?'<span class="badge alert">疫情通報</span> ':''}${g.abn?'<span class="badge warn">化製異常</span>':''}</td><td>${ev}</td></tr>`}).join('')}</tbody></table>`:'<div class="empty">符合條件的牧場為 0</div>'}
+      </div></section>
+  </div>
+  <!-- F-10 資料治理【明確】簡報 -->
+  <section class="card" style="margin-top:18px"><h2>資料來源狀態<span class="legend">更新時間 ${REF} 02:00</span></h2><div class="body">
+    <div class="sources">${TABS.filter(t=>t.sys).map(t=>`<div class="src ${t.off?'off':''}"><b>${t.n}</b><small>${t.org}</small><div class="st">${t.off?'規劃中（本期未介接）':'<span class="badge ok">已取得</span>'}</div></div>`).join('')}</div>
+  </div></section>`;
+}
+
+/* ===== 單場 ===== */
+function farmView(f){
+  const st=status(f), g=flags(f);
+  let body='';
+  if(state.tab==='overview'){
+    body=`<div class="sources" style="grid-template-columns:repeat(2,1fr)">${TABS.filter(t=>t.sys&&!t.off).map(t=>`<div class="card"><h2>${t.n}<button class="chip" data-go="${t.k}">查看</button></h2><div class="body">${summary(f,t.k)}</div></div>`).join('')}</div>
+    <div class="provenance" style="margin-top:12px">本頁為各來源摘要；個案詳細內容與異動請回到原系統查詢。</div>`;
+  }else body=tabBody(f,state.tab);
+  return `<div class="crumb"><button data-home="1">全台總覽</button> ／ ${f.name}</div>
+  <div class="farm-head"><div><h2>${f.name}</h2><div class="sub">防疫統編 ${f.id}・${f.county}${f.town}</div></div>
+    <div>${g.epi?'<span class="badge alert">疫情通報</span> ':''}${g.abn?'<span class="badge warn">化製異常</span> ':''}${st==='ok'?'<span class="badge ok">正常</span>':''}${st==='none'?'<span class="badge off">無資料</span>':''}</div></div>
+  ${body}`;
+}
+function summary(f,k){
+  const emp=state.mode==='empty';
+  if(k==='reg')return dl([['登記證編號',f.cert],['登記頭數',f.head?f.head.toLocaleString()+' 頭':'—']]);
+  if(k==='mgmt')return dl([['在養頭數',emp?'':f.head.toLocaleString()+' 頭'],['牧場種類','豬場']]);
+  if(k==='epi')return emp||!f.epi.length?'<span class="badge off">無通報</span>':`<span class="badge alert">${f.epi.length} 件</span> 最近 ${f.epi[0][1]}<br><small>${f.epi[0][4]}</small>`;
+  if(k==='slh'){if(emp||(!f.rend.length&&!f.decl.length))return '<span class="badge off">無資料</span>';const a=f.rend.filter(recAbn).length;return `化製來源單 ${f.rend.length} 筆${a?` <span class="badge warn">${a} 筆異常</span>`:''}<br>健康聲明 ${f.decl.length} 筆`}
+}
+function tabBody(f,k){
+  const t=tabMeta(k), emp=state.mode==='empty';
+  if(emp)return empty(t)+src(t);
+  if(k==='reg')return `<section class="card"><h2>畜牧場登記基本資料 <span class="badge ok">已取得</span></h2><div class="body">
+    <!-- F-05 SPEC: 欄位依 1020 畜牧場登記管理系統 -->
+    ${dl([['防疫統編',f.id],['登記證編號',f.cert],['畜牧場名稱',f.name],['所在縣市',f.county],['所在鄉鎮市',f.town],['主要畜牧設施',f.fac],['場址',f.addr,1],['標準地籍址',f.cad,1],['登記飼養畜禽種類及數量','豬 '+(f.head?f.head.toLocaleString()+' 頭':'—'),1]])}${src(t)}</div></section>`;
+  if(k==='mgmt')return `<section class="card"><h2>牧場資訊管理（新） <span class="badge ok">已取得</span></h2><div class="body">
+    <!-- F-06 SPEC: 欄位依 1020 牧場資訊管理系統(新) -->
+    ${dl([['防疫統編',f.id],['牧場種類','豬場'],['在養頭數',f.head.toLocaleString()+' 頭'],['縣市',f.county],['鄉鎮',f.town],['村里',f.village],['牧場場址',f.addr,1],['緯度',f.lat],['經度',f.lon],['負責人（Q-06）',mask(f.owner)+'（遮罩）']])}${src(t)}</div></section>`;
+  if(k==='epi')return `<section class="card"><h2>疫情通報 <span class="mark-q">Q-02</span></h2><div class="body">
+    <!-- F-07 SPEC: 只顯示豬；通報人姓名遮罩 Q-06 ⚠️ 待技術確認 Q-02：統編是否隨 API 提供 -->
+    ${f.epi.length?`<table><thead><tr><th>案號</th><th>通報日期</th><th>發病日期</th><th>病名</th><th>送檢動物</th><th>數量</th><th>判定</th><th>判定日期</th></tr></thead><tbody>${f.epi.map(e=>`<tr><td>${e[0]}</td><td>${e[1]}</td><td>${e[2]}</td><td>${e[4]}</td><td>${e[5]}</td><td>${e[6].toLocaleString()}</td><td><span class="badge ${e[7]==='確診'?'alert':'warn'}">${e[7]}</span></td><td>${e[3]}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">此場目前無疫情通報</div>'}${src(t)}</div></section>`;
+  if(k==='slh'){
+    const abn=f.rend.filter(recAbn);
+    return `${abn.length?`<div class="alert-box"><b>化製異常 ${abn.length} 筆</b>　規則暫定：單張來源單流產死胎＞0 頭<span class="mark-q">Q-01</span></div>`:''}
+    <section class="card"><h2>化製原料來源單 <span class="mark-q">Q-03</span></h2><div class="body">
+    <!-- F-08 F-09 SPEC: 牛羊欄位不顯示；淨重未在 1020 欄位內 ⚠️ 待技術確認 Q-03 -->
+    ${f.rend.length?`<table><thead><tr><th>來源單號</th><th>秤重日期</th><th>流產死胎</th><th>仔豬</th><th>中豬</th><th>大豬</th><th>異常</th></tr></thead><tbody>${f.rend.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${recAbn(r)?'<span class="badge warn">異常</span>':'—'}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">此場無化製紀錄</div>'}
+    ${src({sys:'屠宰衛生檢查資訊網（化製原料來源單）',org:'防檢署'})}</div></section>
+    <section class="card" style="margin-top:16px"><h2>家畜健康聲明書 <span class="mark-q">Q-04</span></h2><div class="body">
+    ${f.decl.length?`<table><thead><tr><th>屠宰場縣市</th><th>屠宰場（肉品市場）</th><th>進場時間</th><th>豬（頭）</th></tr></thead><tbody>${f.decl.map(d=>`<tr><td>${d[0]}</td><td>${d[1]}</td><td>${d[2]}</td><td>${d[3]}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">此場無健康聲明書紀錄</div>'}
+    ${src({sys:'屠宰衛生檢查資訊網（家畜健康聲明書）',org:'防檢署'})}</div></section>`;
+  }
+}
+
+/* ===== 來源層（未選場） ===== */
+function sourceLevel(k){
+  const t=tabMeta(k);
+  const rows=[];
+  FARMS.forEach(f=>{
+    if(k==='reg')rows.push([f,f.cert,f.addr,f.head?f.head.toLocaleString():'—']);
+    if(k==='mgmt')rows.push([f,'豬場',f.village,f.head.toLocaleString()]);
+    if(k==='epi')f.epi.forEach(e=>rows.push([f,e[0],e[1],e[4]]));
+    if(k==='slh')f.rend.forEach(r=>rows.push([f,r[0],r[1],'死胎 '+r[2]+'／合計 '+(r[2]+r[3]+r[4]+r[5])+(recAbn(r)?' ⚠':'')]));
+  });
+  const h={reg:['牧場','登記證編號','場址','登記頭數'],mgmt:['牧場','種類','村里','在養頭數'],epi:['牧場','案號','通報日期','病名'],slh:['牧場','來源單號','秤重日期','頭數']}[k];
+  return `<section class="card"><h2>${t.sys}　全部牧場（${rows.length}）</h2><div class="body">
+   <table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="click" data-id="${r[0].id}"><td><b>${r[0].name}</b><br><small>${r[0].id}</small></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</tbody></table>${src(t)}</div></section>`;
+}
+
+/* ===== 渲染 ===== */
+function render(){
+  drawTabs();
+  const f=state.farm&&FARMS.find(x=>x.id===state.farm);
+  $('#page').innerHTML = f ? farmView(f) : (state.tab==='overview'?overview():sourceLevel(state.tab));
+  $('#meta').innerHTML='資料更新 '+REF+' 02:00<br>示範資料，非真實數據';
+  bind();
+}
+function bind(){
+  document.querySelectorAll('[data-id]').forEach(e=>e.onclick=()=>{state.farm=e.dataset.id;if(state.tab!=='overview'&&!tabMeta(state.tab).sys)state.tab='overview';render();scrollTo(0,0)});
+  document.querySelectorAll('[data-home]').forEach(e=>e.onclick=()=>{state.farm=null;state.tab='overview';render()});
+  document.querySelectorAll('[data-go]').forEach(e=>e.onclick=()=>{state.tab=e.dataset.go;render()});
+  const fc=$('#fc');if(fc)fc.onchange=()=>{state.county=fc.value;render()};
+  document.querySelectorAll('[data-f]').forEach(e=>e.onclick=()=>{state.flag=e.dataset.f;render()});
+}
+/* 搜尋 */
+const q=$('#q'),res=$('#results');
+q.oninput=()=>{
+  const v=q.value.trim().toLowerCase();
+  if(!v){res.classList.remove('open');return}
+  const m=FARMS.filter(f=>(f.name+f.id+f.county+f.town).toLowerCase().includes(v)).slice(0,8);
+  res.innerHTML=m.length?m.map(f=>`<button data-pick="${f.id}"><span><b>${f.name}</b>　${f.id}</span><span>${f.county}${f.town}</span></button>`).join(''):'<div class="empty">查無牧場</div>';
+  res.classList.add('open');
+  res.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>pick(b.dataset.pick));
+};
+q.onkeydown=e=>{if(e.key==='Enter'){const b=res.querySelector('[data-pick]');if(b)pick(b.dataset.pick)}};
+function pick(id){state.farm=id;state.tab='overview';q.value='';res.classList.remove('open');render()}
+document.addEventListener('click',e=>{if(!e.target.closest('.search'))res.classList.remove('open')});
+/* 討論模式／規格圖層 */
+$('#qn').textContent=QS.length;
+$('#qlist').innerHTML=QS.map(a=>`<li><b>${a[0]}</b> ${a[1]}<span class="who">【${a[2]}】</span></li>`).join('');
+$('#notesBtn').onclick=()=>document.body.classList.toggle('notes-on');
+$('#mode').onchange=e=>{state.mode=e.target.value;render()};
+const sp=new URLSearchParams(location.search);
+if(sp.get('notes')==='1')document.body.classList.add('notes-on');
+if(sp.get('spec')==='1')document.body.classList.add('spec-on');
+if(sp.get('farm')){state.farm=sp.get('farm')}
+if(sp.get('tab')){state.tab=sp.get('tab')}
+render();
+</script>
+</body>
+</html>

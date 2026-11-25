@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜專案管理</title><link rel="stylesheet" href="_shared.css">
+<style>
+.split{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
+.det{position:sticky;top:0;padding:20px}
+.quote{background:#FAFBFE;border-left:4px solid var(--brand);border-radius:0 10px 10px 0;padding:11px 14px;font-size:13px;color:var(--ink2);margin:8px 0}
+.pill-sel{border:0;border-radius:99px;padding:4px 10px;font-weight:700;font-size:12.5px;font-family:inherit;appearance:none;cursor:pointer;outline:none}
+.conf{display:flex;align-items:center;gap:8px;min-width:96px}.conf .bar{flex:1}
+.fchip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 13px;font-size:13px;font-weight:600;color:var(--ink2)}
+.fchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sticky{position:sticky;bottom:0;margin-top:14px}
+.low td:first-child{box-shadow:inset 3px 0 0 var(--coral)}
+.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;padding:14px 18px;margin-bottom:16px;background:linear-gradient(135deg,var(--brand-bg),#fff)}.howto-s{display:flex;gap:10px;align-items:flex-start}.howto-s i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700}.howto-s b{display:block;font-size:13px}.howto-s span{font-size:12px;color:var(--ink2)}
+.cgrp{border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:12px;overflow:hidden}.cgrp>.gh{padding:10px 16px;background:#FAFBFE;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}.cgrp .quote{margin:10px 16px}.gh2{padding:6px 16px 0}
+.it{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer}.it+.it{border-top:1px solid var(--line)}.it:hover{background:var(--brand-bg)}.it.low{box-shadow:inset 3px 0 0 var(--coral)}
+</style></head>
+<body data-nav="manage" data-crumb="專案管理">
+<script>window.NOTES=[
+ {id:'Q-08',text:'合約解析信心低於多少，必須強制人工核對？目前示範是 70% 以下標紅、全部核對完才生效。',who:'技術',tech:true},
+ {id:'Q-05',text:'成員是否需要「唯讀」等級？目前 PM／PL／PG 同權限，角色標籤只是顯示用。',who:'PM'},
+ {id:'Q-07',text:'「合約範圍判定」畫面（新需求比對工項清單）本次未做，是下期還是不做？',who:'PM'},
+ {id:'Q-16',text:'專案勾選的公司素材庫若之後被收回權限，已產生的規劃內容要不要標示「引用來源已失效」？',who:'主管'}
+];</script>
+<script src="_data.js"></script><script src="_shared.js"></script>
+<div id="page">
+<div class="page-head"><div><h1>專案管理</h1><p>合約拆工項通常在專案初期做一次，之後只在合約變更時回來；專案設定可決定要參考哪些公司素材庫。</p></div></div>
+<div class="tabs">
+  <button class="tab on" data-g="m" data-tab="contract">合約拆工項</button>
+  <button class="tab" data-g="m" data-tab="members">成員 <span class="n" id="nm">0</span></button>
+  <button class="tab" data-g="m" data-tab="settings">專案設定與參考知識</button>
+</div>
+
+<div data-g="m" data-panel="contract" class="on" id="pc"></div>
+
+<div data-g="m" data-panel="members">
+ <!-- F-03 SPEC: 成員以公司 AD 帳號加入；權限相同；角色標籤僅顯示 -->
+ <div class="banner" style="margin-bottom:16px"><span id="mi"></span><span>所有成員權限相同：PM、PL、PG 都能規劃、標註、產出文件。角色標籤只是方便辨識。</span></div>
+ <div class="card">
+  <div class="row spread" style="margin-bottom:12px"><h2>專案成員</h2>
+   <div class="row" style="width:380px"><div class="search grow"><span id="ms"></span><input class="input" id="adq" placeholder="輸入姓名或 AD 帳號搜尋並加入"></div></div></div>
+  <div id="adres" class="card flat hide" style="padding:6px;margin-bottom:12px"><div class="row" style="padding:8px 10px"><div class="avatar d">Y</div><div class="grow"><b>Yvonne Chen</b> <span class="muted xs">yvonne.chen@公司網域 · 系統開發部</span></div><button class="btn sm primary" id="addm">加入</button></div></div>
+  <div class="tbl-wrap" style="box-shadow:none"><table class="tbl"><thead><tr><th>成員</th><th>AD 帳號</th><th>部門</th><th>角色標籤</th><th></th></tr></thead><tbody id="mb"></tbody></table></div>
+ </div>
+</div>
+
+<div data-g="m" data-panel="settings">
+ <div class="grid2" style="grid-template-columns:1fr 1.1fr;align-items:start">
+  <div class="card">
+   <h2>專案設定</h2><div class="sub">基本資料與可見範圍</div>
+   <div class="field"><label>專案名稱</label><input class="input" id="sn"></div>
+   <div class="grid2"><div class="field"><label>客戶</label><input class="input" id="sc"></div><div class="field"><label>分類</label><select class="select"><option id="scat"></option></select></div></div>
+   <div class="field"><label>可見範圍</label><div class="opt on"><input type="radio" checked name="v"><div><b>只有專案成員看得到</b><span>合約與客戶資料不會出現在其他人的列表中。</span></div></div></div>
+   <div class="row spread"><button class="btn" id="closeBtn" style="color:var(--coral)">結案專案</button><button class="btn primary" id="sv">儲存設定</button></div>
+  </div>
+  <div class="card">
+   <h2>參考的公司素材庫 <span class="chip sun xs">尚未規劃・示意</span></h2><div class="sub">勾選後，AI 規劃本專案時會一併參考；公司素材庫由各自管理者另外控管，沒有權限的看不到也不能勾。</div>
+   <div class="col" id="refs" style="gap:8px"></div>
+   <div class="hr"></div><label class="row sm"><input type="checkbox" class="check" checked> 同時參考本專案自己的素材（預設開啟，不可關閉）</label>
+   <div class="xs muted" style="margin-top:6px">可隨時調整；已產生的內容不會因此被改動。</div>
+  </div>
+ </div>
+</div>
+
+<div class="modal-back" id="m-edit"><div class="modal">
+  <div class="mh"><div><h2 id="et"></h2><div class="sm muted">改完按儲存，修改會記入稽核紀錄</div></div><button class="btn ghost sm" data-close>✕</button></div>
+  <div class="mb" id="eb"></div>
+  <div class="mf"><button class="btn" id="esplit">拆分</button><button class="btn" id="edel" style="color:var(--coral)">刪除</button><span class="grow"></span><button class="btn" data-close>取消</button><button class="btn primary" id="esave">儲存</button></div>
+ </div></div>
+ <div class="modal-back" id="m-close"><div class="modal">
+  <div class="mh"><div><h2 id="ct"></h2><div class="sm muted" id="cs"></div></div></div>
+  <div class="mb" id="cb"></div>
+  <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="cok"></button></div>
+</div></div>
+<section class="spec"><h2>本畫面規格</h2>
+<table><tr><th>元素</th><th>欄位</th><th>型別</th><th>規則</th></tr>
+<tr><td>檢視切換</td><td>view</td><td>切換</td><td>「從條文看工項」：依合約條文分組，每段條文下列出拆出的工項；「從工項看條文」：每個工項下顯示對應的條文原文。兩種檢視共用同一份資料與分類篩選</td></tr><tr><td>編輯</td><td>—</td><td>視窗</td><td>點工項整列或「編輯」開啟視窗：可改名稱、分類、條文出處，並有拆分、刪除；儲存記入稽核紀錄</td></tr><tr><td>工項名稱</td><td>name</td><td>文字</td><td>可編輯；合併後以第一筆為準；AI 從合約抽取</td></tr>
+<tr><td>AI 分類</td><td>category</td><td>下拉</td><td>選項取自後台「工項分類清單」；AI 判斷，成員可改</td></tr>
+<tr><td>信心</td><td>confidence</td><td>0–100%</td><td>低於門檻（暫 70%）整列標紅；門檻待 Q-08</td></tr>
+<tr><td>出處</td><td>clause</td><td>文字</td><td>合約項次或頁碼，點列可在右側看原文</td></tr>
+<tr><td>核對</td><td>checked</td><td>勾選</td><td>全部勾選後「確認生效」才可按</td></tr>
+<tr><td>負責 PM</td><td>pm</td><td>下拉</td><td>是</td><td>每個工項一定有負責 PM；確認生效時預設為專案建立者，之後可在工項清單或工作區更換</td></tr>
+<tr><td>參考公司素材庫</td><td>ref[]</td><td>多選</td><td>只列出本人有權限者；預設 全公司層＋本專案領域層；調整不影響已產生內容（F-13）</td></tr></table>
+<ul><li>確認生效後，分類＝功能開發的工項進入工項清單；其餘分類只歸戶保留。</li><li>空專案：顯示「上傳合約」空狀態。</li><li>成員只能用公司 AD 帳號新增；專案建立者不可被移除。</li></ul></section>
+</div>
+<script>
+const catName=DB.CAT;let rows,vw='clause',flt='all',P,sel=-1;
+const lowC=r=>r[3]<70;
+function itRow(i){const r=rows[i];return `<div class="it ${lowC(r)?'low':''}" data-i="${i}"><input type="checkbox" class="check" data-k="${i}" ${r[5]?'checked':''} title="我已對照合約原文，確認這一筆正確"><span class="mono sm muted" style="min-width:34px">${r[0]}</span><b class="grow">${r[1]}</b><span class="cat ${r[2]}">${catName[r[2]]}</span>${lowC(r)?`<span class="chip coral xs">信心 ${r[3]}%</span>`:''}<button class="btn sm" data-e="${i}">編輯</button></div>`}
+function render(){const box=$('#cview');if(!box)return;const ok=i=>flt==='all'||rows[i][2]===flt;let h='';
+ if(vw==='clause'){const g={};rows.forEach((r,i)=>{if(ok(i))(g[r[4]]=g[r[4]]||[]).push(i)});
+  h=Object.keys(g).map(k=>{const ix=g[k];return `<div class="cgrp"><div class="gh"><b>條文 ${k}</b><span class="xs muted">· 拆出 ${ix.length} 筆工項</span></div><div class="quote">${rows[ix[0]][6]}</div>${ix.map(itRow).join('')}</div>`}).join('')}
+ else{h=rows.map((r,i)=>ok(i)?`<div class="cgrp">${itRow(i)}<div class="gh2"><span class="xs muted">對應條文</span> <b class="sm">${r[4]}</b></div><div class="quote">${r[6]}</div></div>`:'').join('')}
+ box.innerHTML=h||'<div class="empty sm">這個分類沒有工項</div>';stat()}
+function stat(){const n=rows.filter(r=>r[5]).length,t=rows.length;$('#done').textContent=n;$('#tot').textContent=t;$('#pg').style.width=(n/t*100)+'%';
+ $('#st1').textContent=n===t?'全部核對完成，可以確認生效':'還有 '+(t-n)+' 筆未核對';$('#apply').disabled=n<t}
+function openEdit(i){sel=i;const r=rows[i];$('#et').textContent='編輯工項 '+r[0];
+ $('#eb').innerHTML=`<div class="field"><label>工項名稱</label><input class="input" id="en" value="${r[1]}"></div>
+ <div class="grid2"><div class="field"><label>AI 分類（可改）</label><select class="select" id="ec">${Object.entries(catName).map(([k,v])=>`<option value="${k}" ${k===r[2]?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>條文出處</label><input class="input" id="eo" value="${r[4]}"></div></div>
+ <div class="field"><label>合約原文（示範摘錄）</label><div class="quote" style="margin:0">${r[6]}</div></div>
+ <div class="ai-card" style="margin:12px 0"><div class="in"><div class="row" style="margin-bottom:5px"><span class="ai-badge">${ic('spark')}AI 分類理由</span><span class="chip ${lowC(r)?'coral':'mint'}">信心 ${r[3]}%</span></div><div class="sm">${r[7]}</div></div></div>
+ <label class="row sm"><input type="checkbox" class="check" id="ek" ${r[5]?'checked':''}> 我已對照合約原文，確認這一筆正確</label>`;
+ $('#m-edit').classList.add('open')}
+window.pageInit=function(){
+ P=DB.cur();rows=P.contract.map(r=>r.slice());
+ const pc=$('#pc');
+ if(!rows.length){pc.innerHTML=`<div class="card"><div class="empty"><div class="art">${ic('upload')}</div><h2 style="color:var(--ink)">上傳合約，讓 AI 拆工項</h2><div class="sm" style="max-width:440px;margin:6px auto 14px">支援 Word、PDF（含掃描檔）。AI 會抽出工作項目、自動分類並附合約條文出處，由你逐筆核對後才生效。</div><button class="btn primary" id="upc">${ic('upload')}選擇合約檔</button></div></div>`;$('#upc').onclick=()=>toast('開啟檔案選擇視窗（示意）')}
+  else{
+  const cnt={all:rows.length};rows.forEach(r=>cnt[r[2]]=(cnt[r[2]]||0)+1);
+  pc.innerHTML=`<div class="card howto"><div class="howto-s"><i>1</i><div><b>上傳合約</b><span>Word、PDF 都可以</span></div></div><div class="howto-s"><i>2</i><div><b>AI 自動拆工項</b><span>每筆都附條文出處與信心</span></div></div><div class="howto-s"><i>3</i><div><b>點開每一筆確認、重新編輯</b><span>名稱、分類、出處都能改</span></div></div><div class="howto-s"><i>4</i><div><b>全部核對完按「確認生效」</b><span>功能開發類進入工項清單</span></div></div></div>
+  <div class="card" style="margin-bottom:16px;padding:16px 20px"><div class="row"><div class="avatar" style="border-radius:11px;background:var(--brand-bg);color:var(--brand)">${ic('doc')}</div>
+   <div class="grow"><b>${P.contractFile}</b><div class="xs muted">已解析 · 共拆出 ${rows.length} 項 · 解析時間 ${P.parsed}</div></div><button class="btn sm">${ic('refresh')}重新解析</button><button class="btn sm">${ic('upload')}上傳新版合約</button></div>
+   <div class="row" style="margin-top:14px"><span class="sm"><b id="done">0</b> / <span id="tot">0</span> 已核對</span><div class="bar grow"><i id="pg" style="width:0"></i></div><span class="sm muted">全部核對完才生效</span></div></div>
+  <div class="row wrap" style="margin-bottom:12px;gap:10px"><div class="seg" id="vsw"><button class="on" data-v="clause">從條文看工項</button><button data-v="item">從工項看條文</button></div><span class="xs muted">點工項或「編輯」可重新編輯</span><span class="grow"></span><div class="row wrap" id="fc" style="gap:6px"><button class="fchip on" data-c="all">全部 ${cnt.all}</button>${Object.keys(catName).filter(k=>cnt[k]).map(k=>`<button class="fchip" data-c="${k}">${catName[k]} ${cnt[k]}</button>`).join('')}</div></div>
+  <div id="cview"></div>
+  <div class="card sticky row spread" style="padding:14px 20px;border-color:var(--brand)"><div><b id="st1"></b><div class="xs muted">核對完才能把工項寫入專案；功能開發類工項會進入工項清單。</div></div><button class="btn primary" id="apply" disabled>確認生效</button></div>`;
+  $('#cview').addEventListener('click',e=>{const k=e.target.closest('.check');if(k){rows[+k.dataset.k][5]=k.checked?1:0;stat();return}
+   const it=e.target.closest('.it');if(it)openEdit(+it.dataset.i)});
+  $$('#vsw button').forEach(b=>b.onclick=()=>{$$('#vsw button').forEach(x=>x.classList.toggle('on',x===b));vw=b.dataset.v;render()});
+  $$('#fc .fchip').forEach(b=>b.onclick=()=>{$$('#fc .fchip').forEach(x=>x.classList.remove('on'));b.classList.add('on');flt=b.dataset.c;render()});
+  $('#esave').onclick=()=>{const r=rows[sel];r[1]=$('#en').value.trim()||r[1];r[2]=$('#ec').value;r[4]=$('#eo').value.trim()||r[4];r[5]=$('#ek').checked?1:0;$('#m-edit').classList.remove('open');render();toast('已儲存，並記入稽核紀錄')};
+  $('#esplit').onclick=()=>toast('已開啟拆分：輸入拆分後的工項名稱，出處沿用');
+  $('#edel').onclick=()=>{const r=rows[sel];rows.splice(sel,1);$('#m-edit').classList.remove('open');render();toast('已刪除「'+r[1]+'」','復原',()=>{rows.splice(sel,0,r);render()})};
+  $('#apply').onclick=()=>toast('已生效：工項已進入工項清單，負責 PM 預設為專案建立者','前往',()=>go('items'));
+  render();}
+ /* 成員 */
+ $('#nm').textContent=P.members.length;$('#mi').innerHTML=ic('users');$('#ms').innerHTML=ic('search');
+ $('#mb').innerHTML=P.members.map(m=>`<tr><td><div class="row"><div class="avatar ${m[5]}">${m[4]}</div><b>${m[0]}</b> ${m[6]?'<span class="chip brand xs">專案建立者</span>':''}</div></td><td class="mono sm">${m[1]}</td><td>${m[2]}</td><td><span class="chip">${m[3]}</span></td><td>${m[6]?'':'<button class="btn ghost sm">'+ic('x')+'</button>'}</td></tr>`).join('');
+ $('#adq').oninput=e=>$('#adres').classList.toggle('hide',e.target.value.length<1);
+ $('#addm').onclick=()=>{$('#adres').classList.add('hide');$('#adq').value='';toast('已加入 Yvonne Chen（權限同其他成員）')};
+ /* 設定 */
+ $('#sn').value=P.name;$('#sc').value=P.client;$('#scat').textContent=P.cat;
+ const ref=DB.refOf(P);
+ $('#refs').innerHTML=DB.LIB.map(l=>{const can=l.scope!=='限部門：景觀專案組'||P.cat==='景觀工程';const can2=l.scope!=='限部門：能源專案組'||P.cat==='能源與圖資';const ok=can&&can2&&l.id!=='secret';
+  return `<label class="opt ${ref.includes(l.id)&&ok?'on':''}" style="${ok?'':'opacity:.55;cursor:not-allowed'}"><input type="checkbox" data-r="${l.id}" ${ref.includes(l.id)&&ok?'checked':''} ${ok?'':'disabled'}><div><b>${l.name} <span class="chip ${l.tone} xs">${l.scope}</span></b><span>${l.desc}${ok?'':'　<b style="color:var(--coral)">'+(l.id==='secret'?'需主管授權專案才能引用':'沒有權限，請向管理者申請')+'</b>'}</span></div></label>`}).join('');
+ $$('[data-r]').forEach(c=>c.onchange=()=>{const v=$$('[data-r]').filter(x=>x.checked).map(x=>x.dataset.r);DB.setRef(P,v);c.closest('.opt').classList.toggle('on',c.checked);toast('已更新參考的公司素材庫')});
+ const cl0=DB.isClosed(P);$('#closeBtn').textContent=cl0?'重新開啟專案':'結案專案';$('#closeBtn').style.color=cl0?'var(--brand)':'var(--coral)';
+ $('#closeBtn').onclick=()=>{const c=DB.isClosed(P);$('#ct').textContent=c?'重新開啟專案':'結案專案';$('#cs').textContent=P.client+' · '+P.name;$('#cok').textContent=c?'重新開啟':'確認結案';
+  $('#cb').innerHTML=c?`<div class="banner">${ic('lock')}<span>目前已結案（${c}），內容唯讀。重新開啟後成員可繼續編輯。</span></div>`:`<div class="banner warn" style="margin-bottom:12px">${ic('alert')}<span>結案後，本專案預設不再顯示在專案列表，內容改為唯讀；之後可用列表的「狀態」篩選找回，也可重新開啟。</span></div><label class="row" style="margin-bottom:8px"><input type="checkbox" class="check" checked> 把本專案的成果沉澱進公司素材庫（功能卡）<span class="chip xs">建議</span></label><div class="xs muted" style="margin:-2px 0 10px 26px">AI 會依已定稿的規格整理功能卡草稿，進「待審核」由管理員抽查。</div>`;
+  $('#m-close').classList.add('open')};
+ $('#cok').onclick=()=>{const was=DB.isClosed(P);DB.setClosed(P,!was);$('#m-close').classList.remove('open');toast(was?'已重新開啟':'已結案，將回到專案列表');setTimeout(()=>{location.href=was?location.href:PAGES.projects},900)};
+ $('#sv').onclick=()=>toast('專案設定已儲存');
+};
+</script>
+</body></html>

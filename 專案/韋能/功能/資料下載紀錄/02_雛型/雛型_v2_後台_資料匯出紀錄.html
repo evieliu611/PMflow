@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>資料匯出紀錄 — 土地評估圖台系統 管理後台（雛型 v2：含 Excel／KML／競合分析）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div style="background:#fff4e0;border-bottom:1px solid #f1d9ae;color:#8a4b00;font-size:14px;padding:8px 16px;text-align:center">此為討論版，客戶於 2026-11-13 決定只記錄空間分析的 PDF，<b>不採用本版擴大的範圍</b>（Excel、KML、競合分析、功能欄與篩選）。請以雛型 v1 為準。</div>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40"><path d="M20 3C10 12 7 22 14 31c3 4 9 6 14 3 6-4 8-14-8-31z" fill="#1c6fb0"/><path d="M14 31c6-2 10-8 6-16-6 8-9 12-6 16z" fill="#8bc34a"/></svg>
+      <div><div class="en">VENA<br>ENERGY<br>韋能能源</div></div>
+      <h1>土地評估圖台系統</h1><span class="bk-tag">管理後台</span>
+    </div>
+    <div class="top-right"><span>返回前台</span><span class="user-chip">👤 測試管理者 <a href="javascript:void 0">登出</a></span></div>
+  </header>
+  <div class="body">
+    <!-- F-01 左側選單「資料匯出紀錄」入口，僅系統管理者可見【對話確認】（同 v1） -->
+    <nav class="bk-rail" id="rail"></nav>
+    <main class="bk-main" id="main"></main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<button class="notes-fab" onclick="toggleNotes()">討論模式</button>
+<div class="notes-panel" id="notes"></div>
+<section id="spec"></section>
+
+<script>
+/* ===== 雛型 v2（討論版，不取代 v1）：納入空間分析 Excel／PDF／KML 與競合分析 Excel 的匯出紀錄 ===== */
+/* ---------- 假資料：一次匯出動作 = 一筆紀錄；每筆含 1～3 個檔案（F-06【對話確認 2026-11-05】） ---------- */
+var ACC=[
+ ['admin@test','測試管理者'],['AlvinLin@richitech.com.tw','Alvin'],['caseychen@richitech.com.tw','Casey'],
+ ['charliehsieh@richitech.com.tw','瑞竣管理'],['evieliu@richitech.com.tw','Evie'],['karenhuang@richitech.com.tw','Karen'],
+ ['sandytsai@richitech.com.tw','Sandy'],['user@test','測試使用者'],['wang2025t1','王小明'],['wang2025t2','王小明'],
+ ['olduser@richitech.com.tw','林舊人']
+];
+var SA=[{n:'分析清單',t:'Excel'},{n:'分析報告',t:'PDF'},{n:'查詢範圍',t:'KML'}];
+var CM=[{n:'競合分析資料',t:'Excel'}];
+var ALL=[];
+(function(){
+  var t=Date.now()-37*60*1000,i,seed=23;
+  function rnd(){seed=(seed*9301+49297)%233280;return seed/233280;}
+  for(i=0;i<44;i++){
+    var a=ACC[Math.floor(rnd()*ACC.length)],fn=rnd()<0.7?'空間分析':'競合分析',fl=[];
+    if(fn==='競合分析')fl=CM.slice();
+    else{var mask=1+Math.floor(rnd()*7);SA.forEach(function(f,k){if(mask&(1<<k))fl.push(f);});}
+    ALL.push({id:i+1,acct:a[0],name:a[1],time:t,func:fn,files:fl});
+    t-=Math.floor(rnd()*16*3600*1000)+10*60*1000;
+  }
+  /* 讓預設畫面的第 1 筆就是「一次匯出 3 個檔案」，方便看展開效果 */
+  ALL[0].func='空間分析';ALL[0].files=SA.slice();
+  ALL[1].func='空間分析';ALL[1].files=[SA[0],SA[2]];
+  ALL[2].func='競合分析';ALL[2].files=CM.slice();
+})();
+function p2(n){return n<10?'0'+n:''+n;}
+function fmt(ms){var d=new Date(ms);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+' '+p2(d.getHours())+':'+p2(d.getMinutes())+':'+p2(d.getSeconds());}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+
+/* ---------- 狀態 ---------- */
+function ymd(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function defRange(){var e=new Date(),s=new Date();s.setDate(s.getDate()-6);return {from:ymd(s),to:ymd(e)};}
+function defF(){var r=defRange();return {acct:'',name:'',fn:'',ft:'',from:r.from,to:r.to};}
+var S={role:'admin',data:'normal',f:defF(),sk:'time',sd:-1,page:1,per:10};
+var qp=new URLSearchParams(location.search);
+if(qp.get('state')==='empty')S.data='empty';
+if(qp.get('state')==='noperm')S.role='user';
+
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(function(){t.classList.remove('on')},3200);}
+
+function renderRail(){
+  var ic1='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/></svg>';
+  var ic2='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h24v24H0z" fill="none"/><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>';
+  var ic3='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-8L4 8v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 2v16H6V8.83L10.83 4H18z"/><path d="m16 13-4 4-4-4 1.41-1.41L11 13.17V9.02L13 9v4.17l1.59-1.59L16 13z"/></svg>';
+  var h='<button data-tip="帳號管理" aria-label="帳號管理" onclick="toast(\'帳號管理為既有功能，此處僅示意\')">'+ic1+'</button>';
+  if(S.role==='admin'){
+    h+='<button data-tip="登入紀錄" aria-label="登入紀錄" onclick="toast(\'登入紀錄為另一功能（合約 3.1），此處僅示意入口位置\')">'+ic2+'</button>';
+    h+='<button class="active" data-tip="資料匯出紀錄" aria-label="資料匯出紀錄">'+ic3+'</button>';
+  }
+  document.getElementById('rail').innerHTML=h;
+}
+
+/* ---------- 篩選／排序 ---------- */
+function filtered(){
+  if(S.data==='empty')return [];
+  var f=S.f,from=f.from?new Date(f.from+'T00:00:00').getTime():-Infinity,to=f.to?new Date(f.to+'T23:59:59').getTime():Infinity;
+  var rows=ALL.filter(function(r){
+    return (!f.acct||r.acct.toLowerCase().indexOf(f.acct.toLowerCase())>=0)
+      &&(!f.name||r.name.toLowerCase().indexOf(f.name.toLowerCase())>=0)
+      &&(!f.fn||r.func===f.fn)
+      &&(!f.ft||r.files.some(function(x){return x.t===f.ft;}))
+      &&r.time>=from&&r.time<=to;
+  });
+  rows.sort(function(a,b){var x=a[S.sk],y=b[S.sk];return (x<y?-1:x>y?1:0)*S.sd;});
+  return rows;
+}
+function sortBy(k){if(S.sk===k)S.sd=-S.sd;else{S.sk=k;S.sd=k==='time'?-1:1;}S.page=1;renderList();}
+function opt(v,l,cur){return '<option value="'+v+'"'+(cur===v?' selected':'')+'>'+l+'</option>';}
+
+function renderMain(){
+  var m=document.getElementById('main');
+  if(S.role!=='admin'){m.innerHTML='<div class="noperm"><b>🔒 您沒有權限檢視此頁面</b>資料匯出紀錄僅限系統管理者使用。</div>';return;}
+  var f=S.f;
+  m.innerHTML=
+  '<h2 class="pg">資料匯出紀錄</h2>'+
+  '<h3 class="sec-t">資料匯出紀錄查詢</h3>'+
+  '<div class="qrow">'+
+   '<!-- F-03 帳號、姓名、匯出時間篩選（同 v1）；查詢條件順序與清單欄位一致，寬度不夠時整組自動換行 --><span class="qf"><span class="q-l">帳號</span><input class="w-t" id="fa" value="'+esc(f.acct)+'" placeholder="輸入關鍵字"></span>'+
+   '<span class="qf"><span class="q-l">姓名</span><input class="w-t" id="fn" value="'+esc(f.name)+'" placeholder="輸入關鍵字"></span>'+
+   '<span class="qf"><span class="q-l">匯出時間</span><input type="date" class="w-d" id="ff" value="'+f.from+'"><span class="dash">～</span><input type="date" class="w-d" id="ft" value="'+f.to+'"></span>'+
+   '<!-- F-07 功能、匯出檔案篩選【對話確認 2026-11-05】 --><span class="qf"><span class="q-l">功能</span><select id="fu">'+opt('','不拘',f.fn)+opt('空間分析','空間分析',f.fn)+opt('競合分析','競合分析',f.fn)+'</select></span>'+
+   '<span class="qf"><span class="q-l">匯出檔案</span><select id="fy">'+opt('','不拘',f.ft)+opt('Excel','Excel',f.ft)+opt('PDF','PDF',f.ft)+opt('KML','KML',f.ft)+'</select></span>'+
+   '<span class="qbtns"><button class="btn" onclick="clearQ()">清除</button><button class="btn primary" onclick="doQ()">查詢</button></span>'+
+   '<div class="qerr" id="qerr">匯出時間的起日不可晚於迄日</div>'+
+  '</div><hr class="bk-hr">'+
+  '<div class="bk-list-head"><h3 class="sec-t" style="margin:0">資料匯出紀錄清單</h3><span class="cnt" id="cnt"></span></div>'+
+  '<div id="tbl"></div><div class="pager" id="pager"></div>';
+  renderList();
+}
+function doQ(){
+  var from=document.getElementById('ff').value,to=document.getElementById('ft').value;
+  if(from&&to&&from>to){document.getElementById('qerr').classList.add('on');return;}
+  document.getElementById('qerr').classList.remove('on');
+  S.f={acct:v('fa'),name:v('fn'),fn:v('fu'),ft:v('fy'),from:from,to:to};S.page=1;renderList();
+}
+function v(id){return document.getElementById(id).value.trim();}
+function clearQ(){S.f=defF();S.page=1;renderMain();}
+function goPage(p){S.page=p;renderList();}
+function byId(id){return ALL.filter(function(x){return x.id===id})[0];}
+/* F-04 取得「當時」的檔案，內容與匯出當下完全一致；此動作不另記一筆。
+   各檔案於前台產出時已先儲存；ZIP 按鈕於點擊當下才壓縮【技術確認 2026-11-05】 */
+function dlOne(id,k){var r=byId(id),f=r.files[k];toast('示意：匯出「'+f.n+'」（'+f.t+'），'+r.name+' 於 '+fmt(r.time)+' 匯出，內容與當時完全一致');}
+function dlZip(id){var r=byId(id);toast('示意：點擊當下才將 '+r.files.length+' 個檔案（'+r.files.map(function(x){return x.t}).join('、')+'）壓縮成 ZIP 並匯出');}
+
+function renderList(){
+  var rows=filtered(),total=rows.length,pages=Math.max(1,Math.ceil(total/S.per));
+  if(S.page>pages)S.page=pages;
+  var start=(S.page-1)*S.per,cur=rows.slice(start,start+S.per);
+  function th(k,label,al){var on=S.sk===k;return '<th class="sortable'+(on?' sorted':'')+(al?' al':'')+'" onclick="sortBy(\''+k+'\')">'+label+'<span class="ar">'+(on?(S.sd>0?'▲':'▼'):'⇅')+'</span></th>';}
+  var h='<table class="bk v2"><thead><tr><th style="width:72px">項次</th>'+
+    th('acct','帳號',1)+th('name','姓名')+th('time','匯出時間')+
+    '<!-- F-07 功能【對話確認 2026-11-05】 -->'+th('func','功能')+
+    '<!-- F-07 匯出檔案：每個檔案一顆按鈕（顯示檔案類型，不顯示檔名），2 個以上檔案多一顆 ZIP 按鈕；表頭與內容靠左對齊【對話確認 2026-11-05】 --><th class="al">匯出檔案</th></tr></thead>';
+  if(!total){
+    h+='<tbody class="rec"><tr style="background:none"><td colspan="6"><div class="empty"><b>無符合查詢結果</b>請調整查詢條件後再試。'+'</div></td></tr></tbody>';
+  }else cur.forEach(function(r,i){
+    var multi=r.files.length>1;
+    /* 固定四個位置：Excel、PDF、KML、ZIP；該列沒有的檔案留空，ZIP 永遠在最右邊（A 方案，PM 2026-11-05 試做） */
+    var btns=['Excel','PDF','KML'].map(function(t){var k=-1;r.files.forEach(function(f,i){if(f.t===t)k=i;});return k<0?'<span class="slot none" aria-hidden="true">—</span>':'<button class="btn sm slot" title="'+r.files[k].n+'（'+t+'）" onclick="dlOne('+r.id+','+k+')">'+t+'</button>';}).join('')+'<span class="slot-gap"></span>'+(multi?'<button class="btn sm primary slot" title="整包 ZIP（點擊當下才壓縮）" onclick="dlZip('+r.id+')">ZIP</button>':'<span class="slot none" aria-hidden="true">—</span>');
+    h+='<tbody class="rec"><tr><td>'+(start+i+1)+'</td><td class="al">'+r.acct+'</td><td>'+r.name+'</td><td>'+fmt(r.time)+'</td><td>'+r.func+'</td>'+
+       '<td class="al"><span class="fbtns">'+btns+'</span></td></tr></tbody>';
+  });
+  document.getElementById('tbl').innerHTML=h+'</table>';
+  document.getElementById('cnt').textContent='共 '+total+' 筆';
+  var pg='';
+  if(total){pg+='<button '+(S.page===1?'disabled':'')+' onclick="goPage('+(S.page-1)+')">‹</button>';
+    for(var p=1;p<=pages;p++)pg+='<button class="'+(p===S.page?'on':'')+'" onclick="goPage('+p+')">'+p+'</button>';
+    pg+='<button '+(S.page===pages?'disabled':'')+' onclick="goPage('+(S.page+1)+')">›</button>';}
+  document.getElementById('pager').innerHTML=pg;
+}
+
+/* ---------- 討論模式：只放未決事項 ---------- */
+var QS=[
+ ['Q-07 已撤回','增補協議 3.2 字面只有「匯出 PDF」。納入 Excel、KML 與競合分析的匯出紀錄是否算範圍內，已因客戶決定只記空間分析 PDF 而撤回（見確認紀錄）','主管／客戶'],
+ ['Q-08 ⚠️待技術確認','各檔案前台產出時即儲存；後台 ZIP 按鈕於點擊當下才壓縮：檔案很大或很多時的壓縮時間、逾時與同時多人點擊的處理；ZIP 檔名是否沿用前台規則','技術主管'],
+ ['Q-09 ⚠️待技術確認','前台各匯出入口（空間分析「匯出資料」、競合分析匯出表格，之後的 2.5「匯出報告」）成功匯出時，能否都回報「功能＋檔案清單」給後台寫入紀錄','技術主管'],
+ ['Q-10 ⚠️待技術確認','儲存空間：除了 PDF，Excel、KML、競合分析 Excel 也都要留存；保存期限是否與 PDF 一致（併入 Q-03）','技術主管／客戶'],
+ ['Q-11','競合分析一次匯出是否只有 1 個 Excel（雛型照此畫）；若之後可多選，沿用本頁展開規則','PM'],
+ ['Q-12','開發工作量：若與只記 PDF 差異不大，直接納入並與客戶說明；差異大則維持 v1 範圍，其餘列下期','PM／技術主管'],
+ ['Q-03','紀錄與留存檔案的保存期限，以及過期後「匯出」按鈕要怎麼呈現（目前不設限、無自動清除）','客戶／技術主管'],
+ ['Q-04','匯出時間區間是否限制最大範圍；每頁筆數目前暫設 10 筆','PM／技術主管']
+];
+function renderNotes(){
+  document.getElementById('notes').innerHTML='<h4>① 今天要決定的（'+QS.length+' 項）</h4>'+
+   QS.map(function(q){return '<div class="q"><b>'+q[0]+'</b> '+q[1]+'<div class="own">決策者：'+q[2]+'</div></div>';}).join('')+
+   '<div class="sw"><b>情境切換</b>'+
+   '<label>視角：<select onchange="S.role=this.value;renderRail();renderMain()"><option value="admin">系統管理者</option><option value="user">一般使用者（無權限）</option></select></label>'+
+   '<label>資料：<select onchange="S.data=this.value;S.page=1;renderMain()"><option value="normal">有資料</option><option value="empty">尚無任何紀錄</option></select></label></div>'+
+   '<details style="padding:8px 14px;font-size:13px;color:#555"><summary>② 已定案摘要（v2 討論版）</summary>一次匯出動作一列；欄位順序為項次、帳號、姓名、匯出時間、功能、匯出檔案，沒有「操作」欄；查詢條件順序與清單一致且寬度不夠時整組換行；「功能」「匯出檔案」都可篩選；匯出檔案欄靠左，直接是一顆顆按鈕且有固定位置（Excel、PDF、KML、ZIP，沒有的位置顯示淡色「—」）（顯示 Excel／PDF／KML 類型，不顯示檔名），含 2 個以上檔案時多一顆 ZIP 按鈕；各檔案於前台產出時已先儲存，ZIP 於點擊當下才壓縮；其餘沿用 v1（只有系統管理者、帳號被刪紀錄保留、成功匯出才記、近 7 天預設、重新匯出不另記一筆）。</details>';
+}
+function toggleNotes(){document.body.classList.toggle('notes');}
+
+/* ---------- 規格檢視 ?spec=1 ---------- */
+document.getElementById('spec').innerHTML='<h2>📋 本畫面規格（後台・資料匯出紀錄・雛型 v2 討論版）</h2>'+
+'<p>v2 為討論版，<b>不取代 v1</b>：v1 只記空間分析 PDF；v2 把前台空間分析的 Excel、PDF、KML 與競合分析的 Excel 匯出都納入。與 v1 相同處不重列，下列為 v2 異動。</p>'+
+'<h3>欄位表（清單，v2 異動）</h3><table><tr><th>F-</th><th>欄位</th><th>型別</th><th>資料來源</th><th>顯示／互動</th></tr>'+
+'<tr><td>F-07</td><td>功能</td><td>文字（空間分析／競合分析）</td><td>匯出當下的前台功能</td><td>可排序；可篩選</td></tr>'+
+'<tr><td>F-07</td><td>匯出檔案</td><td>按鈕群（Excel／PDF／KML，2 個以上檔案多一顆 ZIP）</td><td>該次匯出實際產生的檔案清單；各檔案於前台產出時已先儲存，ZIP 於點擊當下才壓縮【技術確認 2026-11-05】</td><td>表頭與內容靠左對齊，按鈕不換行；固定四個位置依序為 Excel、PDF、KML、ZIP，該列沒有的位置顯示淡色「—」（不是按鈕），Excel、PDF、KML 三格間距較小，ZIP 永遠在最右邊且與前三個之間多留一點間距；每顆按鈕寬度相同；每個檔案一顆按鈕，按鈕文字為檔案類型，滑鼠移上顯示用途名稱（分析清單、分析報告、查詢範圍、競合分析資料），不顯示檔名；點擊取得與當時完全一致的檔案；ZIP 按鈕取得該次匯出的整包；不可排序；此動作不另記一筆。沒有獨立的「操作」欄</td></tr></table>'+
+'<h3>欄位表（查詢條件，v2 異動）</h3><table><tr><th>F-</th><th>條件</th><th>型別</th><th>比對方式</th><th>預設</th></tr>'+
+'<tr><td>F-07</td><td>功能</td><td>下拉</td><td>不拘／空間分析／競合分析，精確比對</td><td>不拘</td></tr>'+
+'<tr><td>F-07</td><td>匯出檔案</td><td>下拉</td><td>不拘／Excel／PDF／KML；該次匯出「含」此類型就符合</td><td>不拘</td></tr></table>'+
+'<h3>業務規則（v2 新增或異動）</h3><ul>'+
+'<li>F-06 納入範圍：空間分析「匯出資料」可複選的分析清單（Excel）、分析報告（PDF）、查詢範圍（KML），以及競合分析的 Excel 匯出。其他功能的下載不納入。</li>'+
+'<li>F-06 一次成功的匯出動作寫入一筆紀錄，不論含幾個檔案；前台一次匯出 2 個以上檔案自動打包 ZIP，只含 1 個檔案則為原檔（沿用 2026-11-02 空間分析決定）。</li>'+
+'<li>F-07 欄位順序：項次、帳號、姓名、匯出時間、功能、匯出檔案。查詢條件順序與清單一致：帳號、姓名、匯出時間、功能、匯出檔案，最後是「清除」「查詢」；每個條件的名稱與輸入框為一組，視窗寬度不夠時整組換到下一行，不會把名稱和輸入框拆開。</li>'+
+'<li>F-04 後台 ZIP 按鈕與前台使用者當時取得的整包檔案內容一致；各檔案在前台產出時即儲存，ZIP 於點擊當下才壓縮【技術確認 2026-11-05】。</li>'+
+'<li>F-07 「功能」「匯出檔案」兩個查詢條件與其他條件同時成立（AND）；按「清除」一併回到「不拘」。</li>'+
+'<li>其餘（只有系統管理者、帳號被刪紀錄保留、成功匯出才記、近 7 天預設、管理者重新匯出不另記一筆）同 v1。</li></ul>'+
+'<h3>例外流程與訊息文案（v2 無新增）</h3><p>查詢無結果（含尚無紀錄）的統一文案、起日晚於迄日、無權限的文案同 v1。檔案因故取不到的畫面仍待定（Q-03）。</p>';
+
+/* ---------- 啟動 ---------- */
+renderRail();renderMain();renderNotes();
+if(qp.get('notes')==='1')document.body.classList.add('notes');
+if(qp.get('spec')==='1')document.body.classList.add('spec');
+</script>
+</body>
+</html>

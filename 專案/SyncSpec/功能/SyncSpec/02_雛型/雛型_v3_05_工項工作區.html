@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜工項工作區（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.work{display:grid;grid-template-rows:auto auto 1fr;height:100%;min-height:0}
+.wh{background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.wh h2{font-size:18px}
+.stepper{display:flex;align-items:center}
+.stepper .s{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:600;padding:3px 0;white-space:nowrap}
+.stepper .s::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--line)}
+.stepper .s.done{color:var(--ink2)}.stepper .s.done::before{background:var(--brand)}
+.stepper .s.now{color:var(--brand);font-weight:800}.stepper .s.now::before{background:var(--brand);box-shadow:0 0 0 4px rgba(45,91,255,.2)}
+.stepper .bar2{width:14px;height:2px;background:var(--line);margin:0 4px}.stepper .bar2.done{background:var(--brand)}
+.dgrp{display:inline-flex;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+.dgrp:hover{border-color:#B9C6EE}
+.dbtn{display:flex;align-items:center;gap:7px;padding:6px 10px;border:0;background:transparent;font-size:12.5px;font-weight:600;white-space:nowrap}
+.dbtn:hover{background:#F7F9FF}.dbtn svg{width:16px;height:16px;color:var(--brand)}
+.dbtn .dot{width:8px;height:8px;border-radius:50%}.dot.ok{background:var(--mint)}.dot.old{background:var(--sun)}.dot.no{background:#C3CADD}
+.dgrp .dl{border-left:1px solid var(--line);padding:6px 8px}
+.wbody{display:grid;grid-template-columns:minmax(0,1fr);min-height:0}
+.wbody.lpwide .lp{padding:20px max(24px,calc((100% - 880px)/2))}
+.nte{display:flex;gap:6px;align-items:flex-start}.ntx{flex:1;border-radius:6px;padding:1px 4px;outline:none;cursor:text}.ntx:hover{background:var(--brand-bg)}.ntx:focus{background:#fff;box-shadow:0 0 0 2px var(--brand)}.ntd{border:0;background:none;color:var(--ink2);opacity:0;font-size:15px;line-height:1}.nte:hover .ntd{opacity:1}.ntadd{margin:2px 0 6px}
+.dm{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.dm-h{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}.dmm{border:0;background:none;font-weight:700;font-size:13px;color:var(--ink2);padding:3px 6px;border-bottom:2px solid transparent}.dmm.on{color:var(--brand);border-bottom-color:var(--brand)}
+.dm-ai{margin:8px 12px 0;padding:8px 10px;font-size:12px;gap:6px;flex-wrap:wrap}.dm-b{padding:6px 16px 10px;font-size:13.5px;line-height:1.7}.dm-b h4{font-size:15px;margin:16px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--line)}.dm-b h4:first-child{margin-top:8px}.dm-b h5{font-size:13px;margin:10px 0 2px;color:var(--ink2)}.dm-b .mdl{margin:2px 0 4px;padding-left:20px}.dm-b li.task{list-style:none;margin-left:-18px}.dm-b li.task input{margin-right:6px}.dm-b p{margin:4px 0;color:var(--ink2);font-size:12px}
+#dmTa{width:100%;min-height:520px;border:1px solid var(--line);border-radius:8px;padding:10px;font:13px/1.65 ui-monospace,Consolas,monospace;resize:vertical;box-sizing:border-box;margin-top:6px}#dmTa:focus{outline:2px solid var(--brand)}.dm-f{padding:8px 12px;border-top:1px solid var(--line);gap:8px}
+.nextbar{display:flex;align-items:center;gap:10px;padding:8px 18px;background:linear-gradient(90deg,var(--brand-bg),#fff);border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap}.nb-i{color:var(--brand);display:grid}.nb-i svg{width:17px;height:17px}
+#view button .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:6px;vertical-align:middle;background:var(--sun)}#view button .dot.no{background:#C3CBE0}
+.dsec{border-top:1px solid var(--line)}.dsec:first-child{border-top:0}.dsec summary{cursor:pointer;font-weight:700;font-size:13px;padding:8px 2px;display:flex;align-items:center;gap:8px;list-style:none}.dsec summary::before{content:"▸";color:var(--ink2);font-size:11px}.dsec[open] summary::before{content:"▾"}.dsec summary .n{background:var(--coral);color:#fff;border-radius:10px;font-size:11px;padding:0 7px}.dsb{padding:0 2px 8px;font-size:13px;line-height:1.6}.dsb h5{font-size:12px;margin:8px 0 2px;color:var(--ink2)}.dsb .mdl{margin:2px 0;padding-left:18px}
+.tn{background:var(--coral);color:#fff;border-radius:10px;font-size:11px;padding:0 6px;margin-left:6px}#dmBody,#dmBodyV{max-width:820px;margin:0 auto}#dmBody .dsb,#dmBodyV .dsb{font-size:14px}
+.ask-q{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff;overflow:hidden}.ask-q.done{opacity:.8}.ask-i{display:flex;align-items:center;gap:10px;padding:10px 12px}.ask-o{display:flex;flex-wrap:wrap;gap:8px;padding:0 12px 10px}.ask-r{display:flex;gap:8px;padding:0 12px 10px;justify-content:flex-end}.ask-r .input{flex:1}.ask-r textarea{flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;resize:none;outline:none}.ask-r textarea:focus{border-color:var(--brand)}.ask-th{padding:0 12px 10px;display:flex;flex-direction:column;gap:6px}.ask-me{align-self:flex-end;background:var(--brand);color:#fff;border-radius:12px;padding:6px 12px;font-size:13px;max-width:80%}.ask-ai{background:var(--bg);border-radius:12px;padding:6px 12px;font-size:13px;align-self:flex-start;max-width:90%}#askBody{max-width:820px;margin:0 auto}#askBody h4{margin:14px 0 8px;font-size:14px;display:flex;gap:8px;align-items:center}#askBody h4 .n{background:var(--coral);color:#fff;border-radius:10px;font-size:11px;padding:0 7px}
+.laygrp{display:flex;align-items:center;gap:6px;padding:3px 8px;border:1px dashed var(--line);border-radius:12px}
+.lt{display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 9px;font-size:12.5px;font-weight:600;color:var(--ink2)}
+.lt svg{width:15px;height:15px}.lt.on{background:var(--brand-bg);color:var(--brand);border-color:var(--brand)}.lt:disabled{opacity:.4;cursor:not-allowed}
+.sp{cursor:col-resize;position:relative;background:var(--bg);touch-action:none}.sp::after{content:"";position:absolute;left:3px;top:0;bottom:0;width:2px;background:var(--line);transition:.15s}.sp:hover::after,.sp.on::after{background:var(--brand);left:2px;width:4px;border-radius:3px}
+.rp.floatw{position:fixed;right:22px;bottom:22px;width:min(430px,92vw);height:min(80vh,780px);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 70px rgba(10,16,42,.35);z-index:70;overflow:hidden}
+.rp.floatw.min{display:none}
+#chatBubble{position:fixed;right:24px;bottom:24px;z-index:70;display:none;align-items:center;gap:8px;border:0;border-radius:99px;padding:12px 18px;background:var(--ai);color:#fff;font-weight:700;box-shadow:0 10px 30px rgba(18,181,203,.45)}
+.rp-h{flex-wrap:wrap}
+.lp{background:#fff;border-right:1px solid var(--line);overflow:auto;padding:14px 16px}
+.cp{display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.cp-head{padding:12px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cp-body{flex:1;min-height:0;padding:0 20px 18px;display:flex}
+.pane{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.pane .ph{padding:9px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;background:#FAFBFE;flex-wrap:wrap}
+.pane .pb{flex:1;min-height:0;overflow:auto}
+#annoHint,#gatehint{white-space:nowrap}
+.rp{background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.rp-h{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.chat{flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.msg.me{align-self:flex-end;background:var(--brand);color:#fff;border-radius:14px 14px 4px 14px;padding:9px 13px;max-width:88%}
+.msg.ai .tag{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:#0A6D8A;background:#E2F6FA;border-radius:8px;padding:2px 9px;margin-bottom:6px}
+.msg.ai .tag a{color:var(--brand);margin-left:4px;cursor:pointer}
+.msg.ai .bd{background:var(--bg);border-radius:14px 14px 14px 4px;padding:11px 14px}
+.folded{align-self:stretch;text-align:center;font-size:12px;color:var(--muted);background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:7px 10px}
+.kbcard{border:1.5px solid #BFE3EA;background:linear-gradient(180deg,#F2FBFD,#fff);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:12.5px}
+.qchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.qchips button{border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:99px;padding:4px 12px;font-size:12.5px;font-weight:600}
+.qchips button:hover{background:var(--brand);color:#fff}.qchips button:disabled{opacity:.45}
+.compose{border-top:1px solid var(--line);padding:12px 14px}
+.compose textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;resize:vertical;height:84px;min-height:64px;max-height:220px;outline:none}
+.compose textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(45,91,255,.14)}
+.typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);margin-right:3px;animation:bl 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.cmp>div{border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;background:#fff}.cmp b{display:block;font-size:11px;color:var(--muted)}
+.li{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}.li:last-child{border:0}.li .k{font-family:var(--mono);font-size:11.5px;color:var(--muted);min-width:34px;padding-top:1px}
+.nt h4{font-size:12.5px;margin:12px 0 5px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.nt ul{margin:0;padding-left:18px;font-size:12.8px;color:var(--ink)}.nt li{margin:3px 0}
+.pin{position:absolute;z-index:30;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--coral);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;box-shadow:0 3px 8px rgba(0,0,0,.35)}
+.pin span{transform:rotate(45deg)}.pin.tech{background:var(--sun)}
+.pop{position:absolute;z-index:40;width:290px;background:#fff;border-radius:14px;box-shadow:0 14px 40px rgba(10,16,42,.35);padding:14px;display:none}.pop.on{display:block}
+.vwrap{padding:18px 22px 40px;position:relative;background:#F5F7FC}
+.acc{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden}.acc>summary{cursor:pointer;list-style:none;padding:10px 12px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;background:#FAFBFE}.acc>summary::-webkit-details-marker{display:none}.acc>summary::before{content:"▸";color:var(--muted);transition:.15s}.acc[open]>summary::before{transform:rotate(90deg)}.acc>summary .n{margin-left:auto;background:var(--coral-bg);color:#C2412A;border-radius:99px;font-size:11px;padding:1px 8px}.acc>summary .xs{margin-left:auto;font-weight:500}.acc>div{padding:4px 12px 10px}.accb{padding:8px 12px 10px!important}.pmsel{border:1px solid var(--line);border-radius:8px;padding:3px 6px;font:inherit;font-size:12.5px;background:#fff}#dmProg,#dmBody2{max-width:820px;margin:0 auto}#docSec{max-width:1100px;margin:6px auto;border-top:1px solid var(--line)}#docSec>.dsb{padding:6px 0}#w-doc.fw{height:76vh;padding:0!important}#w-doc.fw #v-doc{height:100%;display:flex;flex-direction:column}#w-doc.fw .vframe{flex:1;min-height:0;height:auto}.pane.vfull #w-doc.fw{height:calc(100vh - 190px)}.pane.vfull #docSec{max-width:none}
+</style></head>
+<body data-nav="items" data-crumb="工項 › 工作區" data-flush="1">
+<script>window.NOTES=[
+ {id:'Q-01',text:'「小修改直接套用、大修改先看對照」的判斷線怎麼畫？目前示範：不影響版面與流程、一句話能說完的算小修改。',who:'PM／技術',tech:true},
+ {id:'Q-04',text:'雛型內的地圖底圖來源（自建圖磚／公開圖資／離線）與版權；本雛型為示意底圖。',who:'技術',tech:true},
+ {id:'Q-06',text:'下載時詢問「是否凍結」，每次都問，還是可以記住選擇？',who:'PM'},
+ {id:'Q-17',text:'圖文對照的圖號（熱點）要由 AI 自動依雛型元素產生，還是成員可手動調整位置？',who:'PM'},
+ {id:'Q-24',text:'「討論整理」由 AI 自動維護：成員改過的內容，AI 之後要不要保護不覆蓋？整理的觸發時機（每 N 則／手動）？',who:'PM'},
+ {id:'Q-22',text:'圖文對照／規格文件／驗收條件文件開放的階段（目前：功能細節規劃起）。',who:'PM'},
+ {id:'Q-27',text:'版面開關的預設值：依階段自動（構想只有面板＋AI、規劃全開），或一律記住使用者上次的選擇？目前是沒選過就依階段、選過就記住。',who:'PM'},
+ {id:'Q-26',text:'左／右欄寬度與 AI 對話視窗的位置（停駐或浮動），是每位成員各自記住，還是以專案為單位統一？目前記在各自的瀏覽器。',who:'PM'},
+ {id:'Q-56',text:'雛型版本：每個工項各自一條線性版本（對外凍結後開下一版）；同工項可有並行「方案」，選定後其他封存；交付時用「交付快照」對齊各工項版本。是否足夠、需不需要更完整的分支？',who:'PM／PG'},
+ {id:'Q-46',text:'「工項說明」把合約依據、User Story、圖文對照需求說明放在同一頁、隨 AI 討論逐步增加；原本獨立的「規格文件」頁籤先取消，是否合適？',who:'PM／PG'},
+ {id:'Q-47',text:'驗收條件的產出時機：需求說明確認後才產出（目前：功能細節規劃起可產出，需求說明改了標「已過期」）。',who:'PM／PG'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script><script src="_proto.js"></script><script src="_visualdoc.js"></script>
+<div id="page"><div class="work" id="wk"></div>
+
+<div class="modal-back" id="m-fz"><div class="modal">
+ <div class="mh"><h2 id="fzt">凍結這一版？</h2></div>
+ <div class="mb"><div class="banner"><span id="fz1"></span><span id="fzs"></span></div></div>
+ <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="fzgo">凍結並開下一版</button></div>
+</div></div>
+<div class="modal-back" id="m-base"><div class="modal">
+ <div class="mh"><div><h2>從基準畫面開始</h2><div class="sm muted">複製一張既有系統的畫面當起點，並記錄來源</div></div><button class="btn ghost sm" data-close>✕</button></div>
+ <div class="mb" id="baseList"></div>
+ <div class="mf"><button class="btn" data-close>取消</button></div>
+</div></div>
+<div class="modal-back" id="m-gen"><div class="modal">
+ <div class="mh"><div><h2 id="gt"></h2><div class="sm muted" id="gs"></div></div><button class="btn ghost sm" data-close>✕</button></div>
+ <div class="mb"><div class="empty"><div class="art" id="gart"></div><b>還沒有產生過</b><div class="sm">AI 會依目前雛型與已確認事項產出，產出後可直接在系統內檢視。</div></div></div>
+ <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="ggo"></button></div>
+</div></div>
+<div class="modal-back" id="m-pre"><div class="modal">
+ <div class="mh"><h2>產生前先確認一下</h2></div>
+ <div class="mb"><div class="banner warn"><span id="pre1"></span><div>還有 <b id="preN">3</b> 項待定，仍要產生「規格文件」嗎？<div class="xs" style="margin-top:3px">待定項目會集中列在規格最後一章，不會被當成已確認。</div></div></div></div>
+ <div class="mf"><button class="btn" data-close>先回去處理待定</button><button class="btn primary" id="pregen">仍要產生</button></div>
+</div></div>
+<div class="modal-back" id="m-dl"><div class="modal">
+ <div class="mh"><div><h2>下載這份文件</h2><div class="sm muted">下載視為對外使用，需要決定要不要凍結版本。</div></div></div>
+ <div class="mb">
+  <div class="opt on"><input type="radio" name="fz" checked><div><b>只是自己看，先不凍結</b><span>雛型維持目前版本，可繼續原地修改。</span></div></div>
+  <div class="opt"><input type="radio" name="fz" id="fz2"><div><b>要給客戶或主管，凍結目前版本</b><span>雛型 v1 就此凍結保留，之後的修改會進入 v2。</span></div></div>
+  <div class="field" style="margin-top:6px"><label>格式</label><select class="select" id="fmt"></select></div>
+ </div>
+ <div class="mf"><button class="btn" data-close>取消</button><button class="btn primary" id="dlgo"></button></div>
+</div></div>
+<div class="modal-back" id="m-style"><div class="modal wide">
+ <div class="mh"><div><h2>畫面風格基準</h2><div class="sm muted">全專案共用一套；鎖定後只追加調整，不重排版。</div></div><button class="btn ghost sm" data-close>✕</button></div>
+ <div class="mb">
+  <div class="banner ok" style="margin-bottom:14px"><span id="sty1"></span><span id="styt"></span></div>
+  <h3 style="margin-bottom:8px">全新專案沒有既有系統時，AI 會給 3 種方案</h3>
+  <div class="grid3">
+   <div class="opt" style="flex-direction:column"><div style="height:64px;border-radius:9px;background:linear-gradient(90deg,#1F3A68 0 22%,#F5F7FB 22% 100%);display:flex;gap:6px;align-items:center;padding:0 10px;justify-content:flex-end"><i style="width:40px;height:14px;background:#2D6CDF;border-radius:4px"></i><i style="width:26px;height:14px;background:#DDE5F3;border-radius:4px"></i></div><b>A 清爽專業</b><span>藍灰色系、資訊密度中等，適合政府與企業後台。</span></div>
+   <div class="opt" style="flex-direction:column"><div style="height:64px;border-radius:9px;background:linear-gradient(90deg,#3A2A24 0 22%,#FFF8F1 22% 100%);display:flex;gap:6px;align-items:center;padding:0 10px;justify-content:flex-end"><i style="width:40px;height:14px;background:#E8742C;border-radius:4px"></i><i style="width:26px;height:14px;background:#F6E2CC;border-radius:4px"></i></div><b>B 溫暖友善</b><span>暖色調、圓角較大，適合民眾或服務型系統。</span></div>
+   <div class="opt" style="flex-direction:column"><div style="height:64px;border-radius:9px;background:linear-gradient(90deg,#0B1020 0 22%,#161C33 22% 100%);display:flex;gap:6px;align-items:center;padding:0 10px;justify-content:flex-end"><i style="width:40px;height:14px;background:#22D3A0;border-radius:4px"></i><i style="width:26px;height:14px;background:#2A3358;border-radius:4px"></i></div><b>C 沉穩深色</b><span>深色底、重資料與地圖，適合監控與圖資類。</span></div>
+  </div>
+  <div class="xs muted" style="margin-top:6px">客戶有建議時，可在鎖定後微調色彩與元件，調整記錄會留存。</div>
+ </div>
+ <div class="mf"><button class="btn" data-close>關閉</button></div>
+</div></div>
+
+<section class="spec" style="margin:20px"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>分頁（v3 調整）</td><td>四個：<b>工項說明</b>、<b>待確認事項</b>、<b>雛型</b>、<b>驗收條件</b>。取消原本獨立的「圖文對照」「規格文件」「工項說明」頁籤；驗收條件在功能細節規劃階段起才出現</td></tr>
+<tr><td>工項說明</td><td>同一頁依序是：合約依據（做什麼、合約條文、參考的公司知識庫）、User Story、圖文對照需求說明（左圖右規格、畫面是嵌入的雛型、圖號可點、可全版面檢視）；下方收合區放「來自專案對話／檔案」與「討論整理」。內容隨 AI 討論逐步增加，頂端以勾選標示目前累積到哪；唯讀，要調整請跟 AI 說。圖文對照在功能細節規劃階段才可產生，需求說明落後雛型或結論時標「已過期」並可更新；不提供下載</td></tr>
+<tr><td>待確認事項</td><td>同 v1：待確認與已確認、標示處理者（PG／PM／問客戶／問主管）；每項附 AI 給的選項加「其他」；送出後移到已確認並讓需求說明與驗收條件標為待更新；未處理件數顯示在頁籤上</td></tr>
+<tr><td>雛型</td><td>同 v1：只在雛型檢視可標註；小改直接套用、大改先看前後對照；可勾「待技術確認」</td></tr>
+<tr><td>驗收條件</td><td>PG 自測／PM 驗收各自勾選；可依類別篩選；規範的檢核項會自動帶入（見公司知識庫「規範」）。產出時機待確認（Q-47）</td></tr>
+<tr><td>階段與負責 PM（v3 調整）</td><td>不再有「內容／AI」顯示開關與階段線段圖，這一階段只用一段文字標示「目前階段」與下一步建議，可手動「改階段」；每個工項一定有負責 PM。AI 對話統一用全站的「AI 幫手」（浮動視窗或常駐面板，右下角或右側），不在工項頁內另做一個對話欄</td></tr>
+<tr><td>分頁與區塊依進度出現（v3）</td><td>剛拆出來的工項只有「工項說明」（先只有合約資訊）與「待確認事項」。跟 AI 幫手討論後逐步長出：User Story、需求摘要（工項說明的區塊順序固定為：合約資訊、User Story、需求摘要、規格說明、版本紀錄）；雛型歸入後出現「雛型」分頁與「版本紀錄」；待確認事項談到一個段落，請 AI 幫手產出「規格說明（圖文對照版）」，之後才出現「驗收條件」分頁。工項說明裡每個區塊都能收合／展開，也有「全部展開／全部收合」。工項說明不另設「用途快捷」按鈕，要拿去寫建議書或簡報時直接跟 AI 幫手說</td></tr>
+<tr><td>雛型版本與方案（v3）</td><td>雛型分頁上方：版本下拉（v1 已凍結、v2 編輯中…；看舊版是唯讀存檔）、方案下拉與「＋方案」（從目前方案複製出並行的另一個，最後「採用此方案」，其他封存但可查看）、「凍結此版」（對外看過就凍結，之後的修改進下一版，圖文對照需求說明標待更新）。每個工項各自一條線性版本，不做完整分支；交付時用專案總覽的「交付快照」對齊各工項版本（Q-56）</td></tr>
+<tr><td>系統與基準（v3）</td><td>頂端顯示工項的所屬系統（專案有拆系統才顯示）與對齊基準（點了到專案設定）。工項沒有雛型時，若所屬系統有既有系統基準，除了「請 AI 產生雛型」，另有「從基準畫面開始」：選一張基準畫面複製成起點，並記錄來源</td></tr>
+<tr><td>已移除</td><td>專案層級的「對話存檔」整頁已移除；AI 對話與會議紀錄由 AI 自行對應到工項，整理在各工項「工項說明」下方；規格文件頁籤與下載一併取消（v3 的需求文件即工項說明裡的圖文對照需求說明）</td></tr></table></section>
+</div>
+<script>
+let P,IT,IDX,stage,docs,tbd,oks,notes,view='mem',screen=null,anno=false,pend=null,pn=0,curGen=null,dlKey=null,rendered={};
+const KEYS={split:1,spec:2,ac:2};
+const DN={split:['split','規格說明（圖文對照版）'],ac:['check','驗收條件']};
+const DS={ok:'最新',old:'已過期',no:'尚未產出'};
+const can=k=>stage>=2;
+function ivInfo(){let o=null;try{o=JSON.parse(localStorage.getItem('ss_iv_'+P.id))}catch(e){}const m=o&&o.items&&o.items[IDX];return m||(IT.iv||null)}
+function stepper(){nextBar()}
+function docbtns(){const b=$('#view button[data-v="mem"]');if(b){const st=docs[1];b.innerHTML='工項說明'+(st==='old'?'<span class="dot old" title="圖文對照需求說明已過期"></span>':'')}
+ const a=$('#view button[data-v="ac"]');if(a){const st=docs[2];a.innerHTML='驗收條件'+(st==='old'?'<span class="dot old" title="已過期"></span>':st==='no'?'<span class="dot no" title="尚未產出"></span>':'')}
+ nextBar()}
+function nextBar(){const nb=$('#nb');if(!nb)return;const hasS=V3.hasProto(P,IT);
+ const H=[['尚未開始','先看合約資訊與待確認事項；到 AI 幫手談整體方向，雛型會歸到對應的工項','請 AI 幫手整理構想','idea'],
+  ['初步構想',hasS?'雛型已歸入，可以拿去寫服務建議書或準備簡報；有疑問的點記在「待確認事項」':'跟 AI 幫手談到輪廓清楚，雛型就會出現在「雛型」分頁','進入功能細節規劃',hasS?'next':'proto'],
+  ['功能細節規劃','逐項處理「待確認事項」；談到一個段落後，請 AI 幫手產出工項說明裡的規格說明（圖文對照版）','產出規格說明','spec'],
+  ['規劃調整','把訪談或主管結論回填到雛型，改完文件會提示更新','',''],
+  ['產出規格','檢查規格說明與驗收條件是否與雛型一致，沒問題就交付技術團隊','',''],
+  ['規格調整','先判斷是否超出合約範圍，再從雛型改起，規格說明與驗收條件跟著同步','','']][stage];
+ nb.innerHTML='<span class="nb-i">'+ic('flag')+'</span><div class="grow"><span class="chip brand xs">目前階段</span> <b>'+H[0]+'</b><span class="sm muted"> — '+H[1]+'</span></div>'+(H[2]?'<button class="btn sm primary" id="nbGo">'+H[2]+'</button>':'')+'<a id="chg" class="xs" style="cursor:pointer;margin-left:8px;color:var(--ink2)">改階段</a>';
+ const go=$('#nbGo');if(go)go.onclick=()=>{const a=H[3];if(a==='idea'){GAI.send('請依合約條文先整理出這個工項的初步構想')}else if(a==='proto'){const m=$('#mkproto');if(m)m.click();else GAI.send('請依合約條文先做出第一版雛型畫面')}else if(a==='next'){stage=2;IT.stage=2;IT.auto=0;nextBar();applyGate();docRefresh();toast('階段改為「功能細節規劃」')}else if(a==='spec'){if(docs[1]==='no')openGen('split');else setView('mem')}};
+ $('#chg').onclick=()=>{stage=(stage+1)%6;IT.stage=stage;IT.auto=0;nextBar();applyGate();docRefresh();toast('階段改為「'+DB.STG[stage]+'」（手動）')}}
+function protoVis(){return V3.hasProto(P,IT)}
+function acVis(){return docs[1]!=='no'||docs[2]!=='no'}
+function prog(){return stage>=1||V3.hasProto(P,IT)||notes.dir.length>1}
+function applyGate(){docbtns();const pb=$('#view button[data-v="proto"]'),ab=$('#view button[data-v="ac"]');if(pb)pb.style.display=protoVis()?'':'none';if(ab)ab.style.display=acVis()?'':'none';if(view==='proto'&&!protoVis())setView('mem');if(view==='ac'&&!acVis())setView('mem')}
+/* ---------- 工項說明（AI 整理、唯讀；要調整就跟 AI 說） ---------- */
+const mdEsc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+const ulf=a=>'<ul class="mdl">'+a.map(x=>'<li>'+x+'</li>').join('')+'</ul>',Ef=t=>'<div class="xs muted">'+t+'</div>';
+function verLog(){const v=V3.verOf(P,IT),n=Math.max(v.n,1),L=[];for(let i=n;i>=1;i--){const fz=i<n||v.frozen;L.push('<li><b>v'+i+'</b> '+(fz?'已凍結・2026-11-'+String(8+i*4).padStart(2,'0')+'（示意）':'編輯中')+(i===n&&v.plans.length>1?'・方案 '+v.plans.join('／')+(v.archived.length?'（'+v.archived.join('、')+' 已封存）':''):'')+'</li>')}
+ const pf=V3.protoOf(P,IT);return '<ul class="mdl">'+L.join('')+'</ul>'+(pf.length?'<h5>歸入的雛型檔案</h5>'+ulf(pf.map(mdEsc)):'')+(IT.baseFrom?'<h5>來源</h5>'+ulf(['基準畫面「'+mdEsc(IT.baseFrom)+'」']):'')}
+function secsA(){const row=P.contract.find(c=>c[0]===IT.no)||[],quote=row[6]||'',lib=DB.refOf(P).map(id=>(DB.LIB.find(l=>l.id===id)||{}).name).filter(Boolean).join('、')||'無';
+ const out=[['合約資訊',0,1,ulf(['<b>做什麼</b>：'+mdEsc(IT.name+'：'+(quote||'尚未整理，請跟 AI 幫手討論。')),'<b>合約條文</b>：'+mdEsc(row[4]||'—'),'<b>參考的公司知識庫</b>：'+mdEsc(lib)])]];
+ if(!prog()){out.push(['接下來會長出來的內容',0,1,Ef('跟 AI 幫手討論後，這裡會逐步出現「User Story」「需求摘要」；待確認事項談到一個段落，再請 AI 幫手產出「規格說明」（圖文對照版），雛型歸入後出現「版本紀錄」。')]);return out}
+ const us=(IT.no==='2.6'&&P.id==='wn')?['身為<b>業務主管</b>，我想上傳 KML 範圍檔查詢範圍內的案件，以便不用逐筆框選。','身為<b>承辦人員</b>，我想把查詢範圍下載成 KML，以便與其他系統共用。']:['身為<b>使用者</b>，我想使用「'+mdEsc(IT.name)+'」，以便完成合約要求的功能。 <span class="xs muted">（AI 先擬的草稿・示意，請跟 AI 幫手調整）</span>'];
+ out.push(['User Story',us.length,1,ulf(us)]);
+ out.push(['需求摘要',0,1,ulf(notes.dir.map(mdEsc))+(notes.out.length?'<h5>已排除／不做</h5>'+ulf(notes.out.map(mdEsc)):'')]);
+ return out}
+function secsV(){return V3.hasProto(P,IT)?[['版本紀錄',0,0,verLog()]]:[]}
+function secsB(){const ents=(window.PMEM?PMEM.list(P.id):[]).filter(e=>!e.items.length||e.items.indexOf(IT.no)>-1);
+ const sub=(k,t)=>'<h5>'+t+'</h5>'+(notes[k].length?ulf(notes[k].map(mdEsc)):Ef('（尚無）'));
+ return [['來自專案對話／檔案',ents.length,0,ents.length?ulf(ents.map(e=>'<span class="chip '+(e.kind==='決議'?'mint':'sun')+' xs">'+e.kind+'</span> '+mdEsc(e.text)+' <span class="xs muted">（'+mdEsc(e.src)+' · '+e.at+(e.items.length?'':' · 專案層級')+'）</span>')):Ef('跟 AI 幫手談規劃方向或丟會議紀錄，AI 會自行歸到工項，整理在這裡')],
+  ['討論整理（AI 的工作記憶）',0,0,sub('dir','目前討論方向')+sub('out','已排除／不做')+sub('next','下一步')+Ef('最近整理：'+notes.at+'　·　已整理 '+notes.n+' 則對話')]]}
+function docSecSt(){const e=$('#docSt');if(e){e.className='';e.textContent=''}const h=$('#docAll');if(!h)return;const st=docs[1],pr=prog();if(!pr||st==='no'){h.innerHTML='';return}
+ h.innerHTML=st==='old'?'<span class="chip sun xs">有異動還沒整理進文件</span><button class="btn sm primary" id="docUpd">'+ic('spark')+'請 AI 幫手整份更新</button>':'<span class="chip mint xs">整份最新'+(typeof VS!=='undefined'&&VS&&VS.n?'・對應雛型 v'+VS.n:'')+'</span>';
+ const u=$('#docUpd');if(u)u.onclick=()=>{docs[1]='ok';IT.docs=docs;docbtns();if(view==='mem'){docRefresh();if(!IT.docFile)renderView('doc',true)}docSecSt();toast('工項說明已整份更新到最新（合約資訊、User Story、需求摘要、規格說明、版本紀錄一起）')}}
+function docSec(force){docSecSt();const pr=prog(),ds=$('#docSec');if(ds)ds.style.display=pr?'':'none';if(!pr)return;const no=docs[1]==='no',e=$('#docEmpty'),w=$('#w-doc');if(!e||!w)return;w.style.display=no?'none':'';
+ if(no){const many=tbd.length>3;e.innerHTML='<div class="empty" style="padding:24px 0"><div class="art">'+ic('split')+'</div><b>規格說明還沒有產生</b><div class="sm" style="max-width:440px;margin:6px auto 14px">'+(many?'待確認事項還有 <b>'+tbd.length+'</b> 項，建議談到一個段落再請 AI 幫手產出；要先產出的話，未確認的會列在最後一章。':'AI 幫手會依雛型與已確認事項，整理成「左圖右規格」的圖文對照說明，之後隨討論更新。')+'</div><button class="btn ai" id="gdoc">'+ic('spark')+(many?'仍要請 AI 幫手產出':'請 AI 幫手產出規格說明')+'</button></div>';const g=$('#gdoc');if(g)g.onclick=()=>openGen('split');return}
+ e.innerHTML='';if(!rendered.doc||force)renderView('doc',true);else if(!IT.docFile)VDOC.fit($('#v-doc'))}
+function docRefresh(){const fill=(id,secs)=>{const box=$(id);if(!box)return;const open={};$$(id+' details').forEach(d=>open[d.dataset.k]=d.open);box.innerHTML=secs.map(([t,n,o,h])=>'<details class="dsec" data-k="'+t+'"'+((open[t]!==undefined?open[t]:o)?' open':'')+'><summary>'+t+(n?'<span class="n">'+n+'</span>':'')+'</summary><div class="dsb">'+h+'</div></details>').join('')};
+ fill('#dmBody',secsA());fill('#dmBodyV',secsV());fill('#dmBody2',secsB());docSec();docSecSt()}
+let askF={w:''},askPick={};
+const askOpts=t=>{const x=t[1];
+ if(/大小|容量/.test(x))return['10MB（建議）','20MB','不限制'];
+ if(/期限|保留/.test(x))return['半年','一年（建議）','三年'];
+ if(/顏色|分級|門檻/.test(x))return['依預設值（建議）','請客戶提供','先用暫定值'];
+ if(/同步|即時/.test(x))return['即時同步（建議）','定時更新','手動更新'];
+ if(/對齊|一致|沿用/.test(x))return['照既有系統（建議）','另外設計'];
+ if(/是否|要不要|需不需要|補回|審核/.test(x))return['要（建議）','不要','先保留，之後再決定'];
+ return['依 AI 建議','先不做','先保留，之後再決定']};
+function askRefresh(){const tb=$('#view button[data-v="ask"]');if(tb)tb.innerHTML='待確認事項'+(tbd.length?'<span class="tn">'+tbd.length+'</span>':'');const b=$('#askBody');if(!b)return;
+ $('#askCnt').textContent=(tbd.length?'未處理 '+tbd.length:'全部處理完')+'・已確認 '+oks.length;
+ const match=t=>!askF.w||WHOS(t[2]).includes(askF.w);
+ const fl='<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:14px"><select class="fsel'+(askF.w?' on':'')+'" id="aW"><option value="">處理者</option>'+['PM','PG','PL','問客戶','問主管'].map(x=>'<option'+(askF.w===x?' selected':'')+'>'+x+'</option>').join('')+'</select><button class="btn ghost sm" id="aC">清除</button></div>';
+ const L=tbd.map((t,i)=>match(t)?'<div class="ask-q" data-i="'+i+'"><div class="ask-i"><span class="chip coral xs">未處理</span><div class="grow"><b>'+t[0]+'</b>　'+mdEsc(t[1])+'</div>'+WHO(t[2])+'</div><div class="ask-o">'+askOpts(t).concat(['其他']).map(o=>'<button class="fchip'+(askPick[t[0]]===o?' on':'')+'" data-o="'+mdEsc(o)+'">'+mdEsc(o)+'</button>').join('')+'</div><div class="ask-r"><input class="input" data-x="'+i+'" placeholder="請輸入你的答案" style="display:'+(askPick[t[0]]==='其他'?'':'none')+'"><button class="btn sm primary" data-s="'+i+'">送出</button></div></div>':'').join('');
+ b.innerHTML=fl+'<h4>待確認 <span class="n">'+tbd.length+'</span></h4>'+(L||'<div class="sm muted">'+(tbd.length?'沒有符合篩選的事項':'沒有待確認事項')+'</div>')+'<h4>已確認 <span class="n">'+oks.length+'</span></h4>'+(oks.length?oks.map(t=>'<div class="ask-q done"><div class="ask-i"><span class="chip mint xs">已確認</span><div class="grow">'+mdEsc(t)+'</div></div></div>').join(''):'<div class="sm muted">跟 AI 確認過的事項會出現在這裡</div>');
+ $('#aW').onchange=e=>{askF.w=e.target.value;askRefresh()};$('#aC').onclick=()=>{askF={w:''};askRefresh()};
+ $$('#askBody .ask-o .fchip').forEach(x=>x.onclick=()=>{const q=x.closest('.ask-q'),t=tbd[+q.dataset.i];askPick[t[0]]=x.dataset.o;$$('.fchip',q).forEach(y=>y.classList.toggle('on',y===x));const inp=$('input[data-x]',q);inp.style.display=x.dataset.o==='其他'?'':'none';if(x.dataset.o==='其他')inp.focus()});
+ const send=i=>{const t=tbd[i],q=$('#askBody .ask-q[data-i="'+i+'"]');if(!q)return;let v=askPick[t[0]];if(!v){toast('請先選一個選項，或選「其他」自己輸入');return}
+  if(v==='其他'){v=$('input[data-x]',q).value.trim();if(!v){toast('請輸入你的答案');return}}
+  const defer=/^先保留|先問|待確認|不確定|再看看|不知道|還沒/.test(v);
+  q.insertAdjacentHTML('beforeend','<div class="ask-th"><div class="ask-me">'+mdEsc(v)+'</div><div class="ask-ai"><span class="ai-badge">AI</span> '+(defer?'好，這題我先留在待確認，之後有答案再回覆。':'收到，已把「'+mdEsc(t[1])+'」記為「'+mdEsc(v)+'」並移到已確認，相關文件標為待更新。')+'</div></div>');
+  if(defer){delete askPick[t[0]];$$('.fchip',q).forEach(y=>y.classList.remove('on'));$('input[data-x]',q).style.display='none';return}
+  $('.ask-o',q).remove();$('.ask-r',q).remove();delete askPick[t[0]];
+  setTimeout(()=>{const k=tbd.indexOf(t);if(k>-1){tbd.splice(k,1);oks.push(t[1]+'：'+v);IT.tbd=tbd;lists();stale();toast('已移到「已確認」')}},1400)};
+ $$('#askBody [data-s]').forEach(x=>x.onclick=()=>send(+x.dataset.s));
+ $$('#askBody input[data-x]').forEach(x=>x.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();send(+x.dataset.x)}}))}
+function lists(){docRefresh();askRefresh()}
+function notesView(){docRefresh()}
+function dmInit(){$('#dmAsk').onclick=()=>GAI.prefill('請把工項說明調整成：');
+ $('#dmOpen').onclick=()=>$$('#p-mem details.dsec').forEach(d=>d.open=true);$('#dmClose').onclick=()=>$$('#p-mem details.dsec').forEach(d=>d.open=false)}
+/* ---------- AI 幫手（全站同一個，這裡只提供這個工項的處理邏輯） ---------- */
+const say=(who,html)=>{if(window.GAI)GAI.say(who==='ai'?'ai':'me',html)};
+function ai(html,tag,delay){return new Promise(r=>setTimeout(()=>{say('ai',html);r()},delay||700))}
+function compact(){}
+function autoCompact(){}
+const classify=s=>/訪談|客戶說|主管說|他們說/.test(s)?'回填訪談結論':/規格.*(改|變)|客戶又要|漏了/.test(s)?'規格後變更':'整理需求';
+function stale(){if(docs[1]!=='no')docs[1]='old';if(docs[2]!=='no')docs[2]='old';IT.docs=docs;docbtns();if(view==='mem'&&docs[1]!=='no')renderView('doc',true)}
+function mkFirst(){IT.screens=[{wn:'dllog',nh:'nhrep',nb:'nbtree'}[P.theme]||'dllog'];if(stage<1){stage=1;IT.stage=1;IT.auto=1;stepper();docbtns()}applyGate();setView('proto');nextBar();verInit();verUI()}
+function reply(text){const tag=classify(text);let body='我聽到了。';
+ if(stage<1&&!V3.hasProto(P,IT)&&/初步構想|整理構想/.test(text)){const row=P.contract.find(c=>c[0]===IT.no)||[],q=row[6]||IT.name;
+  notes.dir.push('做什麼：'+q);notes.dir.push('使用者：承辦人員與一般使用者（暫定，AI 依條文推測）');
+  tbd.push(['Q-'+IT.no+'1','資料欄位與必填規則怎麼定','客戶'],['Q-'+IT.no+'2','是否需要審核或簽核流程','PM']);IT.tbd=tbd;
+  stage=1;IT.stage=1;IT.auto=1;stepper();docbtns();nextBar();lists();
+  ai('我依合約條文「'+(row[4]||'—')+'」先整理出初步構想：<ul><li>做什麼：'+mdEsc(q)+'</li><li>使用者：承辦人員與一般使用者（暫定）</li></ul>「工項說明」已長出 User Story 與需求摘要，有 2 項要先確認，放在「待確認事項」。下一步我可以先做出第一版雛型畫面。<div class="qchips"><button data-mkp>做出第一版雛型</button></div>');return}
+ if(/做出.*雛型|第一版雛型/.test(text)&&!V3.hasProto(P,IT)){mkFirst();ai('好，我依合約條文與專案素材先做出了<b>第一版雛型</b>，在「雛型」分頁，可以直接操作；要改哪裡，開「標註」點畫面說就好。有疑問的地方記在「待確認事項」。','整理需求');toast('已產生第一版雛型');return}
+ if(/簡報|建議書|啟動會議/.test(text)){ai('好，我依這個工項目前的合約資訊、需求摘要與雛型，整理成草稿（示意）：<ul><li>服務建議書段落：功能說明與預期效益</li><li>會議簡報：目前方案、待確認事項、下一步</li></ul>完成後會放在「工項說明」，你可以直接請我修改。');return}
+ if(/規格說明|圖文對照|產出規格/.test(text)){if(docs[1]==='no'){if(tbd.length>3)ai('待確認事項還有 <b>'+tbd.length+'</b> 項，建議先談到一個段落再產出；若要先產出，未確認的會列在最後一章。<div class="qchips"><button data-gen>仍要產出</button><button>先不要</button></div>');else openGen('split')}else ai('規格說明已經有了，我已標出需要更新的地方。');return}
+ if(tag==='回填訪談結論')body='我會把這段結論逐條歸到對應的待定項與畫面，改完給你看哪裡變了。<div class="qchips"><button>先回填第一個待定</button><button>全部回填</button></div>';
+ else if(tag==='規格後變更')body='規格已經產生過了，我先檢查這個變更是否超出合約範圍，再從雛型改起，並列出規格哪幾章要同步。';
+ else{body='已記入需求：<b>'+text.slice(0,24)+(text.length>24?'…':'')+'</b>（暫定）。「工項說明」已同步。<div class="qchips"><button>確認採用</button><button>先保留待確認</button></div>';notes.dir.push(text.slice(0,30)+(text.length>30?'…':'')+'（暫定）');notesView()}
+ ai(body,tag).then(()=>{if(tag==='整理需求')stale()})}
+function send(v){if(window.GAI)GAI.send(v)}
+/* ---------- 視圖 ---------- */
+function renderView(v,force){
+ if(v==='doc'){VDOC.render($('#v-doc'),P,IT);$('#w-doc').classList.toggle('fw',!!IT.docFile);$('#w-doc').style.overflow=IT.docFile?'hidden':'';}
+  if(v==='ac'){VDOC.ac($('#v-ac'),P,IT);$('#w-ac').classList.toggle('fw',!!IT.acFile);$('#w-ac').style.overflow=IT.acFile?'hidden':''}
+ rendered[v]=1}
+function setView(v,scr,init){if(v==='doc'||v==='spec')v='mem';if(v==='ac'&&!acVis())v='mem';if(v==='proto'&&!protoVis())v='mem';view=v;$$('#view button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+ ['mem','ask','ac','proto'].forEach(x=>$('#p-'+x).style.display=x===v?'':'none');if(v==='mem'){docRefresh();docSec()}if(v==='ask')askRefresh();
+ $$('.only-proto').forEach(x=>x.style.display=v==='proto'?'':'none');
+ if(v==='proto'){if(scr)screen=scr;drawProto()}else if(v==='ac'){if(!rendered.ac)renderView('ac')}}
+function drawProto(){const host=$('#host');if(typeof verUI==='function'&&VS)verUI();
+ if(!IT.screens.length&&V3.protoOf(P,IT).length){host.innerHTML='<div class="empty" style="padding-top:70px"><div class="art">'+ic('grid')+'</div><b>已歸入 '+V3.protoOf(P,IT).length+' 個雛型檔案</b><div class="sm" style="max-width:420px;margin:8px auto">'+V3.protoOf(P,IT).map(mdEsc).join('、')+'</div><div class="xs muted">示意：正式版會在這裡直接顯示並可標註；版本與方案也從這裡管理。</div></div>';return}
+ if(!IT.screens.length){host.innerHTML=`<div class="empty" style="padding-top:90px"><div class="art">${ic('spark')}</div><b>這個工項還沒有雛型畫面</b><div class="sm" style="max-width:360px;margin:6px auto 14px">跟 AI 說想做什麼，我會依素材與公司素材庫先做出第一版畫面。</div><div class="row" style="justify-content:center;gap:8px"><button class="btn ai" id="mk">${ic('spark')}請 AI 產生雛型</button>${baseOf()?'<button class="btn" id="mkb">從基準畫面開始</button>':''}</div></div>`;$('#mk').onclick=()=>GAI.send('請依合約條文先做出第一版雛型畫面');const mb=$('#mkb');if(mb)mb.onclick=openBase;return}
+ if(!screen||!IT.screens.includes(screen))screen=IT.screens[0];
+ $('#scr').innerHTML=IT.screens.map(s=>`<option value="${s}" ${s===screen?'selected':''}>${PROTO.screens[s].title}</option>`).join('');
+ $('#pins').innerHTML='';pn=0;PROTO.render(screen,host,{});setAnno(anno)}
+function setAnno(on){anno=on;$('#host').classList.toggle('annoOn',on);$('#annoBtn').classList.toggle('primary',on);$('#annoBtn').innerHTML=ic('pin')+(on?'標註中':'標註');$('#annoHint').textContent=on?'點選畫面上要修改的位置':'開啟「標註」後，點選畫面上的位置說明怎麼改'}
+/* ---------- 文件產生／下載 ---------- */
+function openGen(k){curGen=k;$('#gt').textContent='產生「'+DN[k][1]+'」';$('#gs').textContent='目前尚未產出';$('#gart').innerHTML=ic(DN[k][0]);$('#ggo').innerHTML=ic('spark')+'產生';$('#m-gen').classList.add('open')}
+function gen(){const k=curGen;docs[KEYS[k]]='ok';IT.docs=docs;docbtns();$('#m-gen').classList.remove('open');if(k==='split'){rendered.doc=0;setView('mem');docSec(true)}else{rendered.ac=0;setView('ac')}toast('「'+DN[k][1]+'」已產生，可直接在系統內檢視')}
+function freeze(){if($('#fz2').checked){$('#ver').className='chip';$('#ver').innerHTML='🔒 雛型 v1 · 已凍結（對外）';return true}return false}
+function dl(k){dlKey=k;$('#fmt').innerHTML=(k==='spec'?['單檔 HTML','Word（.docx）','PDF']:['單檔 HTML（與線上同一份）','PDF']).map(x=>'<option>'+x+'</option>').join('');$('#dlgo').innerHTML=ic('download')+'下載';$('#m-dl').classList.add('open')}
+
+function applyLay(){if(window.VDOC&&view==='mem'&&docs[1]!=='no'&&!IT.docFile)setTimeout(()=>VDOC.fit($('#v-doc')),60)}
+window.onGAIChange=()=>{if(P&&IT){applyGate();docRefresh()}};
+function itemUnit(){const S=V3.getSys(P),sn=V3.sysNames(P).length?V3.itemSysOf(P,IT):'';return{u:S.split&&sn?(S.list.find(x=>x.name===sn)||S.main):S.main,sn}}
+function baseOf(){const {u}=itemUnit();return u&&(u.nat==='擴充'||u.nat==='維運')?u:null}
+function sysChips(){const {u,sn}=itemUnit(),b=baseOf();return (sn?'<span class="chip violet" title="所屬系統">'+sn+'</span>':'')+'<a class="chip '+(b?'brand':'')+'" href="'+DB.href(PAGES.manage)+'#base" title="既有系統基準；點了到專案設定" style="gap:6px">'+(b?'對齊基準：'+(u.base.from||'未設定'):'全新（無基準）')+'</a>'}
+let VS=null,viewV=1;
+function verInit(){VS=V3.verOf(P,IT);viewV=VS.n||1}
+function verSave(){V3.setVer(P,IT,VS)}
+function verUI(){if(!VS)return;const has=IT.screens.length>0;if(has&&!VS.n){VS.n=1;viewV=1}
+ const ids=['verSel','planSel','newPlan','adoptPlan','freezeBtn'];
+ if(!has){ids.forEach(i=>$('#'+i).style.display='none');$('#verNote').style.display='none';return}
+ const cur=viewV===VS.n,editable=cur&&!VS.frozen,active=VS.plans.filter(x=>!VS.archived.includes(x));
+ const vs=[];for(let i=1;i<=VS.n;i++)vs.push([i,i<VS.n||VS.frozen]);
+ $('#verSel').innerHTML=vs.map(([i,fz])=>'<option value="'+i+'"'+(i===viewV?' selected':'')+'>v'+i+' '+(fz?'已凍結':'編輯中')+'</option>').join('');
+ $('#planSel').innerHTML=VS.plans.map(p=>'<option value="'+p+'"'+(p===VS.plan?' selected':'')+'>方案 '+p+(VS.archived.includes(p)?'（封存）':'')+'</option>').join('');
+ $('#verSel').style.display='';$('#planSel').style.display=cur?'':'none';
+ $('#newPlan').style.display=editable?'':'none';$('#adoptPlan').style.display=editable&&active.length>1&&!VS.archived.includes(VS.plan)?'':'none';$('#freezeBtn').style.display=editable?'':'none';
+ const vn=$('#verNote');vn.style.display=cur?'none':'';vn.textContent='正在看 v'+viewV+'（唯讀存檔）；目前版本是 v'+VS.n;
+ $('#annoBtn').disabled=!editable;if(!editable&&anno)setAnno(false);
+ const bn=$('#baseNote');bn.style.display=IT.baseFrom?'':'none';bn.textContent=IT.baseFrom?'來源：基準畫面「'+IT.baseFrom+'」':'';
+ $('#ver').className='chip '+(editable?'mint':'');$('#ver').innerHTML=(editable?'<span class="d"></span>':'🔒 ')+'雛型 v'+viewV+' · '+(cur&&!VS.frozen?'編輯中':'已凍結')+(VS.plans.length>1?' · 方案 '+VS.plan:'');
+ docSecSt()}
+function bindVer(){
+ $('#verSel').onchange=e=>{viewV=+e.target.value;verUI();toast(viewV<VS.n||VS.frozen?'正在看 v'+viewV+'（唯讀存檔，畫面取自存檔圖）':'回到 v'+viewV+'（編輯中）')};
+ $('#planSel').onchange=e=>{VS.plan=e.target.value;verSave();verUI();toast('切到方案 '+VS.plan)};
+ $('#newPlan').onclick=()=>{const L=String.fromCharCode(65+VS.plans.length);VS.plans.push(L);const from=VS.plan;VS.plan=L;verSave();verUI();toast('已從方案 '+from+' 複製出方案 '+L+'；兩個方案各自修改，最後選一個採用')};
+ $('#adoptPlan').onclick=()=>{const keep=VS.plan;VS.archived=VS.plans.filter(x=>x!==keep);verSave();verUI();toast('已採用方案 '+keep+'，其他方案封存（仍可查看）')};
+ $('#freezeBtn').onclick=()=>{$('#fz1').innerHTML=ic('lock');$('#fzt').textContent='凍結 v'+VS.n+'？';$('#fzs').innerHTML='對外（客戶或主管）看過的版本就凍結：v'+VS.n+' 之後只能看，不能再改；接下來的修改會進入 <b>v'+(VS.n+1)+'</b>。'+(VS.plans.length>1?'目前有多個方案，凍結前建議先「採用此方案」。':'');$('#m-fz').classList.add('open')};
+ $('#fzgo').onclick=()=>{const old=VS.n;VS.frozen=true;VS.n=old+1;VS.frozen=false;VS.plans=['A'];VS.plan='A';VS.archived=[];viewV=VS.n;verSave();$('#m-fz').classList.remove('open');if(docs[1]==='ok'){docs[1]='old';IT.docs=docs}docbtns();verUI();toast('v'+old+' 已凍結，已開啟 v'+VS.n+' 繼續編輯；圖文對照需求說明標為待更新')}}
+function openBase(){const {u}=itemUnit();if(!u)return;const scr=V3.baseScreens[P.id]||V3.baseScreens.def;
+ $('#baseList').innerHTML='<div class="xs muted" style="margin-bottom:8px">基準：'+(u.base.from||'未設定')+'（'+u.base.state+'）　<a href="'+DB.href(PAGES.manage)+'#base">到專案設定調整基準</a></div>'+scr.map(x=>'<div class="opt" style="margin-bottom:8px;cursor:pointer" data-b="'+x+'"><div><b>'+x+'</b><span>'+(u.base.mod[x]?'標了「本次會改」':'僅參考')+'・複製後成為本工項雛型的起點</span></div></div>').join('');
+ $$('#baseList [data-b]').forEach(o=>o.onclick=()=>startBase(o.dataset.b));$('#m-base').classList.add('open')}
+function startBase(name){$('#m-base').classList.remove('open');IT.screens=[{wn:'dllog',nh:'nhrep',nb:'nbtree'}[P.theme]||'dllog'];IT.baseFrom=name;if(stage<1){stage=1;IT.stage=1;IT.auto=1;stepper();docbtns()}applyGate();setView('proto');verInit();verUI();say('ai','好，我從基準畫面「<b>'+name+'</b>」複製了一份當起點，並記錄來源；要改哪裡，開「標註」點畫面說就好。','整理需求');toast('已從基準畫面「'+name+'」開始')}
+window.pageInit=function(){
+ P=DB.cur();const q=new URLSearchParams(location.search);const wk=$('#wk');
+ if(!P.items.length){wk.innerHTML=`<div class="empty" style="padding-top:120px"><div class="art">${ic('list')}</div><b>此專案還沒有可規劃的工項</b><div class="sm" style="margin:6px 0 14px">先到專案管理上傳合約，核對後功能開發工項會出現在工項清單。</div><a class="btn primary" href="${PAGES.manage}#contract">前往合約拆工項</a></div>`;return}
+ IDX=+(q.get('i')||Math.max(0,P.items.findIndex(i=>i.stage>0&&i.stage<4)));IT=P.items[IDX]||P.items[0];
+ stage=IT.stage;docs=IT.docs.slice();tbd=IT.tbd.slice();IT.docs=docs;
+ const row=P.contract.find(c=>c[0]===IT.no)||[];const quote=row[6]||'';
+ oks=IT.no==='2.6'&&P.id==='wn'?['所有登入者皆可用','查詢方式三選一','支援 .kml／.kmz','範圍須為多邊形','一檔一個面','上傳後自動縮放','按查詢才分析']:[];
+ notes=(IT.no==='2.6'&&P.id==='wn')?{dir:['沿用既有「空間分析」版型，只新增「範圍查詢（上傳 KML）」','查詢範圍可下載為 KML（匯出勾選）'],out:['地籍查詢、行政區查詢先移除（11/02 決定）','繪製畫面的「下載 KML」先移除'],next:['確認檔案大小與頂點數上限','與 2.5 進階匯出對齊匯出多選'],at:'10:42',n:0}:{dir:[IT.name+'：'+(quote||'尚未整理')],out:[],next:tbd.length?['處理待定：'+tbd[0][1]]:['與 AI 討論補充細節'],at:'—',n:0};
+ document.querySelector('.top .crumb').textContent='工項 › '+IT.no+' '+IT.name;
+ const iv=ivInfo();
+ wk.innerHTML=`<div class="wh"><div><div class="xs muted">工項 ${IT.no} · <span class="cat dev" style="padding:1px 9px;font-size:11px">功能開發</span></div><h2>${IT.name}</h2></div>
+  <span class="chip" style="gap:6px;padding:2px 4px 2px 10px">負責 PM <select id="pmSel" class="pmsel">${P.members.map(m=>`<option ${m[0]===DB.pmOf(P,IT.no)?'selected':''}>${m[0]}</option>`).join('')}</select></span>${iv&&iv.on?`<a class="chip sun" href="${PAGES.items}" title="在工項清單調整" style="gap:6px">${ic('flag')}列入下次訪談</a>`:''}
+  ${sysChips()}
+  </div>
+ <div class="nextbar" id="nb"></div>
+ <div class="wbody" id="wb"><section class="cp"><div class="cp-head"><div class="seg" id="view"><button class="on" data-v="mem">工項說明</button><button data-v="ask">待確認事項</button><button data-v="proto">雛型</button><button data-v="ac">驗收條件</button></div>
+   <span class="chip mint only-proto" id="ver" style="display:none"><span class="d"></span>雛型 v1 · 編輯中</span><div class="grow"></div>
+   <button class="btn sm only-proto" id="annoBtn" style="display:none"></button><button class="btn sm only-proto" id="fs" style="display:none"></button><button class="btn sm primary only-proto" id="exp" style="display:none"></button></div>
+   <div class="cp-body">
+    <div class="pane" id="p-ask" style="display:none"><div class="ph">待確認事項<span class="chip" id="askCnt" style="font-weight:600"></span><span class="grow"></span><span class="xs muted">未處理的事項會標在頁籤上</span></div><div class="pb" style="overflow:auto;padding:18px 22px"><div id="askBody"></div></div></div>
+    <div class="pane" id="p-mem"><div class="ph">工項說明<span class="chip" style="font-weight:600">由 AI 幫手逐步整理 · 每個區塊都能收合</span><span id="docAll" class="row" style="gap:8px"></span><span class="grow"></span><button class="btn sm" id="dmAsk">${ic('msg')}請 AI 幫手修改</button><button class="btn ghost sm" id="dmOpen">全部展開</button><button class="btn ghost sm" id="dmClose">全部收合</button><button class="btn sm fsb" data-p="mem"></button></div><div class="pb" style="overflow:auto;padding:18px 22px"><div id="dmBody"></div><details class="dsec" id="docSec" open><summary>規格說明（圖文對照版）<span class="chip xs" id="docSt" style="margin-left:6px"></span></summary><div class="dsb"><div id="docEmpty"></div><div class="vwrap" id="w-doc" style="padding:8px 0;background:transparent"><div id="v-doc"></div></div></div></details><div id="dmBodyV"></div><div id="dmBody2"></div></div></div>
+    <div class="pane" id="p-ac" style="display:none"><div class="ph">驗收條件<span class="chip" style="font-weight:600">PG 自測、PM 驗收</span><span class="grow"></span><button class="btn sm fsb" data-p="ac"></button></div><div class="pb vwrap" id="w-ac"><div id="v-ac"></div></div></div>
+    <div class="pane" id="p-proto" style="display:none"><div class="ph"><select class="select" id="scr" style="width:auto;padding:4px 10px"></select><span class="chip" style="font-weight:600" id="stybadge"></span><select class="select" id="verSel" style="width:auto;padding:4px 10px" title="雛型版本"></select><select class="select" id="planSel" style="width:auto;padding:4px 10px" title="同一工項的並行方案"></select><button class="btn sm" id="newPlan" title="從目前方案複製出另一個方案">＋方案</button><button class="btn sm" id="adoptPlan" style="display:none" title="採用目前方案，其他方案封存">採用此方案</button><button class="btn sm" id="freezeBtn" title="對外看過就凍結，之後的修改進下一版">凍結此版</button><span class="chip coral xs" id="verNote" style="display:none"></span><span class="chip xs" id="baseNote" style="display:none"></span><span class="grow"></span><span class="xs muted" id="annoHint"></span></div>
+     <div class="pb" id="canvas" style="position:relative;overflow:hidden"><div id="host" style="height:100%"></div><div id="pins"></div>
+      <div class="pop" id="pop"><div class="xs muted" id="plab" style="margin-bottom:6px"></div><textarea class="input" id="ptxt" rows="3" placeholder="想怎麼改？例如：規則文字改成「一次只能上傳一個多邊形」"></textarea><label class="row sm" style="margin:8px 0"><input type="checkbox" class="check" id="ptech"> 標為 <b>⚠️ 待技術確認</b></label><div class="row" style="justify-content:flex-end"><button class="btn sm" id="pc">取消</button><button class="btn sm primary" id="ps">送出給 AI</button></div></div></div></div></div></section></div>`;
+ verInit();stepper();docbtns();dmInit();lists();bindVer();
+ $('#annoBtn').innerHTML=ic('pin')+'標註';$('#fs').innerHTML=ic('eye')+'試走';$('#exp').innerHTML=ic('download')+'匯出';$('#exp').title='匯出為單檔網頁（離線可開、地圖可操作）';
+ $$('.fsb').forEach(b=>{b.innerHTML=ic('eye')+'全版面檢視';b.onclick=()=>{const p=$('#p-'+b.dataset.p);const on=!p.classList.contains('vfull');p.classList.toggle('vfull',on);b.innerHTML=on?ic('x')+'結束全版面':ic('eye')+'全版面檢視';if(window.VDOC&&b.dataset.p==='mem'&&!IT.docFile)setTimeout(()=>VDOC.fit($('#v-doc')),50)}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')$$('.pane.vfull').forEach(p=>$('.fsb',p).click())});
+ $('#stybadge').textContent=P.id==='wn'?'對齊既有系統 · 已鎖定':'風格已鎖定';
+ $('#sty1').innerHTML=ic('check');$('#pre1').innerHTML=ic('alert');
+ $('#styt').textContent=P.id==='wn'?'本專案是既有系統的擴充，已對齊「土地評估圖台系統」（深藍側欄、青藍重點色）並鎖定。':'已從 3 種風格方案中選定並鎖定；客戶有建議時仍可追加微調。';
+ $$('#view button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(v==='ac'&&docs[2]==='no'){openGen('ac');return}setView(v)});
+ $('#scr').onchange=e=>{screen=e.target.value;drawProto()};
+ $('#fs').onclick=()=>{const p=$('#host');p.requestFullscreen&&p.requestFullscreen()};
+ $('#exp').onclick=()=>toast('已打包「雛型 v1」為單檔網頁（離線可開、地圖可操作）');
+ $('#pmSel').onchange=e=>{DB.setPm(P,IT.no,e.target.value);toast('負責 PM 已改為 '+e.target.value)};
+ 
+ $('#ggo').onclick=gen;$('#pregen').onclick=()=>{$('#m-pre').classList.remove('open');gen()};
+ $('#dlgo').onclick=()=>{$('#m-dl').classList.remove('open');const fr=freeze(),k=dlKey,nm=(k==='spec'?'需求規格_':'圖文對照_')+IT.no+'_'+IT.name;
+  if(/HTML/.test($('#fmt').value)){const f=k==='spec'?IT.specFile:IT.docFile;if(f)VDOC.downloadFile(f,nm);else VDOC.standalone($('#v-'+(k==='spec'?'spec':'doc')+' .vdoc'),nm)}
+  toast(fr?'已下載，雛型 v1 已凍結；之後修改會進入 v2':'已下載（未凍結）')};
+ const ctxClick=e=>{
+  if(e.target.closest('[data-gen]')){e.target.closest('.qchips').querySelectorAll('button').forEach(b=>b.disabled=true);openGen('split');return}
+  const c=e.target.closest('.qchips button');if(c){say('me',c.textContent);c.parentElement.querySelectorAll('button').forEach(b=>b.disabled=true);
+   if(c.hasAttribute('data-mkp')){reply('做出第一版雛型');return}
+   if(/10MB/.test(c.textContent)){const i=tbd.findIndex(t=>/大小/.test(t[1]));if(i>-1){tbd.splice(i,1);oks.push('檔案大小上限 10MB（暫定）');notes.dir.push('檔案大小上限暫定 10MB')}lists();notesView();ai('好，暫定 <b>10MB</b>，頂點數上限仍待技術確認，我留在待定。','整理需求')}else ai('收到，已更新「工項說明」。','整理需求');return}
+  if(e.target.closest('.fix')){toast('可改成：整理需求／回填訪談結論／規格後變更（示範）');return}
+  const ap=e.target.closest('[data-apply]');if(ap){ap.closest('.gmsg').querySelector('.cmp').insertAdjacentHTML('afterend','<div class="chip mint" style="margin-top:6px">已套用</div>');ap.parentElement.remove();stale();toast('已套用，相關文件標為已過期')}
+  if(e.target.closest('[data-undo]'))toast('已復原')};
+ if(window.GAI)GAI.ctx={onSend:t=>{reply(t);return true},onClick:ctxClick};
+ const canvas=$('#canvas'),pop=$('#pop');
+ canvas.addEventListener('click',e=>{if(!anno)return;const t=e.target.closest('[data-a]');if(!t||e.target.closest('.pop'))return;e.preventDefault();e.stopPropagation();
+  const cb=canvas.getBoundingClientRect(),x=e.clientX-cb.left,y=e.clientY-cb.top;pend={t,x,y,label:t.dataset.a};
+  $('#plab').innerHTML='📍 要修改：<b>'+t.dataset.a+'</b>';$('#ptxt').value='';$('#ptech').checked=false;
+  pop.style.left=Math.min(x+14,cb.width-310)+'px';pop.style.top=Math.min(y+8,cb.height-230)+'px';pop.classList.add('on');$('#ptxt').focus()},true);
+ $('#pc').onclick=()=>{pop.classList.remove('on');pend=null};
+ $('#ps').onclick=()=>{const txt=$('#ptxt').value.trim();if(!txt||!pend)return;const tech=$('#ptech').checked;pn++;
+  const pin=document.createElement('div');pin.className='pin'+(tech?' tech':'');pin.style.left=pend.x-12+'px';pin.style.top=pend.y-24+'px';pin.innerHTML='<span>'+pn+'</span>';$('#pins').appendChild(pin);
+  pop.classList.remove('on');say('me','📍 '+pn+'｜'+pend.label+'：'+txt+(tech?'　⚠️待技術確認':''));
+  const big=txt.length>22||/新增|增加|改版|重新|版面|流程|多選|分頁/.test(txt),el=pend.t,lb=pend.label,m=txt.match(/改成[「"]?(.+?)[」"]?$/);
+  if(tech){const id='Q-2'+(1+tbd.length);tbd.push([id,lb+'：'+txt,'技術']);IT.tbd=tbd;lists();ai('已把這一點標為 <b>⚠️ 待技術確認</b> 並加入待定面板（'+id+'）。技術同事可直接在畫面上看到這個釘。','整理需求')}
+  else if(!big){ai('這是小修改，<b>我直接套用了</b>。<div class="qchips"><button data-undo>復原</button></div>','整理需求').then(()=>{if(m&&/文字|說明|規則/.test(lb))el.innerHTML=m[1];el.classList.add('flash');stale()})}
+  else ai('這個改動比較大，會影響版面，<b>先給你看前後對照</b>：<div class="cmp"><div><b>修改前</b>'+lb+'維持現狀</div><div><b>修改後</b>依你的說明：'+txt.slice(0,40)+'</div></div><div class="qchips"><button data-apply>套用</button><button>先不要</button></div>','整理需求');
+  pend=null};
+ $('#annoBtn').onclick=()=>setAnno(!anno);
+ /* AI 幫手：這個工項的一次性開場 */
+ try{const ok='ss_aih_open_'+P.id+'_'+IT.no;if(!sessionStorage.getItem(ok)){sessionStorage.setItem(ok,'1');if(tbd.length)ai('這個工項目前有 <b>'+tbd.length+'</b> 項待確認，建議先處理：<b>'+tbd[0][1]+'</b>。<div class="qchips"><button>先處理這題</button><button>稍後再說</button></div>','',600)}}catch(e){}
+ const mk=$('#mkproto');if(mk)mk.onclick=()=>{IT.screens=[{wn:'dllog',nh:'nhrep',nb:'nbtree'}[P.theme]||'dllog'];if(stage<1){stage=1;IT.stage=1;IT.auto=1;stepper();docbtns()}mk.closest('.banner').remove();applyGate();setView('proto');say('ai','好，我依合約條文與專案素材先做出了<b>第一版雛型</b>，右邊可以直接操作；要改哪裡，開「標註」點畫面說就好。','整理需求');toast('已產生第一版雛型，中間檢視區出現了')};
+ applyGate();applyLay();setView(['mem','ask','ac','proto'].includes(q.get('tab'))?q.get('tab'):'mem',undefined,true);
+};
+window.addEventListener('resize',()=>{if(view==='mem'&&docs[1]!=='no'&&window.VDOC&&$('#v-doc')&&!IT.docFile)VDOC.fit($('#v-doc'))});
+</script>
+</body></html>

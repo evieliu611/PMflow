@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>雛型導覽｜災害模擬演練展示平台</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+.nav-hero{background:var(--brand);color:#fff;padding:26px 0}
+.nav-hero .page{margin:0 auto}
+.nav-hero h1{color:#fff;font-size:22px}
+.nav-hero p{opacity:.85;margin:6px 0 0;font-size:13px}
+.screen-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:18px}
+.screen{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.screen .sc-thumb{height:130px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--panel-2)}
+.screen .sc-body{padding:13px 15px}
+.screen h3{font-size:15px;color:var(--ink)}
+.screen p{font-size:12px;color:var(--ink-2);margin:6px 0 12px}
+.legend{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-top:18px;box-shadow:var(--shadow);font-size:13px}
+.legend code{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:12px}
+.legend .row{display:flex;gap:10px;margin:7px 0;align-items:flex-start}
+.legend .k{width:150px;flex-shrink:0;font-weight:600}
+</style>
+</head>
+<body>
+<div class="nav-hero">
+  <div class="page">
+    <h1>⛑ 災害模擬演練展示平台 — 雛型 v1</h1>
+    <p>中央警察大學 智慧災害模擬演練平台｜對應合約第一階段交付「展示平台雛型網頁」｜整理日期 115/08/14</p>
+  </div>
+</div>
+
+<div class="page">
+  <p style="margin:16px 0 0">📄 需求依據：<a href="../01_需求整理/01_需求摘要.md">01_需求摘要.md</a>　｜　本雛型為討論用，含假資料。</p>
+
+  <div class="screen-list">
+    <div class="screen">
+      <div class="sc-thumb">🗂</div>
+      <div class="sc-body">
+        <h3>① 演練專案列表</h3>
+        <p>列出各演練專案、依狀態（待演練／演練中／演練結束）篩選、新增與複製專案。平台的進入骨架。</p>
+        <a class="btn primary sm" href="雛型_v1_演練專案列表.html">開啟畫面</a>
+      </div>
+    </div>
+    <div class="screen">
+      <div class="sc-thumb">🗺</div>
+      <div class="sc-body">
+        <h3>② 演練操作台（地圖 console）</h3>
+        <p>核心畫面：地圖底圖/2D3D、圖層套疊面板、EMIC 時間軸重播、AI 生成地圖、繪圖、篩選定位、學員檢視。</p>
+        <a class="btn primary sm" href="雛型_v1_演練操作台.html">開啟畫面</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div style="font-weight:700;color:var(--brand);margin-bottom:8px">怎麼看這份雛型</div>
+    <div class="row"><span class="k">預設（乾淨畫面）</span><span>直接投影給客戶/主管看，無開發雜訊。</span></div>
+    <div class="row"><span class="k">💬 討論模式</span><span>點右下角按鈕 或 加 <code>?notes=1</code>：只列「今天要決定的事」＋情境切換器（教官/學員視角）。</span></div>
+    <div class="row"><span class="k">📋 規格檢視</span><span>給 PL／PG／設計，網址加 <code>?spec=1</code>：欄位表、業務規則、例外流程。</span></div>
+    <div class="row"><span class="k">地圖說明</span><span>雛型用離線示意底圖；正式系統採 <b>Mapbox</b> 核心。</span></div>
+  </div>
+
+  <p style="color:var(--ink-2);font-size:12px;margin-top:20px">下一步：需求穩定後跑 <code>/spec-gen</code> 產規格；要見客戶跑 <code>--訪談準備</code>。</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>20261119_NCDR養豬場平台_需求訪談</title>
+<!--
+  需求訪談簡報｜依雛型 v3｜版型取自「2026 RiChi 簡報母片」藍綠色板（背景圖與 Logo 在 assets/）
+  版面與互動參考：互動雛形簡報外殼（雛形內嵌、標註、局部放大與平移、雛形全螢幕、換頁列）
+  Demosite＝雛型_v3_儀表板.html，以 iframe 內嵌，可直接操作。
+  操作：← → 翻頁｜G 切頁器｜F 全螢幕｜N 講者備註｜Esc 還原放大／結束雛型全螢幕／關閉切頁器
+  內容取自「客戶討論問題清單」文件；編號沿用文件（2-3＝第 2 節第 3 題）。
+-->
+<style>
+:root{
+  --teal:#44D2C4; --teal-2:#63D4D2; --blue:#53B9DF; --blue-lt:#9DC4E5; --teal-deep:#17978E;
+  --mag:#A64D79; --mag-dk:#823A5E; --mag-soft:#F4E6EE; --yellow:#FDB515;
+  --ink:#3B3B3B; --ink-2:#6A6A6A; --ink-3:#9A9A9A; --line:#E3EBEB; --paper:#fff; --soft:#F2FAFA;
+  --warn-soft:#FFF3D6;
+  --sans:"Noto Sans TC","Microsoft JhengHei","PingFang TC",Arial,sans-serif;
+  --serif:"Cormorant Garamond","Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#17383b;font-family:var(--sans);color:var(--ink)}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--mag);outline-offset:2px}
+#viewport{position:fixed;inset:0;overflow:hidden}
+#deck{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center center;overflow:hidden;box-shadow:0 14px 60px rgba(0,0,0,.45)}
+
+/* ===== 頁面底圖與頁尾 ===== */
+.slide{position:absolute;inset:0;display:none;background:#58c9d4 url(assets/bg-content.jpg) center/cover}
+.slide.on{display:block}
+.slide.cover{background-image:url(assets/bg-cover.jpg)}
+.foot{position:absolute;left:72px;right:72px;bottom:22px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.foot .motto{font-family:var(--serif);font-size:17px;letter-spacing:.34em;color:rgba(255,255,255,.92)}
+.foot .pn{display:flex;align-items:center;gap:12px;font-style:italic;color:#2f3b3b;font-size:19px}
+.foot .pn img{height:26px;display:block}
+.foot .pn i{display:block;width:1px;height:20px;background:rgba(0,0,0,.35)}
+
+.sheet{position:absolute;left:64px;right:64px;top:50px;bottom:78px;background:var(--paper);border-radius:28px;box-shadow:0 10px 36px rgba(8,70,80,.22);padding:30px 42px 0;display:flex;flex-direction:column}
+.head{display:flex;align-items:baseline;gap:16px;flex:0 0 auto;min-height:58px}
+.head h1{margin:0;font-size:42px;font-weight:900;color:#444;letter-spacing:.02em}
+.head .sub{font-size:25px;font-weight:500;color:var(--ink-2)}
+.head .sec{margin-left:auto;align-self:center;font-size:17px;padding:3px 14px;border-radius:999px;background:var(--soft);color:var(--teal-deep);border:1px solid #bfe8e4;white-space:nowrap}
+.head .sec.ask{background:var(--mag-soft);color:var(--mag);border-color:#e3bfd1}
+.body{flex:1;min-height:0;display:flex;gap:24px;padding:16px 0 20px}
+
+/* ===== 封面 ===== */
+.cover .logo{position:absolute;left:44px;top:34px;height:44px}
+.cover .vtxt{position:absolute;right:46px;top:90px;writing-mode:vertical-rl;font-family:var(--serif);font-size:17px;letter-spacing:.36em;color:rgba(255,255,255,.85)}
+.cover .c{position:absolute;left:170px;top:260px;right:260px;color:#fff}
+.cover h1{margin:0 0 26px;font-size:76px;line-height:1.2;font-weight:900;letter-spacing:.02em;text-shadow:0 2px 14px rgba(0,80,90,.25)}
+.cover .lede{font-size:32px;font-weight:400;opacity:.95}
+.cover .meta{margin-top:34px;font-size:22px;opacity:.9}
+
+/* ===== 一般內容 ===== */
+.cols{display:grid;gap:22px;width:100%;align-content:start}
+.c2{grid-template-columns:repeat(2,1fr)} .c3{grid-template-columns:repeat(3,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px 26px;box-shadow:0 4px 14px rgba(20,100,110,.08)}
+.card h3{margin:0 0 10px;font-size:29px;color:#444}
+.card p,.card li{font-size:23px;margin:7px 0;line-height:1.55}
+.card ul{margin:6px 0;padding-left:26px}
+.card .cap{font-size:18px;color:var(--ink-3)}
+.ask-box{background:var(--mag-soft);border:2px solid #e3bfd1;border-radius:18px;padding:16px 24px;font-size:24px;color:#5b2a42;width:100%}
+.ask-box b{color:var(--mag)}
+.tag{display:inline-block;padding:1px 12px;border-radius:999px;font-size:17px;font-weight:500}
+.tag.q{background:#FFF1CF;color:#8A5A00}
+.tag.on{background:#DDF5F1;color:var(--teal-deep)} .tag.off{background:#EEF1F1;color:var(--ink-3)}
+table.t{width:100%;border-collapse:collapse;font-size:21px}
+table.t th{text-align:left;font-size:17px;font-weight:500;color:var(--teal-deep);padding:8px 14px;border-bottom:2px solid var(--teal)}
+table.t td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5}
+table.t td.no{width:84px;font-weight:700;color:var(--mag);white-space:nowrap}
+table.t tr.grp td{background:var(--soft);color:var(--teal-deep);font-weight:700;font-size:17px;letter-spacing:.08em;padding:6px 14px}
+.own{display:inline-block;padding:2px 12px;border-radius:999px;font-size:16px;font-weight:700;background:#eef1f1;color:#555}
+.own.rc{background:var(--teal);color:#07403b} .own.nc{background:#1B4F8A;color:#fff} .own.dc{background:var(--mag);color:#fff}
+.scroll{overflow:auto;width:100%}
+
+/* ===== 雛型頁 ===== */
+.proto{--k:.7;--z:1;--tx:0px;--ty:0px;position:relative;flex:0 0 auto;width:calc(1500px * var(--k));height:calc(860px * var(--k));border:1px solid #bcd8d8;border-radius:10px;background:#f6f0ea;overflow:hidden;box-shadow:0 8px 24px rgba(8,70,80,.18);transition:width .35s,height .35s}
+.cam{position:absolute;left:0;top:0;width:1500px;height:860px;transform-origin:0 0;transform:scale(var(--k)) translate(var(--tx),var(--ty)) scale(var(--z));transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.cam iframe{position:absolute;inset:0;width:1500px;height:860px;border:0;background:#f6f0ea}
+.proto.dragging .cam{transition:none}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-3);font-size:18px}
+.marks{position:absolute;inset:0;pointer-events:none}
+.mark{--s:calc(1 / (var(--k) * var(--z)));position:absolute;transform:translate(-50%,-50%) scale(var(--s));min-width:30px;height:30px;padding:0 8px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:var(--mag);color:#fff;font-weight:900;font-size:14px;letter-spacing:.02em;box-shadow:0 0 0 3px #fff,0 4px 12px rgba(0,0,0,.28);transition:transform .2s}
+.mark.hot{transform:translate(-50%,-50%) scale(calc(var(--s) * 1.25));background:var(--mag-dk)}
+.mark::after{content:"";position:absolute;inset:-8px;border-radius:24px;border:3px solid var(--mag);opacity:0}
+.mark.hot::after{animation:ring 1.2s ease-out infinite}
+@keyframes ring{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(1.5)}}
+.hide-marks .marks{display:none}
+.mark{pointer-events:auto;cursor:pointer}
+.pqs{overflow:hidden}
+.qs-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px;flex:0 0 auto}
+.qs .qlist{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}
+.q[hidden]{display:none}
+.qback{border:1.5px solid var(--mag);background:#fff;color:var(--mag);border-radius:999px;padding:3px 14px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
+.qback:hover{background:var(--mag-soft)}
+.qback[hidden]{display:none}
+.qpager{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:12px;min-height:34px;font-size:16px;color:var(--ink-2)}
+.qpager[hidden]{display:none}
+.qpager button{width:32px;height:32px;border-radius:50%;border:1px solid #cfe9e6;background:#fff;color:var(--ink);cursor:pointer;font-size:16px}
+.qpager button:hover:not(:disabled){background:var(--soft)}
+.qpager button:disabled{opacity:.35;cursor:default}
+.pqs.focus .q{border-color:var(--mag);background:var(--mag-soft)}
+.panpad{position:absolute;inset:0;z-index:4;display:none;cursor:grab;touch-action:none}
+.panning .panpad{display:block}
+.panpad.drag{cursor:grabbing}
+.panpad .tip{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(25,60,64,.85);color:#fff;font-size:15px;white-space:nowrap;pointer-events:none}
+
+/* 雛型放大工具列 */
+.ptools{position:absolute;top:10px;right:10px;z-index:6;display:flex;align-items:center;gap:4px;padding:5px;border-radius:999px;background:rgba(25,60,64,.88);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.ptools button{height:30px;min-width:30px;padding:0 11px;border:0;border-radius:999px;background:transparent;color:#fff;font-size:15px;cursor:pointer;white-space:nowrap}
+.ptools button:hover{background:rgba(255,255,255,.16)}
+.ptools button[aria-pressed="true"]{background:var(--teal);color:#07403b;font-weight:700}
+.ptools .zl{min-width:52px;text-align:center;color:#fff;font-size:15px;font-variant-numeric:tabular-nums}
+.ptools .sep{width:1px;height:20px;background:rgba(255,255,255,.28);margin:0 4px}
+.ptools .unzoom[hidden]{display:none}
+.ptools .unzoom{background:var(--mag);font-weight:700}
+.ptools .chips{display:none;gap:3px}
+.pcol{position:relative;flex:0 0 auto;display:flex;flex-direction:column;gap:6px}
+.pcol>.ptools{position:static;align-self:flex-end;padding:3px}
+.pcol>.ptools button{height:28px}
+.ptgrip{display:none;font-size:14px;color:#fff;padding:0 12px;line-height:28px;white-space:nowrap}
+.wide .pcol>.ptools{position:absolute;top:6px;right:8px;z-index:8;max-width:84px;overflow:hidden;opacity:.6;transition:max-width .25s,opacity .2s}
+.wide .pcol>.ptools:hover,.wide .pcol>.ptools:focus-within{max-width:1000px;opacity:1}
+.wide .ptgrip{display:inline-block}
+.ptools:hover .ptgrip{display:none}
+.wide .ptools .chips{display:flex}
+.ptools .chips button{padding:0 9px;font-weight:700;color:#bff3ec}
+.qs{flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
+.qs-title{font-size:19px;font-weight:900;color:var(--teal-deep);letter-spacing:.14em}
+.q{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;padding:14px 16px;border:1.5px solid #cfe9e6;border-radius:14px;background:#fff;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 #e3f1ef;transition:background .15s,border-color .15s}
+.q:hover,.q.hot{background:var(--soft);border-color:var(--teal)}
+.q[aria-pressed="true"]{background:var(--mag-soft);border-color:var(--mag)}
+.q .no{align-self:flex-start;padding:1px 11px;border-radius:12px;background:var(--mag);color:#fff;font-size:15px;font-weight:700}
+.q .text{font-size:19px;font-weight:700;line-height:1.45}
+.q .now{font-size:16px;color:var(--ink-2);line-height:1.5}
+.q .now b{color:#444;font-weight:500}
+.q.static{cursor:default}
+.q.static:hover{background:#fff;border-color:#cfe9e6}
+.wide .head,.wide .qs{display:none}
+.wide .sheet{padding:14px 20px 0}
+.wide .body{justify-content:center;padding:6px 0 14px}
+
+/* ===== 導覽列、切頁器 ===== */
+#nav{position:fixed;left:50%;transform:translateX(-50%);bottom:6px;z-index:20;display:flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;background:rgba(17,50,54,.9);color:#fff;font-size:14px}
+#nav button{width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:#fff;font-size:17px;cursor:pointer}
+#nav button:hover:not(:disabled){background:rgba(255,255,255,.16)}
+#nav button:disabled{opacity:.3;cursor:default}
+#nav .pg{min-width:58px;text-align:center;font-variant-numeric:tabular-nums}
+#nav .dots{display:flex;gap:5px;align-items:center;padding:0 6px}
+#nav .dots b{display:block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:transform .15s}
+#nav .dots b.s-1{background:#bfe6ea} #nav .dots b.s-2{background:var(--teal)} #nav .dots b.s-3{background:#7cc4ee} #nav .dots b.s-4{background:#e68fb9} #nav .dots b.s-5{background:#ddd}
+#nav .dots b.on{transform:scale(1.7);box-shadow:0 0 0 2px #fff}
+#nav .dots b:hover{transform:scale(1.5)}
+#nav #pgr{width:auto;padding:0 12px;border-radius:999px;font-size:14px;border-left:1px solid rgba(255,255,255,.2)}
+#nav #fs{border-left:1px solid rgba(255,255,255,.2);border-radius:0 50% 50% 0}
+#pager{position:fixed;inset:0;z-index:30;background:rgba(10,40,44,.95);display:none;padding:40px 60px;overflow:auto}
+#pager.open{display:block}
+#pager h2{margin:0 0 6px;color:#fff;font-size:30px}
+#pager .hint{color:#b9dcdc;font-size:15px;margin-bottom:18px}
+#pager .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+#pager .it{position:relative;text-align:left;padding:14px 16px;border-radius:16px;border:2px solid transparent;background:#fff;cursor:pointer;min-height:118px;display:flex;flex-direction:column;gap:6px}
+#pager .it:hover{border-color:var(--teal)}
+#pager .it.on{border-color:var(--mag);box-shadow:0 0 0 3px rgba(166,77,121,.35)}
+#pager .it .n{font-family:var(--serif);font-size:34px;line-height:1;color:var(--mag)}
+#pager .it .t{font-size:17px;font-weight:700;color:#444;line-height:1.35}
+#pager .it .g{margin-top:auto;font-size:13px;padding:1px 10px;border-radius:999px;align-self:flex-start}
+#pager .g.s-1{background:#e4f3f5;color:#35767c} #pager .g.s-2{background:#DDF5F1;color:var(--teal-deep)} #pager .g.s-3{background:#DFF0FB;color:#2a74a3} #pager .g.s-4{background:var(--mag-soft);color:var(--mag)} #pager .g.s-5{background:#eee;color:#666}
+#pager .x{position:absolute;right:26px;top:22px;color:#fff;background:transparent;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:6px 16px;font-size:16px;cursor:pointer}
+#toast{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);z-index:31;padding:10px 18px;border-radius:10px;background:rgba(17,50,54,.92);color:#fff;font-size:15px}
+.notes{display:none;position:absolute;left:0;right:0;bottom:0;z-index:15;background:rgba(17,50,54,.96);color:#e8f6f6;padding:12px 72px 16px;font-size:19px;line-height:1.6;max-height:230px;overflow:auto;border-top:4px solid var(--teal)}
+.notes b{color:#fff}
+body.shownotes .notes{display:block}
+.hint-key{position:fixed;left:10px;top:4px;z-index:5;font-size:12px;color:#86b9b9}
+.rec{width:100%;min-height:140px;border:2px dashed #b9dede;border-radius:14px;background:#fbffff;padding:12px 16px;font-size:22px;outline:none;color:var(--ink)}
+.rec:focus{border-color:var(--teal)}
+
+/* 資料欄位頁 */
+.c5{grid-template-columns:repeat(5,1fr);gap:14px}
+.colc{padding:16px 14px}
+.colc h3{font-size:20px;color:var(--mag);margin:0 0 8px;line-height:1.3}
+.colc ul{margin:0;padding-left:18px}
+.colc li{font-size:17px;margin:5px 0;line-height:1.4}
+.footnote{font-size:18px;color:var(--ink-3);margin:4px 0}
+.chipsf{display:flex;flex-wrap:wrap;gap:8px}
+.chipsf span{background:var(--soft);border:1px solid #cfe9e6;border-radius:6px;padding:5px 12px;font-size:20px}
+.qbox{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.qfig{margin:0;text-align:center}.qfig img{max-width:100%;object-fit:contain;border:1px solid #cfd8dc;border-radius:6px;background:#fff;cursor:zoom-in}
+#imgbox{position:fixed;inset:0;z-index:99;background:rgba(10,30,40,.82);display:none;align-items:center;justify-content:center;cursor:zoom-out}#imgbox.on{display:flex}#imgbox img{max-width:94vw;max-height:94vh;background:#fff;border-radius:6px}
+.qb{background:var(--mag-soft);border:2px solid #e3bfd1;border-radius:14px;padding:18px 22px}
+.qb .no{display:inline-block;background:var(--mag);color:#fff;border-radius:12px;padding:1px 12px;font-size:16px;font-weight:700;margin-bottom:6px}
+.qb ul{margin:6px 0 0;padding-left:22px}
+.qb li{font-size:23px;font-weight:700;line-height:1.5;margin:10px 0;color:#4b2438}
+table.cmp td{padding:6px 12px;font-size:19px}
+table.cmp td.k{font-weight:700;color:#444;white-space:nowrap}
+.na{color:#c3c3c3}
+@media (prefers-reduced-motion:reduce){.mark.hot::after{animation:none}.cam,.proto,.mark{transition:none}}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="deck"></div></div>
+<nav id="nav" aria-label="換頁">
+  <button id="prev" type="button" aria-label="上一頁">‹</button>
+  <span class="dots" id="dots" aria-hidden="true"></span>
+  <span class="pg" id="pg">1 / 1</span>
+  <button id="next" type="button" aria-label="下一頁">›</button>
+  <button id="pgr" type="button" title="切頁器（G）">▦ 切頁器</button>
+  <button id="fs" type="button" title="全螢幕（F）" aria-label="全螢幕">⛶</button>
+</nav>
+<div id="pager" role="dialog" aria-label="切頁器">
+  <button class="x" id="pgx" type="button">關閉（Esc）</button>
+  <h2>切頁器</h2>
+  <div class="hint">點選卡片直接跳頁；顏色代表段落（需求釐清／目前規劃／需要確認）。</div>
+  <div class="grid" id="pgrid"></div>
+</div>
+<div id="toast" hidden></div>
+<div class="hint-key">← → 翻頁　G 切頁器　F 全螢幕　N 講者備註</div>
+
+<script>
+/* ============================================================
+   簡報內容（只改這裡）。sec：1 開場、2 需求釐清、3 目前規劃、4 需要確認、5 收尾
+   ============================================================ */
+const PROTO = './雛型_v3_儀表板.html';
+const SECNAME = {1:'開場',2:'需求釐清',3:'目前規劃',4:'需要確認',5:'收尾'};
+const RAW = [
+ { kind:'cover', sec:1, title:'養豬場防疫決策輔助平臺\n儀表板', lede:'需求訪談', date:'瑞竣科技　Evie 劉乙欣',
+   note:'開場：今天會直接操作 Demo。過程中任何地方覺得不對，隨時打斷。' },
+
+ { kind:'table', sec:2, title:'資料來源與本期範圍', sub:'',
+   cols:['來源系統','提供單位','畫面上的位置','本期'],
+   rows:[
+    ['畜牧場登記系統','畜牧司','畜牧場基本資料','<span class="tag on">有資料</span>'],
+    ['牧場整合管理資訊系統','防檢署','畜牧場基本資料、坐標、在養頭數','<span class="tag on">有資料</span>'],
+    ['動物疫情通報系統','防檢署','「疫情通報」','<span class="tag on">有資料</span>'],
+    ['屠宰衛生檢查資訊網','防檢署','「家畜健康聲明書」、「化製來源」（化製原料來源單）','<span class="tag on">有資料</span>'],
+    ['畜產行情資訊網','畜產會','「畜產行情」','<span class="tag off">規劃中</span>'],
+    ['國產生鮮豬肉追溯資訊網','畜產會','「國產生鮮豬肉追溯」','<span class="tag off">規劃中</span>'],
+    ['家畜疾病監測系統','防檢署','「疾病監測」','<span class="tag off">規劃中</span>'],
+    ['畜牧場用藥監測管理資訊系統','防檢署','「用藥監測」','<span class="tag off">規劃中</span>'] ],
+   note:'「規劃中」的四個來源在畫面上灰階顯示、不可點。' },
+
+ { kind:'cols5', sec:2, title:'資料來源確認', sub:'', cols:[
+   { h:'畜牧場登記管理系統', items:['所在縣市','所在鄉鎮市','登記證編號','畜牧場名稱','場址','標準地籍址','登記飼養畜禽種類及數量','主要畜牧設施','防疫統編（A、B、C、D 都接）'] },
+   { h:'牧場資訊管理系統（新）', items:['畜牧場名稱','縣市','鄉鎮','村里','牧場場址','牧場種類','緯度','經度','防疫統編','在養頭數'] },
+   { h:'動物疫情通報系統', items:['案號','通報日期','通報人姓名','發病日期','牧場防疫統編','牧場／場所名稱','縣市','鄉鎮市區','經度','緯度','送檢動物（只介接家畜、家禽）','數量','檢驗結果綜合判定（確診）','判定日期'] },
+   { h:'家畜健康聲明書', items:['屠宰場縣市','屠宰場（肉品市場）','進場時間','防疫統編','牧場名稱','本批（車）家畜種類及數量（頭）：豬、牛、羊'] },
+   { h:'化製原料來源單', items:['來源單號','秤重日期','表單日期','防疫統編','化製原料來源場','流產死胎（頭）','仔豬、中豬、大豬','牛、仔牛、成牛','羊、仔羊、成羊'] } ],
+   note:'先讓客戶確認五種資料來源與欄位；之後先展示目前規劃的畫面，最後逐一確認資料問題。' },
+
+ { kind:'proto', sec:3, title:'整體畫面', sub:'左地圖、中查詢、右資料', view:'?frame=0', qs:[
+    { no:'1', text:'左：地圖', now:'臺灣地圖以縣市界為底，一個點代表一個畜牧場；點位外圈的三段環顯示近 30 日的疫情通報、化製送交、屠宰送交狀態。', at:[150,60] },
+    { no:'2', text:'中：畜牧場查詢', now:'查詢區在最上方，可依畜牧場條件（縣市、鄉鎮市區、名稱、狀態）或依受影響範圍查詢。', at:[690,40] },
+    { no:'3', text:'中：查詢結果清單', now:'列出符合條件的畜牧場與三種狀態，點選即選取；進入畫面時預設選取第一筆有狀態的畜牧場。', at:[545,520] },
+    { no:'4', text:'右：選取畜牧場的資料', now:'右側依序是基本資料、資料來源按鈕與各資料區；整個畫面嵌在主平臺的「儀表板＋地圖」區塊，上方橫幅與頁籤由主平臺提供。', at:[1430,110] },
+    { no:'5', text:'資料來源與更新時間', now:'各資料區底部標示資料來源與更新時間。', at:[1300,790] } ],
+   note:'操作腳本：① 先讓客戶看整體。② 點地圖不同的點，右側跟著換。③ 點「收合」示範基本資料可收起。④ 提醒最上方橫幅與頁籤由主平臺提供。' },
+
+ { kind:'proto', sec:3, title:'點位狀態與查詢', sub:'一圈三段環與查詢條件', view:'?frame=0&chk=epi,slh', qs:[
+    { no:'1', text:'點位狀態圖例', now:'一圈三段環：上＝疫情通報、右下＝化製送交、左下＝屠宰送交；亮色表示近 30 日有紀錄，灰色表示沒有；選取的畜牧場外加深色外圈。', at:[185,775] },
+    { no:'2', text:'疫情通報狀態', now:'近 30 日有疫情通報就亮，目前不分判定結果。', at:[440,231] },
+    { no:'3', text:'化製送交狀態', now:'近 30 日有化製原料來源單即亮；資料區不另標異常。', at:[560,259] },
+    { no:'4', text:'「近期」的定義', now:'固定為近 30 日。', at:[680,231] },
+    { no:'5', text:'狀態勾選', now:'可複選；同時勾選多項時為「同時符合」，不符合的點位在地圖上淡化。', at:[680,295] },
+    { no:'6', text:'名稱與地區查詢', now:'名稱欄可輸入畜牧場名稱或防疫統編；縣市、鄉鎮市區為下拉選單，鄉鎮隨縣市連動。', at:[700,190] },
+    { no:'7', text:'地圖範圍', now:'地圖含臺灣本島、澎湖、金門、連江與縣市界，離島以插圖方式放在本島左側；點位依牧場坐標標示，可縮放與回全台。', at:[150,330] } ],
+   note:'操作腳本：目前已預先勾選「疫情通報」「屠宰送交」，清單縮小、地圖其他點變淡。取消一項再勾回，說明「同時符合」。縣市選「屏東縣」看鄉鎮連動。' },
+
+ { kind:'proto', sec:3, title:'受影響範圍', sub:'以縣市行政區標示', view:'?frame=0&scope=both', qs:[
+    { no:'1', text:'查詢方式二選一', now:'查詢區頂端切換「依畜牧場條件」或「依受影響範圍」，兩者不並用，避免縣市篩選混淆；受影響範圍可選疫情發生縣市、疫情場送往的屠宰場縣市、兩者合併。', at:[700,141] },
+    { no:'2', text:'指定縣市（選填）', now:'可再指定一個縣市，直接查該縣市有沒有疫情通報、有沒有疫情場送往該縣市的屠宰場；不指定則為「縣市不拘」。', at:[700,186] },
+    { no:'3', text:'疫情場送往的屠宰場縣市', now:'從疫情發病日起，疫情場進場的屠宰場所在縣市。', at:[255,300] },
+    { no:'4', text:'縣市行政區底色', now:'紅＝疫情發生縣市、藍綠＝疫情場送往的縣市、斜紋＝兩者皆是；範圍內的縣市名稱標在地圖上。', at:[150,805] },
+    { no:'5', text:'範圍內的畜牧場清單', now:'清單顯示所在縣市屬受影響範圍的畜牧場；指定縣市時，只列該縣市有疫情通報、或有疫情場送來的畜牧場，通報與進場明細看右側面板。', at:[640,271] },
+    { no:'6', text:'不納入的部分', now:'化製場縣市沒有資料，不納入受影響範圍；地圖不畫流向線，只標縣市底色。', at:[120,520] },
+    { no:'7', text:'排序', now:'清單依狀態多者優先排序。', at:[545,740] } ],
+   note:'操作腳本：查詢區已切到「依受影響範圍」，目前是「兩者合併」；切回「依畜牧場條件」可用縣市、名稱、狀態查畜牧場。切到「疫情發生縣市」只剩紅色，切到「疫情場送往的屠宰場縣市」只剩藍綠。再選「臺中市」可看到宜蘭的世仰牧場送往該縣市屠宰場；選「澎湖縣」則為空。' },
+
+ { kind:'proto', sec:3, title:'畜牧場基本資料', sub:'登記與整合合併顯示', view:'?frame=0&farm=A07221', qs:[
+    { no:'1', text:'基本資料欄位', now:'名稱、防疫統編、縣市、鄉鎮市區、村里、地址、主要畜牧設施、牧場種類、在養頭數、登記飼養畜禽種類及數量、登記證編號；可收合，收合時仍顯示名稱與場址。登記飼養畜禽種類及數量：完整呈現登記系統的文字內容（例：種公豬(5),種母豬(65),肉豬(736)），不另判斷是否為豬；內容格式不一，是否需要顯示見 P.10。', at:[900,45] },
+    { no:'2', text:'地址', now:'「地址」欄只取牧場資訊管理系統的場址（門牌地址），不顯示登記系統的場址與標準地籍址。', at:[1050,198] },
+    { no:'3', text:'登記與整合合併顯示', now:'兩個來源合併顯示，欄位旁以「登」「整」標籤區分來源；名稱不一致時以登記為主。', at:[1250,150] },
+    { no:'4', text:'在養頭數與登記飼養畜禽種類及數量', now:'並列顯示，不另做差距提醒。', at:[1100,320] } ],
+   note:'基本資料區可收合。登＝畜牧場登記、整＝牧場整合。畜牧場母體以登記系統為準，查無登記的畜牧場不納入。' },
+
+ { kind:'proto', sec:3, title:'資料來源與資料區', sub:'疫情通報、家畜健康聲明書、化製來源', view:'?frame=0&farm=A07221', qs:[
+    { no:'1', text:'資料來源按鈕', now:'按鈕可開關下方資料區，按鈕上的數字為筆數；有資料的三項預設開啟。', at:[1400,470] },
+    { no:'2', text:'規劃中的來源', now:'畜產行情、國產生鮮豬肉追溯、用藥監測、疾病監測以灰階顯示，本期不可開啟。', at:[880,505] },
+    { no:'3', text:'三個資料區的欄位', now:'只取豬隻資料：疫情通報、家畜健康聲明書、化製來源；通報人姓名做遮罩（例：王O明）。', at:[1100,650] },
+    { no:'4', text:'三個資料區對照', now:'各自一張表，由新到舊排列，方便對照同一畜牧場的通報、進場與化製紀錄。', at:[1400,640] },
+    { no:'5', text:'資料筆數', now:'資料筆數多時全部列出；各資料區底部標示資料來源與更新時間。', at:[1100,790] } ],
+   note:'操作腳本：已選「世仰牧場」（有疫情通報、化製、屠宰紀錄）。關掉其中兩個，只留疫情通報，再打開化製來源，示範「對照」。' },
+
+ { kind:'cmp', sec:4, title:'畜牧場資料欄位比較', sub:'畜牧場登記管理系統 與 牧場資訊管理系統（新）',
+   cols:['項目','畜牧場登記管理系統','牧場資訊管理系統（新）'],
+   rows:[
+    ['防疫統編','防疫統編（A、B、C、D 都接）','防疫統編'],
+    ['畜牧場名稱','畜牧場名稱','畜牧場名稱'],
+    ['縣市','所在縣市','縣市'],
+    ['鄉鎮市區','所在鄉鎮市','鄉鎮'],
+    ['村里','—','村里'],
+    ['場址','場址（多為地號，與門牌混用）','牧場場址（採用）'],
+    ['標準地籍址','標準地籍址（地籍補充）','—'],
+    ['登記證編號','登記證編號','—'],
+    ['登記飼養畜禽種類及數量','登記飼養畜禽種類及數量','—'],
+    ['主要畜牧設施','主要畜牧設施','—'],
+    ['牧場種類','—','牧場種類（判斷是否為豬場）'],
+    ['在養頭數','—','在養頭數'],
+    ['經緯度','—','緯度、經度'] ],
+   qbox:{ no:'', lines:['是否以「畜牧場登記管理系統」為基準進行各資料關聯？並以「牧場資訊管理系統（新）」的牧場種類判斷是否為豬場，僅納入豬場資料','防疫統編 A、B、C、D 代表意義？','場址以「牧場資訊管理系統（新）」的地址為準'], img:{ src:'assets/fig1_登記系統場址.png', cap:'登記系統的場址、標準地籍址資訊', h:285 } },
+   note:'暫建議：牧場母體以登記系統為準；牧場種類（是否為豬場）與場址以牧場資訊管理（新）為準。補充：登記系統的場址與標準地籍址有地號、門牌混用且不完整的情況；牧場資訊管理（新）目前只有介接規格文件，尚未看過實際資料。地圖點位只能來自牧場資訊管理（新）的坐標。' },
+
+ { kind:'cmp', sec:4, title:'畜牧場資料欄位比較', sub:'畜牧場登記管理系統 與 牧場資訊管理系統（新）',
+   cols:['項目','畜牧場登記管理系統','牧場資訊管理系統（新）'],
+   rows:[
+    ['防疫統編','防疫統編（A、B、C、D 都接）','防疫統編'],
+    ['畜牧場名稱','畜牧場名稱','畜牧場名稱'],
+    ['縣市','所在縣市','縣市'],
+    ['鄉鎮市區','所在鄉鎮市','鄉鎮'],
+    ['村里','—','村里'],
+    ['場址','場址（多為地號，與門牌混用）','牧場場址（採用）'],
+    ['標準地籍址','標準地籍址（地籍補充）','—'],
+    ['登記證編號','登記證編號','—'],
+    ['登記飼養畜禽種類及數量','登記飼養畜禽種類及數量','—'],
+    ['主要畜牧設施','主要畜牧設施','—'],
+    ['牧場種類','—','牧場種類（判斷是否為豬場）'],
+    ['在養頭數','—','在養頭數'],
+    ['經緯度','—','緯度、經度'] ],
+   qbox:{ no:'', lines:['是否需顯示主要畜牧設施文字','登記飼養畜禽種類及數量內容格式不一，較難只抓取豬隻資料，是否需顯示？'], img:{ src:'assets/fig2_登記系統種類設施.png', cap:'登記系統的登記飼養畜禽種類及數量、主要畜牧設施資訊', h:420 } },
+   note:'暫建議：牧場母體以登記系統為準；牧場種類（是否為豬場）與場址以牧場資訊管理（新）為準。補充：登記系統的場址與標準地籍址有地號、門牌混用且不完整的情況；牧場資訊管理（新）目前只有介接規格文件，尚未看過實際資料。地圖點位只能來自牧場資訊管理（新）的坐標。' },
+
+ { kind:'fq', sec:4, title:'疫情通報資料欄位', sub:'動物疫情通報系統', groups:[
+   { h:'動物疫情通報系統（共 14 欄）', fields:['通報日期','通報人','發病日期','防疫統編','牧場／場所名稱','縣市','鄉鎮','緯度','經度','送檢動物名稱','送檢動物數量','疾病名稱（初步診斷）','疾病名稱（確診）','判定日期'] } ],
+   qbox:{ no:'', lines:['防疫統編欄位可為空值，統編為空的通報如何對應到牧場？','檢驗後若確認無疾病，是否會在確診欄位標示？標示文字為何？若無疾病是否不須再通報介面呈現？'] },
+   note:'依 NCDR 資料介接說明書－疫情通報系統（1151109）：「數量」為送檢動物數量，不是發病頭數（已確認，不再提問）；有初步診斷與確診疾病名稱。防疫統編與經緯度欄位允許空值。' },
+
+ { kind:'fq', sec:4, title:'家畜健康聲明書、化製原料來源單', sub:'資料欄位與資料來源', groups:[
+   { h:'家畜健康聲明書（共 6 欄）', fields:['屠宰場縣市','屠宰場（肉品市場）','進場時間','防疫統編','牧場名稱','本批（車）家畜種類及數量（頭）：豬、牛、羊'] },
+   { h:'化製原料來源單（共 15 欄）', fields:['來源單號','秤重日期','表單日期','防疫統編','化製原料來源場','流產死胎（頭）','仔豬','中豬','大豬','牛','仔牛','成牛','羊','仔羊','成羊'] } ],
+   qbox:{ no:'', lines:['家畜健康聲明書的豬、牛、羊是否會分開欄位儲存？'] },
+   note:'已確認：家畜健康聲明書、化製原料來源單同屬防檢署屠宰衛生檢查資訊系統（名稱以「家畜健康聲明書」為準）；兩份資料的欄位都有防疫統編。' },
+
+ { kind:'qlist', sec:4, title:'資料與相關呈現確認', sub:'', qs:[
+   { no:'', text:'資料庫的資料更新頻率？', now:'—' },
+   { no:'', text:'已取得家畜健康聲明書、化製原料來源單範例與規格說明，是否可提供畜牧場登記系統規格說明？', now:'—' },
+   { no:'', text:'是否需嵌回災情網？', now:'—' } ] }
+];
+
+/* ============================================================
+   外殼程式
+   ============================================================ */
+const PW=1500, PH=860, ZMAX=4;
+const deck=document.getElementById('deck');
+let cur=0;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const foot=n=>`<div class="foot"><span class="motto">WE GO BEYOND IMAGINATION</span><span class="pn"><img src="assets/logo-dark.png" alt="RiChi"><i></i>P. ${n}</span></div>`;
+const head=s=>`<div class="head"><h1>${esc(s.title)}</h1><span class="sub">${esc(s.sub||'')}</span><span class="sec ${s.sec===4?'ask':''}">${SECNAME[s.sec]||''}</span></div>`;
+const notes=s=>s.note?`<div class="notes"><b>講者備註</b>　${esc(s.note)}</div>`:'';
+function sheet(s,i,inner,cls){
+  const sl=el('section','slide'+(cls?' '+cls:''));
+  sl.setAttribute('aria-label',s.title||'');
+  sl.innerHTML=`<div class="sheet">${head(s)}${inner}</div>${foot(i+1)}${notes(s)}`;
+  return sl;
+}
+function buildCover(s,i){
+  const sl=el('section','slide cover');
+  sl.innerHTML=`<img class="logo" src="assets/logo-white.png" alt="RiChi"><div class="vtxt">WE GO BEYOND IMAGINATION</div>
+   <div class="c"><h1>${esc(s.title).replace(/\n/g,'<br>')}</h1><div class="lede">${esc(s.lede)}</div><div class="meta">${esc(s.date)}</div></div>${notes(s)}`;
+  return sl;
+}
+function buildText(s,i){
+  let inner='<div class="body" style="flex-direction:column;gap:20px;padding-top:22px">';
+  if(s.bullets)inner+=`<ul style="margin:6px 0;padding-left:34px;font-size:27px;line-height:1.7">${s.bullets.map(b=>`<li style="margin:10px 0">${b}</li>`).join('')}</ul>`;
+  if(s.cards)inner+=`<div class="cols ${s.cards.length===3?'c3':'c2'}">${s.cards.map(c=>`<div class="card"><h3>${esc(c.h)}</h3>${c.p?`<p>${esc(c.p)}</p>`:''}${c.list?`<ul>${c.list.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}${c.rec?'<div class="rec" contenteditable="true">點這裡輸入現場結論…</div>':''}${c.cap?`<p class="cap">${esc(c.cap)}</p>`:''}</div>`).join('')}</div>`;
+  if(s.ask)inner+=`<div class="ask-box">${s.ask}</div>`;
+  return sheet(s,i,inner+'</div>');
+}
+function buildTable(s,i){
+  const rows=s.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+  return sheet(s,i,`<div class="body" style="flex-direction:column;gap:10px;padding-top:12px"><div class="scroll"><table class="t"><thead><tr>${s.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>${s.foot?`<p style="font-size:18px;color:var(--ink-3);margin:4px 0">${esc(s.foot)}</p>`:''}</div>`);
+}
+function buildTodo(s,i){
+  const own=o=>`<span class="own ${o==='瑞竣'?'rc':o==='NCDR'?'nc':'dc'}">${esc(o)}</span>`;
+  const rows=s.items.map(r=>`<tr><td class="no">${r.no}</td><td style="font-weight:700">${esc(r.item)}</td><td style="color:var(--ink-2);font-size:19px">${esc(r.note||'')}</td><td>${r.owner?own(r.owner):''}</td></tr>`).join('');
+  return sheet(s,i,`<div class="body" style="padding-top:8px"><div class="scroll"><table class="t"><thead><tr><th>編號</th><th>事項</th><th>說明</th><th>負責單位</th></tr></thead><tbody>${rows}</tbody></table></div></div>`);
+}
+const qCard=q=>`<button class="q" type="button" data-no="${q.no}" aria-pressed="false"><span class="no">${q.no}</span><span class="text">${esc(q.text)}</span>${q.now&&q.now!=='—'?`<span class="now">${esc(q.now)}</span>`:''}</button>`;
+const sCard=q=>`<div class="q static">${q.no?`<span class="no">${q.no}</span>`:''}<span class="text">${esc(q.text)}</span>${q.now&&q.now!=='—'?`<span class="now"><b>現況：</b>${esc(q.now)}</span>`:''}</div>`;
+function buildData(s,i){
+  const inv=`<div class="card" style="flex:0 0 640px;align-self:flex-start"><h3>${esc(s.inv.title)}</h3>${s.inv.groups.map(g=>`<p style="margin:10px 0"><span class="tag on">${esc(g[0])}</span><br><span style="font-size:19px;color:var(--ink-2)">${esc(g[1])}</span></p>`).join('')}</div>`;
+  return sheet(s,i,`<div class="body">${inv}<aside class="qs" style="max-height:640px"><div class="qs-title">待確認問題</div>${s.qs.map(sCard).join('')}</aside></div>`);
+}
+function buildQlist(s,i){
+  return sheet(s,i,`<div class="body"><aside class="qs" style="max-height:640px;max-width:1100px"><div class="qs-title">待確認問題</div>${s.qs.map(sCard).join('')}</aside></div>`);
+}
+const flatSummary=()=>RAW.filter(x=>x.qs&&x.kind!=='summary').flatMap(x=>[{grp:x.title},...x.qs.map(q=>({no:q.no,text:q.text}))]);
+function buildSummary(s,i){
+  const data=s.rowsData||flatSummary();
+  const rows=data.map(r=>r.grp?`<tr class="grp"><td colspan="2">${esc(r.grp)}</td></tr>`:`<tr><td class="no">${r.no}</td><td>${esc(r.text)}</td></tr>`).join('');
+  return sheet(s,i,`<div class="body" style="padding-top:6px"><div class="scroll"><table class="t"><thead><tr><th>編號</th><th>待確認問題</th></tr></thead><tbody>${rows}</tbody></table></div></div>`);
+}
+
+/* 雛型頁 */
+function buildProto(s,i){
+  const sl=sheet(s,i,`<div class="body">
+    <div class="pcol">
+      <div class="ptools" role="toolbar" aria-label="雛型放大工具">
+        <span class="ptgrip" aria-hidden="true">⚙ 工具</span>
+        <span class="chips">${s.qs.map(q=>`<button type="button" data-zoom="${q.no}" aria-label="放大 ${q.no} 區塊">${q.no}</button>`).join('')}</span>
+        <button type="button" class="unzoom" data-act="unzoom" hidden>還原全圖</button>
+        <button type="button" data-act="zout" aria-label="縮小" title="縮小">－</button>
+        <span class="zl" data-zl>100%</span>
+        <button type="button" data-act="zin" aria-label="放大" title="放大">＋</button>
+        <span class="sep"></span>
+        <button type="button" data-act="marks" aria-pressed="true" title="顯示／隱藏題號標註">標註</button>
+        <button type="button" data-act="reset" title="重設雛型畫面">重設</button>
+        <button type="button" data-act="wide" aria-pressed="false" title="雛型全螢幕">全螢幕</button>
+      </div>
+    <div class="proto" id="pr-${i}">
+      <div class="loading">雛型載入中…</div>
+      <div class="cam"><div class="marks"></div></div>
+      <div class="panpad" aria-hidden="true"><span class="tip">拖曳畫面平移；按「還原全圖」或 Esc 回到可操作的全圖</span></div>
+    </div>
+    </div>
+    <aside class="qs pqs"><div class="qs-head"><span class="qs-title">規劃說明</span><button type="button" class="qback" data-act="qall" hidden>顯示全部說明</button></div><div class="qlist">${s.qs.map(qCard).join('')}</div><div class="qpager" hidden><button type="button" data-act="qprev" aria-label="上一頁">‹</button><span class="qpn"></span><button type="button" data-act="qnext" aria-label="下一頁">›</button></div></aside>
+  </div>`);
+  const marks=sl.querySelector('.marks');
+  s.qs.forEach(q=>{const m=el('span','mark',q.no);m.dataset.no=q.no;m.title='點選只看這項說明';m.setAttribute('role','button');m.style.left=q.at[0]+'px';m.style.top=q.at[1]+'px';marks.appendChild(m)});
+  sl._st={z:1,tx:0,ty:0};
+  const hot=no=>sl.querySelectorAll('[data-no]').forEach(e=>e.classList.toggle('hot',e.dataset.no===no));
+  sl.querySelectorAll('.q').forEach(b=>{
+    b.addEventListener('mouseenter',()=>hot(b.dataset.no));
+    b.addEventListener('mouseleave',()=>hot(null));
+    b.addEventListener('click',()=>{
+      if(sl.classList.contains('hide-marks'))toggleMarks(sl,false);
+      hot(b.dataset.no); zoomToMark(sl,s,sl.dataset.zoom===b.dataset.no?null:b.dataset.no);
+    });
+  });
+  const markClick=no=>{
+    if(sl.classList.contains('wide')){zoomToMark(sl,s,sl.dataset.zoom===no?null:no);return}
+    const st=qst(sl);
+    if(st.focus===no){unfocusCards(sl);hot(null)}else{if(sl.classList.contains('hide-marks'))toggleMarks(sl,false);focusCard(sl,no);hot(no)}
+  };
+  sl.addEventListener('click',e=>{
+    const mk=e.target.closest('.mark'); if(mk){markClick(mk.dataset.no);return}
+    const a=e.target.closest('[data-act],[data-zoom]'); if(!a)return;
+    if(a.dataset.zoom){zoomToMark(sl,s,sl.dataset.zoom===a.dataset.zoom?null:a.dataset.zoom);return}
+    const act=a.dataset.act;
+    if(act==='unzoom')zoomToMark(sl,s,null);
+    else if(act==='zin')stepZoom(sl,1.5);
+    else if(act==='zout')stepZoom(sl,1/1.5);
+    else if(act==='marks')toggleMarks(sl);
+    else if(act==='reset'){zoomToMark(sl,s,null);loadProto(sl,s,true)}
+    else if(act==='wide')setWide(sl,s);
+    else if(act==='qall'){unfocusCards(sl);hot(null)}
+    else if(act==='qprev')showQPage(sl,qst(sl).page-1);
+    else if(act==='qnext')showQPage(sl,qst(sl).page+1);
+  });
+  bindPan(sl);
+  return sl;
+}
+/* 說明框：自動分頁（依面板高度）、只看單題、還原 */
+const qst=sl=>sl._qp||(sl._qp={page:0,pages:[[]],focus:null,last:0});
+function layoutQs(sl){
+  const panel=sl.querySelector('.pqs'); if(!panel||sl.classList.contains('wide'))return;
+  const st=qst(sl), list=panel.querySelector('.qlist'), cards=[...list.children];
+  const pager=panel.querySelector('.qpager'), headEl=panel.querySelector('.qs-head');
+  cards.forEach(c=>c.hidden=false); pager.hidden=false;
+  const avail=panel.clientHeight-headEl.offsetHeight-pager.offsetHeight-24;
+  const pages=[[]]; let cur=0;
+  cards.forEach((c,i)=>{const h=c.offsetHeight+12;if(cur+h>avail&&pages[pages.length-1].length){pages.push([]);cur=0}pages[pages.length-1].push(i);cur+=h});
+  st.pages=pages; if(st.page>=pages.length)st.page=0;
+  if(st.focus)focusCard(sl,st.focus);else showQPage(sl,st.page);
+}
+function showQPage(sl,p){
+  const st=qst(sl), panel=sl.querySelector('.pqs'), cards=[...panel.querySelector('.qlist').children];
+  st.page=Math.max(0,Math.min(st.pages.length-1,p));
+  cards.forEach((c,i)=>c.hidden=!st.pages[st.page].includes(i));
+  const pager=panel.querySelector('.qpager');
+  pager.hidden=st.pages.length<=1||!!st.focus;
+  pager.querySelector('.qpn').textContent=(st.page+1)+' / '+st.pages.length;
+  pager.querySelector('[data-act=qprev]').disabled=st.page===0;
+  pager.querySelector('[data-act=qnext]').disabled=st.page===st.pages.length-1;
+}
+function focusCard(sl,no){
+  const st=qst(sl), panel=sl.querySelector('.pqs');
+  st.focus=no;
+  const cards=[...panel.querySelector('.qlist').children];
+  cards.forEach(c=>c.hidden=c.dataset.no!==no);
+  const idx=cards.findIndex(c=>c.dataset.no===no); st.pages.forEach((pg,k)=>{if(pg.includes(idx))st.last=k});
+  panel.classList.add('focus'); panel.querySelector('.qback').hidden=false; panel.querySelector('.qpager').hidden=true;
+}
+function unfocusCards(sl){
+  const st=qst(sl), panel=sl.querySelector('.pqs');
+  st.focus=null; panel.classList.remove('focus'); panel.querySelector('.qback').hidden=true;
+  showQPage(sl,st.last||0);
+}
+function kOf(sl){return parseFloat(getComputedStyle(sl.querySelector('.proto')).getPropertyValue('--k'))||.7}
+function applyCam(sl){
+  const p=sl.querySelector('.proto'),st=sl._st;
+  const clamp=(v,lo)=>Math.min(0,Math.max(lo,v));
+  st.tx=clamp(st.tx,PW-PW*st.z); st.ty=clamp(st.ty,PH-PH*st.z);
+  p.style.setProperty('--z',st.z); p.style.setProperty('--tx',st.tx+'px'); p.style.setProperty('--ty',st.ty+'px');
+  p.classList.toggle('panning',st.z>1.001);
+  sl.querySelector('[data-zl]').textContent=Math.round(st.z*100)+'%';
+  sl.querySelector('.unzoom').hidden=!(st.z>1.001);
+}
+function stepZoom(sl,f){
+  const st=sl._st, z0=st.z, z1=Math.max(1,Math.min(ZMAX,z0*f));
+  if(z1===z0)return;
+  const cx=(PW/2-st.tx)/z0, cy=(PH/2-st.ty)/z0;
+  st.z=z1; st.tx=PW/2-cx*z1; st.ty=PH/2-cy*z1;
+  if(z1<=1.001){st.z=1;st.tx=0;st.ty=0;delete sl.dataset.zoom;sl.querySelectorAll('.q,[data-zoom]').forEach(b=>b.setAttribute('aria-pressed','false'))}
+  applyCam(sl);
+}
+function zoomToMark(sl,s,no){
+  const st=sl._st, q=no&&s.qs.find(x=>x.no===no);
+  if(q){st.z=2;st.tx=PW/2-q.at[0]*2;st.ty=PH/2-q.at[1]*2;sl.dataset.zoom=no}
+  else{st.z=1;st.tx=0;st.ty=0;delete sl.dataset.zoom}
+  applyCam(sl);
+  sl.querySelectorAll('.q').forEach(b=>b.setAttribute('aria-pressed',String(!!q&&b.dataset.no===no)));
+  sl.querySelectorAll('[data-zoom]').forEach(b=>b.setAttribute('aria-pressed',String(!!q&&b.dataset.zoom===no)));
+}
+function toggleMarks(sl,force){
+  const hide=force==null?!sl.classList.contains('hide-marks'):force;
+  sl.classList.toggle('hide-marks',hide);
+  sl.querySelector('[data-act=marks]').setAttribute('aria-pressed',String(!hide));
+}
+function setWide(sl,s,force){
+  const on=force==null?!sl.classList.contains('wide'):force;
+  sl.classList.toggle('wide',on);
+  sl.querySelector('.proto').style.setProperty('--k',on?0.86:0.7);
+  const b=sl.querySelector('[data-act=wide]'); b.setAttribute('aria-pressed',String(on)); b.textContent=on?'結束全螢幕':'全螢幕';
+  if(!on)requestAnimationFrame(()=>layoutQs(sl));
+}
+function bindPan(sl){
+  const pad=sl.querySelector('.panpad'),proto=sl.querySelector('.proto');
+  let st0=null;
+  pad.addEventListener('pointerdown',e=>{
+    const scr=proto.getBoundingClientRect().width/proto.offsetWidth, u=scr*kOf(sl);
+    st0={x:e.clientX,y:e.clientY,tx:sl._st.tx,ty:sl._st.ty,u};
+    pad.setPointerCapture(e.pointerId);pad.classList.add('drag');proto.classList.add('dragging');
+  });
+  pad.addEventListener('pointermove',e=>{if(!st0)return;sl._st.tx=st0.tx+(e.clientX-st0.x)/st0.u;sl._st.ty=st0.ty+(e.clientY-st0.y)/st0.u;applyCam(sl)});
+  const end=()=>{st0=null;pad.classList.remove('drag');proto.classList.remove('dragging')};
+  pad.addEventListener('pointerup',end);pad.addEventListener('pointercancel',end);
+  pad.addEventListener('wheel',e=>{e.preventDefault();stepZoom(sl,e.deltaY<0?1.15:1/1.15)},{passive:false});
+}
+function loadProto(sl,s,reset){
+  const box=sl.querySelector('.proto');let f=box.querySelector('iframe');
+  if(f&&!reset)return;
+  if(f)f.remove();
+  f=document.createElement('iframe');f.title=s.title+'｜Demosite';
+  f.src=PROTO+s.view+'&deck=1'+(reset?'&t='+Date.now():'');
+  f.addEventListener('load',()=>{const l=box.querySelector('.loading');if(l)l.hidden=true});
+  box.querySelector('.cam').insertBefore(f,box.querySelector('.marks'));
+}
+
+/* 組裝 */
+
+const chipsHtml=a=>`<div class="chipsf">${a.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`;
+const qbox=q=>`<aside class="qbox"><div class="qs-title">待確認問題</div><div class="qb">${q.no?`<span class="no">${esc(q.no)}</span>`:''}<ul>${q.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>${q.img?`<figure class="qfig"><img src="${esc(q.img.src)}" alt="${esc(q.img.cap)}" style="max-height:${q.img.h||330}px" title="點擊放大"></figure>`:''}</aside>`;
+function buildCols5(s,i){
+  const cols=s.cols.map(c=>`<div class="card colc"><h3>${esc(c.h)}</h3><ul>${c.items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join('');
+  return sheet(s,i,`<div class="body" style="flex-direction:column;gap:8px;padding-top:14px"><div class="cols c5">${cols}</div>${s.foot?`<p class="footnote">${esc(s.foot)}</p>`:''}</div>`);
+}
+function buildCmp(s,i){
+  const rows=s.rows.map(r=>`<tr><td class="k">${esc(r[0])}</td>${r.slice(1).map(c=>`<td>${c==='—'?'<span class="na">—</span>':esc(c).replace(/&lt;br&gt;/g,'<br>')}</td>`).join('')}</tr>`).join('');
+  return sheet(s,i,`<div class="body"><div class="scroll" style="flex:1.7;min-width:0"><table class="t cmp"><thead><tr>${s.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>${qbox(s.qbox)}</div>`);
+}
+function buildFq(s,i){
+  const g=s.groups.map(x=>`<div class="card"><h3>${esc(x.h)}</h3>${chipsHtml(x.fields)}</div>`).join('');
+  return sheet(s,i,`<div class="body"><div class="cols" style="flex:1.7;min-width:0;grid-template-columns:1fr;align-content:start">${g}</div>${s.qbox&&s.qbox.lines.length?qbox(s.qbox):''}</div>`);
+}
+const BUILD={cols5:buildCols5,cmp:buildCmp,fq:buildFq,cover:buildCover,text:buildText,table:buildTable,todo:buildTodo,data:buildData,qlist:buildQlist,summary:buildSummary,proto:buildProto};
+/* 內容超過一頁時自動換頁：依實際排版高度切分 */
+const AV=640;
+function measure(s){const sl=BUILD[s.kind](s,0);sl.classList.add('on');sl.style.visibility='hidden';deck.appendChild(sl);return sl}
+function packRows(heights,headH,extra){
+  const chunks=[[]];let cur=headH+extra;
+  heights.forEach((h,i)=>{if(cur+h>AV&&chunks[chunks.length-1].length){chunks.push([]);cur=headH+extra}chunks[chunks.length-1].push(i);cur+=h});
+  return chunks;
+}
+function splitRows(s){
+  const key=s.kind==='todo'?'items':s.kind==='table'?'rows':'rowsData';
+  const data=s[key]||flatSummary();
+  const full={...s,[key]:data};
+  const sl=measure(full);
+  const hs=[...sl.querySelectorAll('tbody tr')].map(tr=>tr.offsetHeight), headH=sl.querySelector('thead').offsetHeight;
+  sl.remove();
+  const chunks=packRows(hs,headH,s.foot?40:0);
+  if(chunks.length===1)return [full];
+  return chunks.map((ix,k)=>{
+    let rows=ix.map(i=>data[i]);
+    if(key==='rowsData'&&rows[0]&&!rows[0].grp){let g='';for(let j=ix[0];j>=0;j--)if(data[j].grp){g=data[j].grp;break}rows=[{grp:g+'（續）'},...rows]}
+    return {...s,[key]:rows,title:s.title+'（'+(k+1)+'/'+chunks.length+'）',note:k?'':s.note};
+  });
+}
+function splitCards(s){
+  const sl=measure(s);
+  const panel=sl.querySelector('.qs'), hs=[...panel.querySelectorAll('.q')].map(c=>c.offsetHeight+12), th=panel.querySelector('.qs-title').offsetHeight+12;
+  sl.remove();
+  const chunks=packRows(hs,th,0);
+  if(chunks.length===1)return [s];
+  return chunks.map((ix,k)=>{
+    const qs=ix.map(i=>s.qs[i]);
+    if(k===0)return {...s,qs,title:s.title+'（1/'+chunks.length+'）'};
+    return {kind:'qlist',sec:s.sec,title:s.title+'（'+(k+1)+'/'+chunks.length+'）',sub:s.sub,qs,note:''};
+  });
+}
+function expandDeck(raw){
+  const out=[];
+  raw.forEach(s=>{
+    if(['todo','table','summary'].includes(s.kind))out.push(...splitRows(s));
+    else if(s.kind==='data'||s.kind==='qlist')out.push(...splitCards(s));
+    else out.push(s);
+  });
+  return out;
+}
+const DECK=expandDeck(RAW), TOTAL=DECK.length;
+DECK.forEach((s,i)=>deck.appendChild(BUILD[s.kind](s,i)));
+const slides=[...deck.children];
+
+/* 切頁：導覽列、小圓點、切頁器 */
+const dots=document.getElementById('dots');
+DECK.forEach((s,i)=>{const b=document.createElement('b');b.className='s-'+s.sec;b.title=(i+1)+'. '+(s.title||'封面').replace(/\n/g,' ');b.addEventListener('click',()=>go(i));dots.appendChild(b)});
+const pgrid=document.getElementById('pgrid');
+DECK.forEach((s,i)=>{
+  const it=el('button','it',`<span class="n">${String(i+1).padStart(2,'0')}</span><span class="t">${esc((s.title||'封面').replace(/\n/g,' '))}</span><span class="g s-${s.sec}">${SECNAME[s.sec]}</span>`);
+  it.type='button';it.addEventListener('click',()=>{go(i);closePager()});pgrid.appendChild(it);
+});
+function openPager(){document.getElementById('pager').classList.add('open');markPager()}
+function closePager(){document.getElementById('pager').classList.remove('open')}
+function markPager(){[...pgrid.children].forEach((e,i)=>e.classList.toggle('on',i===cur))}
+
+function go(n){
+  cur=Math.max(0,Math.min(TOTAL-1,n));
+  slides.forEach((sl,i)=>sl.classList.toggle('on',i===cur));
+  const s=DECK[cur];
+  if(s.kind==='proto'){loadProto(slides[cur],s);layoutQs(slides[cur])}
+  document.getElementById('pg').textContent=(cur+1)+' / '+TOTAL;
+  document.getElementById('prev').disabled=cur===0;
+  document.getElementById('next').disabled=cur===TOTAL-1;
+  [...dots.children].forEach((b,i)=>b.classList.toggle('on',i===cur));
+  markPager();
+  try{history.replaceState(null,'','#p'+(cur+1))}catch(e){}
+}
+function fit(){const k=Math.min(innerWidth/1600,innerHeight/900);deck.style.transform='translate(-50%,-50%) scale('+k+')'}
+addEventListener('resize',fit);fit();
+
+const toast=document.getElementById('toast');
+function say(m){toast.textContent=m;toast.hidden=false;clearTimeout(say._t);say._t=setTimeout(()=>toast.hidden=true,4200)}
+function toggleFs(){
+  if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});return}
+  const r=document.documentElement;
+  if(!r.requestFullscreen||document.fullscreenEnabled===false){say('目前的檢視環境不允許全螢幕，請改用瀏覽器全螢幕（F11）');return}
+  r.requestFullscreen().catch(()=>say('目前的檢視環境不允許全螢幕，請改用瀏覽器全螢幕（F11）'));
+}
+document.getElementById('fs').addEventListener('click',toggleFs);
+document.addEventListener('fullscreenchange',()=>requestAnimationFrame(fit));
+document.getElementById('prev').addEventListener('click',()=>go(cur-1));
+document.getElementById('next').addEventListener('click',()=>go(cur+1));
+document.getElementById('pgr').addEventListener('click',openPager);
+document.getElementById('pgx').addEventListener('click',closePager);
+addEventListener('keydown',e=>{
+  if(e.target.isContentEditable)return;
+  const open=document.getElementById('pager').classList.contains('open');
+  if(e.key==='Escape'){
+    if(open){closePager();return}
+    const sl=slides[cur],s=DECK[cur];
+    if(s.kind==='proto'){if(sl._qp&&sl._qp.focus)unfocusCards(sl);else if(sl.dataset.zoom||sl._st.z>1.001)zoomToMark(sl,s,null);else if(sl.classList.contains('wide'))setWide(sl,s,false)}
+    return;
+  }
+  if(open)return;
+  if(['ArrowRight','PageDown'].includes(e.key)){go(cur+1);e.preventDefault()}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){go(cur-1);e.preventDefault()}
+  else if(e.key==='Home')go(0); else if(e.key==='End')go(TOTAL-1);
+  else if(e.key==='g'||e.key==='G'){openPager();e.preventDefault()}
+  else if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.metaKey){toggleFs();e.preventDefault()}
+  else if(e.key==='n'||e.key==='N')document.body.classList.toggle('shownotes');
+});
+/* 滑鼠滾輪換頁：內容還能捲動、縮放平移中、切頁器開啟時不換頁；雛型 iframe 內的滾輪留給雛型 */
+let wheelLock=0;
+document.addEventListener('wheel',e=>{
+  if(e.ctrlKey||Math.abs(e.deltaY)<8)return;
+  if(document.getElementById('pager').classList.contains('open'))return;
+  if(e.target.closest&&e.target.closest('.panpad'))return;
+  const down=e.deltaY>0;
+  for(let n=e.target;n&&n!==document.body;n=n.parentElement){
+    if(n.nodeType!==1)continue;
+    const cs=getComputedStyle(n);
+    if(/(auto|scroll)/.test(cs.overflowY)&&n.scrollHeight>n.clientHeight+1&&(down?n.scrollTop+n.clientHeight<n.scrollHeight-1:n.scrollTop>0))return;
+  }
+  e.preventDefault();
+  const now=Date.now(); if(now-wheelLock<450)return; wheelLock=now;
+  go(cur+(down?1:-1));
+},{passive:false});
+(function(){const box=document.createElement('div');box.id='imgbox';box.innerHTML='<img alt="">';document.body.appendChild(box);
+document.addEventListener('click',e=>{const i=e.target.closest('.qfig img');if(i){box.querySelector('img').src=i.src;box.classList.add('on');return}if(box.classList.contains('on'))box.classList.remove('on')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')box.classList.remove('on')});
+box.addEventListener('wheel',e=>e.stopPropagation(),{passive:true});})();
+const h=parseInt((location.hash.match(/^#p(\d+)$/)||[])[1],10);
+go(h?h-1:0);
+</script>
+</body>
+</html>

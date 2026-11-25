@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜知識與規範（v2 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}@media(max-width:900px){.three{grid-template-columns:1fr}}
+.layer{border:1px solid var(--line);border-radius:14px;background:#fff;padding:18px;display:flex;flex-direction:column;gap:8px}
+.layer .big{font-size:18px;font-weight:800}.layer .k{font-size:13px;color:var(--ink2)}
+.rsplit{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}@media(max-width:1000px){.rsplit{grid-template-columns:1fr}}
+.rrow{cursor:pointer}.rrow.on td{background:var(--brand-bg)}
+.rd{padding:18px;display:flex;flex-direction:column;gap:10px;position:sticky;top:0}.rd h3{margin:0}.rd .lb{font-size:12px;color:var(--muted);margin-bottom:2px}
+.ac{border:1px dashed var(--brand);border-radius:10px;padding:10px 12px;background:var(--brand-bg);font-size:13px}
+</style></head>
+<body data-nav="library" data-scope="global" data-crumb="">
+<script>window.NOTES=[
+ {id:'Q-28',text:'規範的維護與審核：依規範類型分配（技術主管、資深 PM），細節還沒定；規範表上的負責人欄位暫填「待定」。',who:'主管'},
+ {id:'Q-35',text:'「各地圖技術的支援度比照表」放知識（新增「技術知識」一類）還是規範附表？',who:'技術',tech:true},
+ {id:'Q-29',text:'未得標專案的評選簡報、單位資訊要不要提取成知識？',who:'PM'},
+ {id:'Q-36',text:'功能卡要補哪些欄位才算完整：規則、畫面、踩雷、來源專案？Ian 的「專案功能案例參照」目前只有功能清單與關鍵字。',who:'PM'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_shared.js"></script><script>V2.boot()</script>
+<div id="page"><div id="root"></div>
+<section class="spec"><h2>本畫面規格（v2 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>三層</td><td>素材＝原始證據（留在各專案的素材與對話存檔）；知識＝整理過、規劃時「參考」；規範＝必須遵守、可被檢查。判斷方法：違反會被退件→規範；知道了會做得更好→知識；原始檔→素材</td></tr>
+<tr><td>知識</td><td>領域知識、單位知識、公司產品知識、功能卡（獨立一類，只收有實作過的功能）。專案可勾選參考；延續案自動帶入該單位的單位知識</td></tr>
+<tr><td>規範</td><td>欄位：編號、面向、標題、強度（無例外／依情境／查規範）、適用範圍、系統類型、內容、情境做法、檢核、來源、狀態、版本與變更紀錄、負責人。AI 產雛型時自動套用；檢核欄自動帶入驗收條件；更新時，已做的規劃比照合約變更：標示受影響處，AI 建議，PM 確認</td></tr>
+<tr><td>待提取</td><td>來源：規格定稿、結案、對話存檔轉入。管理員審核（核准／退回）；含機敏資料的先去識別。未得標專案的雛型不做功能卡</td></tr>
+<tr><td>不動來源</td><td>Ian 整理的 GIS 知識庫目前不更動；這裡的規範內容只是示範，真實內容以該知識庫為準，之後再決定怎麼匯入</td></tr></table></section></div>
+<script>
+let tab='overview',rf='全部',sel='R-001',cand;
+const SM={'生效':'mint','待確認':'sun','待討論':'coral'};
+function draw(){
+ const R=$('#root'),np=cand.filter(c=>c.state==='待審核').length;
+ R.innerHTML=`<div class="page-head"><div><h1>公司知識庫 <span class="chip sun xs">v2 草稿</span></h1><p>跨專案共用的知識與規範。專案可以勾選要參考哪些；也能把專案的成果提取回來。</p></div></div>
+ <div class="tabs2"><button data-t="overview" class="${tab==='overview'?'on':''}">概觀</button><button data-t="know" class="${tab==='know'?'on':''}">知識</button><button data-t="rules" class="${tab==='rules'?'on':''}">規範</button><button data-t="cand" class="${tab==='cand'?'on':''}">待提取<span class="n">${np}</span></button></div><div id="tb"></div>`;
+ $$('.tabs2 button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+ $('#tb').innerHTML=({overview,know,rules,candH})[tab==='cand'?'candH':tab]();
+ if(tab==='rules')bindRules();if(tab==='cand')bindCand();
+}
+function overview(){return `<div class="three">
+ <div class="layer"><span class="chip">素材</span><div class="big">原始證據</div><div class="k">合約、截圖、email、會議紀錄、原始檔。不加工、可溯源。</div><div class="sm"><b>AI 怎麼用：</b>回頭查證、引用出處</div><div class="xs muted">放在各專案的「素材」與「對話存檔」，不在這一頁。</div></div>
+ <div class="layer"><span class="chip brand">知識</span><div class="big">知道了會做得更好</div><div class="k">領域知識、單位知識、公司產品知識、功能卡。整理過、可重用。</div><div class="sm"><b>AI 怎麼用：</b>規劃時「參考」</div></div>
+ <div class="layer"><span class="chip coral">規範</span><div class="big">違反會被退件</div><div class="k">公司規範、系統設計規範、GIS 發展與地圖核心使用規定。必須遵守、可被檢查。</div><div class="sm"><b>AI 怎麼用：</b>產雛型時「遵守」，並帶進驗收條件與文件檢查</div></div></div>
+ <div class="card" style="margin-top:16px"><h2>資訊怎麼進來、怎麼用</h2><div class="sub">專案和公司知識庫之間的兩個接點</div>
+  <div class="grid2"><div class="card flat"><b>專案 → 公司知識庫（提取）</b><ul class="sm" style="margin:6px 0 0;padding-left:18px"><li>工項規格定稿時，提取功能卡候選</li><li>對話存檔轉入（含去識別）</li><li>結案時整批檢視可提取的內容</li><li>未得標專案的雛型<b>不做功能卡</b>（沒實作過）</li></ul></div>
+  <div class="card flat"><b>公司知識庫 → 專案（參考）</b><ul class="sm" style="margin:6px 0 0;padding-left:18px"><li>專案勾選要參考哪些知識</li><li>延續案自動帶入該單位的單位知識</li><li>適用的規範依專案類型自動帶入（例如公開系統）</li></ul></div></div>
+  <div class="banner" style="margin-top:12px">${ic('book')}<span>Ian 整理的 GIS 規劃知識庫大多屬於規範，格式可直接沿用；<b>目前不更動它</b>，下面的規範只是示範畫面。</span></div></div>`}
+function know(){return `<div class="grid2">${V2.know.map(k=>`<div class="kcard"><div class="row spread"><h2 style="margin:0">${k.t}</h2><span class="chip sun xs">示意</span></div><div class="sm muted">${k.d}</div>${k.items.map(i=>`<div class="krow"><b style="min-width:120px">${i[0]}</b><span class="muted">${i[1]}</span></div>`).join('')}${k.t==='功能卡'?`<div class="xs muted">${k.tag.replace('示意；','')}</div>`:''}</div>`).join('')}</div>`}
+function rules(){const cats=['全部',...new Set(V2.rules.map(r=>r.cat))],L=V2.rules.filter(r=>rf==='全部'||r.cat===rf),r=V2.rules.find(x=>x.id===sel)||L[0];
+ return `<div class="banner warn" style="margin-bottom:12px">${ic('alert')}<span>示意：規範內容與編號是示範；真實規範以 Ian 整理的知識庫為準（目前不更動）。負責人欄位暫填「待定」。</span></div>
+ <div class="row wrap" style="gap:6px;margin-bottom:12px">${cats.map(c=>`<button class="fchip ${rf===c?'on':''}" data-f="${c}">${c==='全部'?'全部面向':c}</button>`).join('')}</div>
+ <div class="rsplit"><div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:70px">編號</th><th style="width:56px">面向</th><th>標題</th><th style="width:76px">強度</th><th style="width:110px">適用範圍</th><th style="width:76px">狀態</th></tr></thead><tbody>${L.map(x=>`<tr class="rrow ${x.id===r.id?'on':''}" data-r="${x.id}"><td class="mono sm">${x.id}</td><td><span class="chip xs">${x.cat}</span></td><td><b>${x.title}</b></td><td class="sm">${x.strength}</td><td class="sm">${x.scope}</td><td><span class="chip ${SM[x.state]} xs">${x.state}</span></td></tr>`).join('')}</tbody></table></div>
+ <div class="card rd"><div class="row spread"><h3>${r.title}</h3><span class="chip ${SM[r.state]} xs">${r.state}</span></div><div class="xs muted">${r.id}・${r.cat}・${r.strength}・${r.scope}・${r.sys}</div>
+  <div><div class="lb">規範內容</div>${r.body}</div><div><div class="lb">情境做法</div>${r.ctx}</div><div><div class="lb">檢核</div>${r.check}</div>
+  <div class="ac"><b>會自動帶進驗收條件</b><div style="margin-top:4px">☐ ${r.check}　<span class="xs muted">PG 自測／PM 驗收</span></div></div>
+  <div class="xs muted">來源：${r.src}<br>版本：${r.ver}　負責人：${r.owner}<br>變更紀錄：${r.log}</div></div></div>`}
+function bindRules(){$$('[data-f]').forEach(b=>b.onclick=()=>{rf=b.dataset.f;sel=null;draw()});$$('.rrow').forEach(t=>t.onclick=()=>{sel=t.dataset.r;draw()})}
+function candH(){return `<div class="banner" style="margin-bottom:12px">${ic('spark')}<span>專案提取過來的內容在這裡等管理員審核。含機敏資料的，要先去識別才能核准。</span></div>
+ <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:80px">類型</th><th>內容</th><th style="width:190px">來源</th><th style="width:130px">方式</th><th style="width:170px">去識別</th><th style="width:170px">審核</th></tr></thead><tbody>${cand.map(c=>`<tr><td><span class="chip ${c.kind==='功能卡'?'brand':c.kind==='單位知識'?'violet':''} xs">${c.kind}</span></td><td><b>${c.title}</b>${c.note?`<div class="xs muted" style="margin-top:3px">${c.note}</div>`:''}</td><td class="sm">${c.src}</td><td class="sm">${c.origin}</td><td class="sm">${c.deid}</td><td>${c.state==='待審核'?`<button class="btn sm" data-ok="${c.id}">核准</button> <button class="btn sm ghost" data-no="${c.id}">退回</button>`:`<span class="chip ${c.state==='已入庫'?'mint':''}">${c.state}</span>`}</td></tr>`).join('')}</tbody></table></div>`}
+function bindCand(){$$('[data-ok]').forEach(b=>b.onclick=()=>{const c=cand.find(x=>x.id===b.dataset.ok);if(c.deid.indexOf('待去識別')===0){toast('這筆含機敏資料，請先去識別再核准');return}c.state='已入庫';draw();toast('已入庫')});$$('[data-no]').forEach(b=>b.onclick=()=>{cand.find(x=>x.id===b.dataset.no).state='已退回';draw();toast('已退回給提取人')})}
+window.pageInit=function(){cand=V2.cand.map(x=>Object.assign({},x));const h=location.hash.slice(1);if(['know','rules','cand'].includes(h))tab=h;draw()};
+</script>
+</body></html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>登入紀錄 設計交付（v1）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--navy:#1d2a5e;--teal:#12a9c4;--ink:#1f2937;--muted:#6b7280;--line:#d9dee7;--warn:#d97706;--bg:#f4f6fa}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;font-size:15px;line-height:1.65}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+h1{color:var(--navy);margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 22px}
+h2{color:var(--navy);border-left:5px solid var(--teal);padding-left:10px;margin:36px 0 12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:14px 0}
+.screen{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:820px){.screen{grid-template-columns:1fr}}
+.screen img{width:100%;border:1px solid var(--line);border-radius:8px;background:#fff}
+.screen h3{margin:0 0 6px;color:var(--navy)}
+ul{margin:6px 0;padding-left:20px}
+li{margin:3px 0}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:14px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#eef1f7}
+.tag{display:inline-block;background:#fff4e0;color:#8a4b00;border-radius:4px;padding:0 7px;font-size:12.5px;font-weight:700}
+.no{color:#b3261e;font-weight:700}
+.note{background:#eaf6fb;border:1px solid #b9e0ee;border-radius:8px;padding:10px 14px;color:#0b5d77;font-size:14px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>登入紀錄 — 設計交付</h1>
+<p class="sub">土地評估圖台系統・管理後台｜依雛型 v1、規格 v1｜對應合約項次 3.1</p>
+<div class="note">本頁是一個資料夾自包含的交付說明，圖都在 <code>圖/</code>。<b>配色、字體、元件樣式沿用現有後台「帳號管理」頁</b>（深藍左側列、青藍使用者標籤、深藍主按鈕、白底藍框次要按鈕、隔行底色表格），不需要新設計一套。</div>
+
+<h2>一、要出什麼</h2>
+<div class="card">
+<table>
+<tr><th style="width:70px">#</th><th>畫面</th><th>說明</th></tr>
+<tr><td>1</td><td>登入紀錄頁（有資料）</td><td>查詢條件列、紀錄表格、分頁</td></tr>
+<tr><td>2</td><td>登入紀錄頁（無符合查詢結果）</td><td>表格區的空狀態</td></tr>
+<tr><td>3</td><td>左側選單新增按鈕「登入紀錄」</td><td>與「帳號管理」按鈕同尺寸，圖示指定使用 Material Icons Outlined 的「login」（24px），不需要另外設計；滑鼠懸停時在按鈕右側顯示深色提示框「登入紀錄」（「帳號管理」按鈕同樣），請一併出圖</td></tr>
+</table>
+<p><b>待設計交付的素材：</b>無。「登入紀錄」按鈕圖示已指定為 Material Icons Outlined「login」，目前頁為白底深藍圖示、一般狀態為深藍底白色圖示，其餘元件沿用現有。</p>
+</div>
+
+<div class="card screen">
+<img src="圖/v1_後台_登入紀錄_清單.png" alt="登入紀錄頁">
+<div><h3>畫面 1：登入紀錄頁（有資料）</h3>
+<ul>
+<li>頁面標題「登入紀錄」；其下「登入紀錄查詢」區：依視窗寬度自動換行：寬度足夠時順序為帳號、姓名、登入時間（起～迄兩個日期，預設填入近 1 週）、登入 IP、結果（下拉），右側「清除」（白底藍框）與「查詢」（深藍）按鈕排成一行；寬度不夠時從「登入時間」之前換行，登入時間、登入 IP、結果與按鈕在第二列（按鈕靠右）。請依此出寬螢幕與窄螢幕兩種版面。</li>
+<li>分隔線後是「登入紀錄清單」，右上角「共 N 筆」。</li>
+<li>表格欄位：項次、帳號、姓名、登入時間、登入 IP、結果、失敗原因；除項次外都可排序，欄位標題旁有 ⇅，目前排序欄顯示 ▲／▼。</li>
+<li>結果：成功為綠字，失敗為紅字粗體。失敗原因只有「帳號已停用」「帳號不存在」兩種，成功者顯示「—」。帳號欄（標題與內容）靠左對齊，其餘欄位置中；帳號欄只顯示帳號本身，不加任何「已刪除」之類的標示。</li>
+<li>表格下方置中分頁：‹、頁碼、›，目前頁為深藍底。</li>
+</ul></div>
+</div>
+
+<h2>二、不可以動什麼</h2>
+<div class="card">
+<ul>
+<li class="no">欄位、按鈕、文案都不可自行增減或改字：</li>
+<li>查詢條件固定 5 個：帳號、姓名、登入時間、登入 IP、結果；按鈕固定「清除」「查詢」。不要加「匯出」「刪除」或任何編輯類按鈕（紀錄唯讀）。</li>
+<li>表格欄位固定 7 欄、順序不可調：項次、帳號、姓名、登入時間、登入 IP、結果、失敗原因。</li>
+<li>登入時間格式固定 <code>yyyy-MM-dd HH:mm:ss</code>（例如 2026-10-29 09:42:17）。</li>
+<li>登入時間是「起日～迄日」兩個日期欄，不是單一日期，也不含時分；進入頁面時預設填入「今天往前 6 天～今天」；兩個日期欄互相限制：迄日的日曆中早於起日的日期、起日的日曆中晚於迄日的日期要顯示為灰色不可點選（起日可等於迄日）。沒有清除按鈕，日期欄不可為空（被刪成空白會自動變成當天）。請出日曆「灰色不可選」的狀態圖。</li>
+<li>預設最新在前，分頁每頁 10 筆；不要改成捲動載入。</li>
+<li>「登入紀錄」按鈕放在「帳號管理」按鈕下方；權限沿用後台既有機制（只有系統管理者能進後台），不需要設計無權限畫面。</li>
+<li>「結果」「失敗原因」兩欄與結果篩選已確認要做（不追加報價），照圖出即可。</li>
+</ul>
+</div>
+
+<h2>三、非理想狀態也要出圖</h2>
+<div class="card screen">
+<img src="圖/v1_後台_登入紀錄_尚無紀錄.png" alt="空狀態">
+<div><h3>無符合查詢結果</h3>
+<table>
+<tr><th>情境</th><th>畫面表現</th></tr>
+<tr><td>查詢後無符合資料</td><td>表格區置中顯示粗體「無符合查詢結果」＋灰字「請調整查詢條件後再試。」；右上「共 0 筆」；不顯示分頁</td></tr>
+<tr><td>系統尚無任何紀錄</td><td>同上，灰字同樣是「請調整查詢條件後再試。」</td></tr>
+</table></div>
+</div>
+<div class="card">
+<h3 style="margin-top:0;color:var(--navy)">欄位驗證錯誤</h3>
+<table>
+<tr><th>情境</th><th>畫面表現</th></tr>
+<tr><td>起日晚於迄日按「查詢」</td><td>條件列下方出現紅字「登入時間的起日不可晚於迄日」，清單維持原狀；修正後再按查詢，訊息消失</td></tr>
+</table>
+<p style="color:var(--muted);font-size:13.5px">此狀態雛型為純文字紅字，請設計出符合現有後台風格的錯誤提示樣式（可出圖也可口頭回覆沿用現有表單錯誤樣式）。</p>
+</div>
+</div></body></html>

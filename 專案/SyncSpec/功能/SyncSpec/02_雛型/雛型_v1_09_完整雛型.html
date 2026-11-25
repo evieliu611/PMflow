@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜完整雛型</title><link rel="stylesheet" href="_shared.css">
+<style>
+.pw{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;height:calc(100vh - 60px - 150px);min-height:520px}
+.tree{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:auto;padding:10px}
+.tg{padding:8px 8px 4px;font-size:12.5px;font-weight:700;color:var(--ink2);display:flex;justify-content:space-between;align-items:center}
+.ts{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;font-size:13px;cursor:pointer;color:var(--ink)}.ts:hover{background:var(--bg)}.ts.on{background:var(--brand-bg);color:var(--brand);font-weight:700}
+.ts .no{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:20px}
+.viewer{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.vh{padding:9px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#FAFBFE}
+.flow{overflow:auto;padding:18px}
+.frow{margin-bottom:22px}.frow h3{margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.fl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.thumb{width:300px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;transition:.15s}.thumb:hover{border-color:var(--brand);transform:translateY(-2px)}
+.thumb .tf{position:relative;width:300px;height:175px;overflow:hidden;background:#f5f7fc}.thumb .tin{position:absolute;left:0;top:0;width:1100px;height:640px;transform-origin:0 0;transform:scale(.2727);pointer-events:none}
+.thumb .tc{padding:8px 12px;font-size:13px;font-weight:700;border-top:1px solid var(--line)}
+.arrow{color:var(--muted);font-size:22px;padding:0 4px}
+.pin{position:absolute;z-index:30;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--coral);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;box-shadow:0 3px 8px rgba(0,0,0,.35)}.pin span{transform:rotate(45deg)}.pin.tech{background:var(--sun)}
+.pop{position:absolute;z-index:40;width:290px;background:#fff;border-radius:14px;box-shadow:0 14px 40px rgba(10,16,42,.35);padding:14px;display:none}.pop.on{display:block}
+</style></head>
+<body data-nav="proto" data-crumb="完整雛型">
+<script>window.NOTES=[
+ {id:'Q-04',text:'完整版內的地圖底圖來源（自建圖磚／公開圖資／離線）與版權；目前是示意底圖。',who:'技術',tech:true},
+ {id:'Q-19',text:'「畫面流程」的箭頭要由 AI 依工項關係自動連，還是由成員手動串？目前示範依工項與畫面順序自動串。',who:'PM'},
+ {id:'Q-06',text:'匯出完整版網頁檔時，是否同樣詢問「要不要凍結目前版本」？',who:'PM'}
+];</script>
+<script src="_data.js"></script><script src="_shared.js"></script><script src="_proto.js"></script>
+<div id="page"><div id="root"></div>
+<section class="spec"><h2>本畫面規格</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>範圍</td><td>整個專案所有工項的雛型畫面集中在這裡檢視，不必一個工項一個工項點進去（F-10）</td></tr>
+<tr><td>左側目錄</td><td>依工項分組列出畫面；沒有畫面的工項灰字提示，可跳去該工項請 AI 產生</td></tr>
+<tr><td>逐頁檢視</td><td>完整尺寸、可操作（地圖可拖曳縮放）；上一頁／下一頁依全專案順序；標題列可跳到該工項的圖文對照</td></tr>
+<tr><td>畫面流程</td><td>依工項與畫面順序顯示縮圖與箭頭，點縮圖進逐頁檢視（箭頭規則待 Q-19）</td></tr>
+<tr><td>標註修改</td><td>逐頁檢視可開啟「標註」，直接點畫面上要修改的位置、說明怎麼改，送出後交給 AI；記進對應工項的 AI 整理說明（來源＝雛型標註）。小改直接套用、大改先看前後對照的處理在該工項的工作區進行；可勾「待技術確認」</td></tr><tr><td>匯出完整版</td><td>單檔網頁（離線可開、地圖可操作）；與工作區匯出同一來源；凍結規則見 Q-06</td></tr>
+<tr><td>版本</td><td>與各工項共用同一版本號；對外後凍結，之後修改進下一版</td></tr></table></section></div>
+<script>
+let P,L,cur=0,mode='page';
+window.pageInit=function(){
+ P=DB.cur();const R=$('#root');
+ L=[];P.items.forEach((it,k)=>it.screens.forEach(s=>L.push({k,it,s})));
+ if(!L.length){R.innerHTML=`<div class="page-head"><div><h1>完整雛型 <span class="chip sun xs">尚未規劃・示意</span></h1><p>${P.name} 全部工項的雛型畫面。</p></div></div><div class="card"><div class="empty"><div class="art">${ic('grid')}</div><b>這個專案還沒有雛型畫面</b><div class="sm" style="max-width:400px;margin:6px auto 14px">到工項工作區和 AI 對話，畫面完成後會自動收進這裡。</div><a class="btn primary" href="${PAGES.items}">前往工項</a></div></div>`;return}
+ R.innerHTML=`<div class="page-head"><div><h1>完整雛型 <span class="chip sun xs">尚未規劃・示意</span></h1><p>${P.name} 全部工項的雛型畫面，集中在這裡一次看完；要看某個畫面的說明，點標題列跳到該工項的圖文對照。</p></div>
+  <div class="row"><span class="chip mint" id="ver"><span class="d"></span>雛型 v1 · 編輯中</span><button class="btn" id="fs">${ic('eye')}全螢幕試走</button><button class="btn primary" id="exp">${ic('download')}匯出完整版</button></div></div>
+  <div class="row" style="margin-bottom:12px"><div class="seg" id="md"><button class="on" data-m="page">逐頁檢視</button><button data-m="flow">畫面流程</button></div><span class="sm muted">共 ${L.length} 個畫面 · ${new Set(L.map(x=>x.k)).size} 個工項</span></div>
+  <div id="body"></div>`;
+ $$('#md button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;$$('#md button').forEach(x=>x.classList.toggle('on',x===b));draw()});
+ $('#fs').onclick=()=>{const p=$('#view');p&&p.requestFullscreen&&p.requestFullscreen()};
+ $('#exp').onclick=()=>toast('已打包「'+P.name+'」完整雛型 v1 為單檔網頁（'+L.length+' 個畫面，離線可開、地圖可操作）');
+ draw();
+};
+let anno=false,pn=0,pend=null;
+function setAnno(on){anno=on;const v=$('#view');if(v)v.classList.toggle('annoOn',on);const b=$('#annoBtn');if(b){b.classList.toggle('primary',on);b.innerHTML=ic('pin')+(on?'標註中：點畫面上要修改的位置':'標註')}}
+function initAnno(){const canvas=$('#canvas'),pop=$('#pop');pn=0;pend=null;
+ $('#annoBtn').onclick=()=>setAnno(!anno);
+ canvas.addEventListener('click',e=>{if(!anno)return;const t=e.target.closest('[data-a]');if(!t||e.target.closest('.pop'))return;e.preventDefault();e.stopPropagation();
+  const cb=canvas.getBoundingClientRect(),x=e.clientX-cb.left,y=e.clientY-cb.top;pend={x,y,label:t.dataset.a};
+  $('#plab').innerHTML='📍 要修改：<b>'+t.dataset.a+'</b>　<span class="xs">（'+L[cur].it.no+' '+L[cur].it.name+'）</span>';$('#ptxt').value='';$('#ptech').checked=false;
+  pop.style.left=Math.max(8,Math.min(x+14,cb.width-310))+'px';pop.style.top=Math.max(8,Math.min(y+8,cb.height-230))+'px';pop.classList.add('on');$('#ptxt').focus()},true);
+ $('#pc').onclick=()=>{pop.classList.remove('on');pend=null};
+ $('#ps').onclick=()=>{const txt=$('#ptxt').value.trim();if(!txt||!pend)return;const tech=$('#ptech').checked;pn++;
+  const pin=document.createElement('div');pin.className='pin'+(tech?' tech':'');pin.style.left=pend.x-12+'px';pin.style.top=pend.y-24+'px';pin.innerHTML='<span>'+pn+'</span>';$('#pins').appendChild(pin);
+  const it=L[cur].it,title=PROTO.screens[L[cur].s].title;
+  if(window.PMEM)PMEM.add(P.id,[{at:PMEM.now(),src:'雛型標註',kind:tech?'待技術確認':'標註修改',text:title+'・'+pend.label+'：'+txt,items:[it.no]}]);
+  pop.classList.remove('on');pend=null;
+  toast(tech?'已標為「⚠️ 待技術確認」，記進 '+it.no+' '+it.name:'已送給 AI，會改在 '+it.no+' '+it.name+' 的雛型（小改直接套用、大改先給你看前後對照）','到該工項',()=>{const h=DB.href(PAGES.work);location.href=h+(h.indexOf('?')>-1?'&':'?')+'i='+L[cur].k})}}
+function draw(){const B=$('#body');
+ if(mode==='flow'){const groups={};L.forEach((x,i)=>{(groups[x.k]=groups[x.k]||[]).push([x,i])});
+  B.innerHTML=`<div class="card flat flow">${Object.entries(groups).map(([k,a])=>`<div class="frow"><h3>${P.items[k].no} ${P.items[k].name}<span class="st s${P.items[k].stage}">${DB.STG[P.items[k].stage]}</span></h3><div class="fl">${a.map(([x,i],n)=>`${n?'<span class="arrow">→</span>':''}<div class="thumb" data-i="${i}"><div class="tf"><div class="tin" data-s="${x.s}"></div></div><div class="tc">${PROTO.screens[x.s].title}</div></div>`).join('')}</div></div>`).join('')}
+  ${P.items.filter(i=>!i.screens.length).map(i=>`<div class="frow"><h3 class="muted">${i.no} ${i.name}<span class="chip">尚無畫面</span></h3></div>`).join('')}</div>`;
+  $$('.tin',B).forEach(t=>PROTO.render(t.dataset.s,t,{}));
+  $$('.thumb',B).forEach(t=>t.onclick=()=>{cur=+t.dataset.i;mode='page';$$('#md button').forEach(x=>x.classList.toggle('on',x.dataset.m==='page'));draw()});return}
+ const groups={};L.forEach((x,i)=>{(groups[x.k]=groups[x.k]||[]).push([x,i])});
+ B.innerHTML=`<div class="pw"><aside class="tree">${P.items.map((it,k)=>`<div class="tg"><span>${it.no} ${it.name}</span><span class="xs muted">${it.screens.length||'—'}</span></div>${(groups[k]||[]).map(([x,i])=>`<div class="ts ${i===cur?'on':''}" data-i="${i}"><span class="no">${i+1}</span>${PROTO.screens[x.s].title}</div>`).join('')||`<div class="ts muted xs" style="cursor:default">尚無畫面　<a href="${PAGES.work}?i=${k}">請 AI 產生</a></div>`}`).join('')}</aside>
+  <div class="viewer"><div class="vh"><span class="chip brand">${cur+1} / ${L.length}</span><b>${PROTO.screens[L[cur].s].title}</b><span class="muted xs">工項 ${L[cur].it.no} ${L[cur].it.name}</span><span class="grow"></span><a class="btn sm" href="${PAGES.work}?i=${L[cur].k}">${ic('split')}看圖文對照說明</a><button class="btn sm" id="annoBtn"></button><button class="btn sm" id="pv">‹ 上一頁</button><button class="btn sm" id="nx">下一頁 ›</button></div><div id="canvas" style="position:relative;flex:1;min-height:0;overflow:hidden"><div id="view" style="height:100%"></div><div id="pins"></div>
+   <div class="pop" id="pop"><div class="xs muted" id="plab" style="margin-bottom:6px"></div><textarea class="input" id="ptxt" rows="3" placeholder="想怎麼改？例如：這個按鈕改成「匯出 KML」"></textarea><label class="row sm" style="margin:8px 0"><input type="checkbox" class="check" id="ptech"> 標為 <b>⚠️ 待技術確認</b></label><div class="row" style="justify-content:flex-end"><button class="btn sm" id="pc">取消</button><button class="btn sm primary" id="ps">送出給 AI</button></div></div></div></div></div>`;
+ PROTO.render(L[cur].s,$('#view'),{});setAnno(anno);initAnno();
+ $$('.ts[data-i]',B).forEach(t=>t.onclick=()=>{cur=+t.dataset.i;draw()});
+ $('#pv').onclick=()=>{cur=(cur-1+L.length)%L.length;draw()};$('#nx').onclick=()=>{cur=(cur+1)%L.length;draw()};
+ if(window.fixLinks)fixLinks();
+}
+</script>
+</body></html>

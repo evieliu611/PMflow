@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>空間分析 KML 上傳／下載 — 土地評估圖台系統（雛型 v1）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40"><path d="M20 3C10 12 7 22 14 31c3 4 9 6 14 3 6-4 8-14-8-31z" fill="#1c6fb0"/><path d="M14 31c6-2 10-8 6-16-6 8-9 12-6 16z" fill="#8bc34a"/></svg>
+      <div><div class="en">VENA<br>ENERGY<br>韋能能源</div></div>
+      <h1>土地評估圖台系統</h1>
+    </div>
+    <div class="top-right"><span>後台管理</span><span class="user-chip">👤 測試管理者 <a>登出</a></span></div>
+  </header>
+  <div class="body">
+    <nav class="rail">
+      <button title="圖層套疊"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 3 8l9 5 9-5-9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5"/></svg><span>圖層套疊</span></button>
+      <button class="active" title="空間分析"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="11" r="3"/><path d="M12 14v4"/></svg><span>空間分析</span></button>
+      <button title="定位工具"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span>定位工具</span></button>
+    </nav>
+    <aside class="panel" id="panel"></aside>
+    <main class="map kmap" id="map">
+      <svg class="base" id="svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
+        <rect width="1000" height="700" fill="#f1ece6"/>
+        <path d="M600 0 C560 120 470 200 470 320 C470 440 400 520 300 600 L240 700 L330 700 C440 610 560 520 600 400 C640 280 700 120 760 0Z" fill="#9ecbf5"/>
+        <path d="M0 560 C120 540 220 500 300 520 L330 600 C220 620 100 640 0 650Z" fill="#9ecbf5"/>
+        <g fill="none" stroke-linecap="round">
+          <path d="M0 330 C200 380 380 470 560 440 S800 360 1000 300" stroke="#f3c969" stroke-width="5"/>
+          <path d="M620 100 C700 160 820 230 1000 190" stroke="#f0a35a" stroke-width="5"/>
+          <path d="M700 700 C760 600 900 560 1000 520" stroke="#f5b73c" stroke-width="6"/>
+          <path d="M330 200 C420 230 520 260 600 330" stroke="#f3e08a" stroke-width="4"/>
+          <path d="M0 140 C120 180 200 190 320 150" stroke="#8e1b8e" stroke-width="2.5"/>
+          <path d="M760 250 L880 140 L1000 100" stroke="#59a9d9" stroke-width="3" stroke-dasharray="8 5"/>
+        </g>
+        <g font-size="22" fill="#8a6f5c" font-family="Microsoft JhengHei,sans-serif"><text x="650" y="150">新 莊 區</text><text x="760" y="290">板 橋 區</text><text x="330" y="560">樹 林 區</text><text x="700" y="640">土 城 區</text><text x="140" y="620" fill="#3f86c9">大 漢 溪</text></g>
+        <g id="rng"></g>
+        <g id="hits" style="display:none"></g>
+      </svg>
+      <div class="mapnote" id="mapnote" style="display:none">註1：本功能分析項目係參考「區域計畫法、非都市開發審議作業規範等開發規範」彙整全法定圖資，惟因部分資料未對外公開，分析項目…</div>
+      <div class="map-tools"><button>＋</button><button>－</button></div>
+      <div class="scale">1 km</div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modal"><div class="modal" id="modalbox"></div></div>
+
+<button class="notes-fab" onclick="toggleNotes()">討論模式</button>
+<div class="notes-panel" id="notes"></div>
+<input type="file" id="file" accept="*/*" style="display:none">
+
+<section id="spec"></section>
+
+<script>
+/* ===== 狀態 ===== */
+/* F-編號：F-01 移除地籍／行政區頁籤 ｜ F-02 查詢方式新增「上傳 KML」｜ F-03 上傳後顯示範圍、按查詢才分析 ｜ F-04 框選畫面下載 KML ｜ F-05 結果頁匯出資料多選 ｜ F-06 預留匯出報告（2.5，非本次） */
+const TRI=[[740,400],[880,330],[800,540]];
+const UPPOLYS=[[[300,300],[420,260],[450,360],[340,400]]];
+const S={mode:'draw',stage:'input',pts:TRI.map(p=>p.slice()),pt:null,up:null,err:null,open:{0:true},exp:{list:true,pdf:true,kml:true}};
+
+/* ===== 輔助 ===== */
+const $=id=>document.getElementById(id);
+function toast(m){const t=$('toast');t.innerHTML=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),4200);}
+function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+p(d.getHours())+p(d.getMinutes());}
+function kmlName(){return '空間分析查詢範圍_'+stamp()+'.kml';}
+function hasRange(){return S.mode==='draw'?S.pts.length>=3:S.mode==='upload'?!!S.up:false;}
+function rangeText(){return S.mode==='draw'?`繪製範圍（${S.pts.length} 個頂點）`:`上傳檔案：${S.up?S.up.name:''}`;}
+
+/* ===== 地圖 ===== */
+function renderMap(){
+  let h='';
+  const poly=(pts,i)=>`<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="rgba(255,152,0,.28)" stroke="#f57c00" stroke-width="3"/>`+pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#f57c00" stroke="#fff" stroke-width="2"/>`).join('');
+  if(S.mode==='draw'){
+    if(S.pts.length>=3)h+=poly(S.pts);
+    else{h+=`<polyline points="${S.pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#f57c00" stroke-width="3"/>`+S.pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#f57c00" stroke="#fff" stroke-width="2"/>`).join('');}
+  }else if(S.mode==='upload'&&S.up){S.up.polys.forEach(p=>h+=poly(p));}
+  else if(S.mode==='point'&&S.pt){h+=`<circle cx="${S.pt[0]}" cy="${S.pt[1]}" r="9" fill="#f57c00" stroke="#fff" stroke-width="3"/>`;}
+  $('rng').innerHTML=h;
+  $('hits').style.display=S.stage==='result'?'block':'none';
+  if(S.stage==='result')$('hits').innerHTML='<g fill="rgba(255,60,40,.35)" stroke="#e53935" stroke-width="1.5"><path d="M700 330l30-40 40 20 10 50-40 30z"/><path d="M780 470l50-20 30 40-40 40-40-20z"/><path d="M560 380l30-20 20 30-30 20z"/></g><circle cx="800" cy="440" r="190" fill="none" stroke="#f57c00" stroke-width="2" stroke-dasharray="8 6"/>';
+  $('mapnote').style.display=S.stage==='result'?'block':'none';
+  $('map').classList.toggle('drawing',S.stage==='input'&&(S.mode==='draw'||S.mode==='point'));
+}
+$('svg').addEventListener('click',e=>{
+  if(S.stage!=='input')return;
+  const svg=$('svg'),pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+  const p=pt.matrixTransform(svg.getScreenCTM().inverse());const xy=[Math.round(p.x),Math.round(p.y)];
+  if(S.mode==='draw'){if(S.pts.length<50)S.pts.push(xy);}
+  else if(S.mode==='point'){S.pt=xy;}
+  else return;
+  render();
+});
+
+/* ===== 側面板 ===== */
+function head(){return `<div class="panel-head"><h2>空間分析</h2><button class="x">✕</button></div>`;}
+/* SPEC: F-01 頁籤列僅保留「繪製查詢」；地籍查詢、行政區查詢先移除 */
+const TABS=`<div class="tabs single"><button class="on">繪製查詢</button></div>`;
+function renderPanel(){
+  const p=$('panel');
+  if(S.stage==='result'){
+    const G=[['🔌','電路基礎設施','3 / 3',['變電站','電塔','高壓電纜']],['📋','環境影響評估法','0 / 3',[]],['🌊','海岸特定區位','0 / 5',[]],['⚠','環境敏感地區一級','0 / 17',[]],['⚠','環境敏感地區二級','1 / 7',['特定水土保持區']],['🐾','生物多樣性','2 / 10',['重要野鳥棲地','野生動物保護區']]];
+    const pointRes=S.mode==='point';
+    p.innerHTML=head()+`<div class="panel-body">${TABS}<h3 style="margin:6px 0 4px;color:var(--ink)">分析結果</h3>
+      <div class="rbar">查詢範圍：<b>${pointRes?'單點查詢（無面範圍）':rangeText()}</b></div>
+      ${G.map((g,i)=>`<div class="rgroup ${S.open[i]?'open':''}" onclick="S.open[${i}]=!S.open[${i}];render()"><span>${g[0]}</span><span>${g[1]}</span><span class="sp"></span><span class="cnt">${g[2]}</span><span>${S.open[i]?'⌃':'⌄'}</span></div><div class="rbody">${g[3].map(x=>`<label><input type="checkbox" checked>${x}</label>`).join('')||'<span class="stat">（本範圍內無命中項目）</span>'}</div>`).join('')}
+    </div>
+    <div class="panel-foot three">
+      <button class="btn" onclick="S.stage='input';render()">重新分析</button>
+      <!-- SPEC: F-05 匯出資料：點擊開啟「匯出項目」小視窗，可複選 分析清單／分析結果PDF／查詢範圍KML -->
+      <button class="btn primary" onclick="openExport()">匯出資料</button>
+      <!-- F-06 預留：匯出報告（屬 2.5 進階匯出成果，非本次工項；僅預留版面，預設不顯示） -->
+      <button class="btn ghostbtn" disabled>匯出報告<span class="q-pin" style="position:static;margin-left:4px">2.5</span></button>
+    </div>`;
+    return;
+  }
+  /* 輸入階段 */
+  let body=TABS;
+  /* SPEC: F-02 查詢方式 選單 單點查詢／範圍查詢（繪製）／範圍查詢（上傳KML） 必填 預設:範圍查詢（繪製） 切換時清除目前範圍 */
+  body+=`<div class="fld q"><label>查詢方式</label><select onchange="setMode(this.value)"><option value="point" ${S.mode==='point'?'selected':''}>單點查詢</option><option value="draw" ${S.mode==='draw'?'selected':''}>範圍查詢（繪製）</option><option value="upload" ${S.mode==='upload'?'selected':''}>範圍查詢（上傳KML）</option></select></div>`;
+  const hint=t=>`<div class="hintbox"><i>i</i><span>${t}</span></div>`;
+  if(S.mode==='point'){
+    body+=hint('請點擊地圖，選擇查詢位置');
+  }else if(S.mode==='draw'){
+    body+=hint('請點擊地圖，繪製查詢範圍');
+    /* F-04 框選畫面下載 KML：本版先移除（2026-11-02 PM） */
+  }else{
+    /* SPEC: F-03 選擇檔案 副檔名:.kml／.kmz 內容:多邊形（面），不支援點、線 多個面:不支援（PM 已決定：一個檔案只能有一個面） 大小上限:【待定】Q-02 */
+    /* 錯誤：檔案含多個面 → 檔案內含多個面，僅支援單一多邊形範圍 */
+    if(S.up){
+      body+=`<div class="filecard"><div class="ft">${S.up.name}<small>${S.up.size}　${S.up.polys.length} 個多邊形，已顯示於地圖</small></div><button class="x" style="font-size:18px" onclick="S.up=null;S.err=null;render()" title="移除">✕</button></div>`
+        +hint('請確認地圖上的範圍，按「查詢」開始分析');
+    }else{
+      body+=`<div class="hintbox col"><button class="btn" onclick="$('file').click()">選擇檔案</button><span class="lead">可透過點擊選擇檔案，或將檔案拖曳至本區塊，即可上傳。</span><ul class="rules"><li>檔案類型：支援 .kml、.kmz 檔</li><li>範圍須為<b>單一多邊形</b>（一個面）</li><li>不支援點、線，或含多個面的檔案</li></ul></div>`;
+    }
+    if(S.err)body+=`<div class="callout lock"><span>⛔</span><span>${S.err}</span></div>`;
+  }
+  p.innerHTML=head()+`<div class="panel-body">${body}</div>
+    <div class="panel-foot"><button class="btn" onclick="clearAll()">清除</button><button class="btn primary" ${hasRange()||(S.mode==='point'&&S.pt)?'':'disabled'} onclick="S.stage='result';render()">查詢</button></div>`;
+}
+function setMode(m){S.mode=m;S.pts=[];S.pt=null;S.up=null;S.err=null;render();}
+function clearAll(){S.pts=[];S.pt=null;S.up=null;S.err=null;render();}
+
+/* 上傳 */
+function handleFile(f){
+  if(!f)return;
+  S.up=null;
+  if(!/\.(kml|kmz)$/i.test(f.name))S.err='檔案格式不符，請上傳 .kml 或 .kmz 檔案';
+  else{S.err=null;S.up={name:f.name,size:(f.size/1024).toFixed(0)+' KB',polys:UPPOLYS};}
+  render();
+}
+$('file').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';handleFile(f);});
+/* SPEC: F-03 拖曳上傳：選擇檔案區可直接拖入檔案，效果等同按「選擇檔案」；一次只收 1 個檔案（拖入多個時取第一個，Q-07）；拖入時該區高亮 */
+document.addEventListener('dragover',e=>{e.preventDefault();const z=document.querySelector('.hintbox.col');if(z&&z.contains(e.target))z.classList.add('dragover');});
+document.addEventListener('dragleave',e=>{const z=document.querySelector('.hintbox.col');if(z&&!z.contains(e.relatedTarget))z.classList.remove('dragover');});
+document.addEventListener('drop',e=>{e.preventDefault();const z=document.querySelector('.hintbox.col');if(z)z.classList.remove('dragover');
+  if(z&&z.contains(e.target)&&S.mode==='upload'&&S.stage==='input')handleFile(e.dataTransfer.files[0]);});
+
+
+/* ===== 匯出資料小視窗（F-05）===== */
+function openExport(){
+  const pointRes=S.mode==='point';
+  /* SPEC: F-05 選項：分析清單（Excel）／分析報告（PDF）／查詢範圍（KML）；選項下方不放說明；單點查詢不提供「查詢範圍」（不顯示該選項） */
+  const o=(k,t)=>`<label class="expo ${S.exp[k]?'on':''}"><input class="cb" type="checkbox" ${S.exp[k]?'checked':''} onchange="S.exp.${k}=this.checked;openExport()"><span><b>${t}</b></span></label>`;
+  const keys=pointRes?['list','pdf']:['list','pdf','kml'];
+  const n=keys.filter(k=>S.exp[k]).length;
+  $('modalbox').innerHTML=`<h3>匯出資料</h3><div class="stat" style="margin-bottom:6px">請勾選要匯出的項目（可複選）</div>
+    ${o('list','分析清單（Excel）')}${o('pdf','分析報告（PDF）')}${pointRes?'':o('kml','查詢範圍（KML）')}
+    <div class="mf"><button class="btn" onclick="$('modal').classList.remove('on')">取消</button><button class="btn primary" ${n?'':'disabled'} onclick="doExport()">匯出</button></div>`;
+  $('modal').classList.add('on');
+}
+function doExport(){
+  const L=[];if(S.exp.list)L.push('分析清單（Excel）');if(S.exp.pdf)L.push('分析報告（PDF）');if(S.exp.kml&&S.mode!=='point')L.push(kmlName());
+  /* SPEC: F-05 勾選 2 項（含）以上才打包成 zip；只勾 1 項直接下載原檔，不壓縮（PM 已決定） */
+  const msg=L.length>=2?'空間分析匯出_'+stamp()+'.zip（內含 '+L.join('、')+'）':L[0];
+  $('modal').classList.remove('on');toast('⬇ 已匯出：'+msg);
+}
+
+/* ===== 討論模式（只列未決事項）===== */
+const Q=[
+ ['Q-02','上傳檔案大小與頂點數上限（目前支援 .kml、.kmz）','技術主管／客戶'],
+ ['Q-04','範圍查詢（繪製）的「下載 KML」本版先移除，之後是否補回','PM'],
+ ['Q-05','匯出資料改為勾選式，與 2.5 進階匯出（匯出報告）共用同一按鈕區，需與 2.5 對齊','PM／內部'],
+ ['Q-07','拖曳上傳一次拖入多個檔案時，暫定只取第一個','PM']
+];
+const STATES=[['draw','範圍查詢（已繪製）'],['drawempty','範圍查詢（未繪製）'],['point','單點查詢'],['upload','範圍查詢（上傳KML）未選檔'],['uploaded','上傳成功'],['err_fmt','錯誤：格式不符'],['err_nopoly','錯誤：無多邊形'],['err_multi','錯誤：含多個面'],['result','分析結果（繪製）'],['resultup','分析結果（上傳）'],['resultpoint','分析結果（單點）'],['export','匯出資料視窗']];
+function renderNotes(){
+  $('notes').innerHTML=`<h4>今天要決定的（${Q.length} 項）</h4>${Q.map(q=>`<div class="q"><b>${q[0]}</b> ${q[1]}<div class="own">決策者：${q[2]}</div></div>`).join('')}
+  <h5>情境切換</h5><div class="sw">${STATES.map(s=>`<button onclick="go('${s[0]}')">${s[1]}</button>`).join('')}</div>`;
+}
+function toggleNotes(){document.body.classList.toggle('notes');}
+
+function go(s){
+  $('modal').classList.remove('on');
+  S.stage='input';S.err=null;S.up=null;S.pt=null;S.pts=[];S.mode='draw';
+  const up={name:'三合段_案場範圍.kml',size:'18 KB',polys:UPPOLYS};
+  if(s==='draw')S.pts=TRI.map(p=>p.slice());
+  else if(s==='point'){S.mode='point';S.pt=[800,420];}
+  else if(s==='upload')S.mode='upload';
+  else if(s==='uploaded'){S.mode='upload';S.up=up;}
+  else if(s==='err_fmt'){S.mode='upload';S.err='檔案格式不符，請上傳 .kml 或 .kmz 檔案';}
+  else if(s==='err_nopoly'){S.mode='upload';S.err='檔案內沒有可用的面範圍（僅支援多邊形，不含點或線）';}
+  else if(s==='err_multi'){S.mode='upload';S.err='檔案內含多個面，僅支援單一多邊形範圍';}
+  else if(s==='result'){S.pts=TRI.map(p=>p.slice());S.stage='result';}
+  else if(s==='resultup'){S.mode='upload';S.up=up;S.stage='result';}
+  else if(s==='resultpoint'){S.mode='point';S.pt=[800,420];S.stage='result';}
+  else if(s==='export'){S.pts=TRI.map(p=>p.slice());S.stage='result';}
+  render();if(s==='export')openExport();
+}
+
+/* ===== 規格檢視（?spec=1）===== */
+function renderSpec(){
+  $('spec').innerHTML=`<h2>📋 本畫面規格（F-01～F-03、F-05、F-06；F-04 本版移除）</h2>
+  <table><tr><th>元素</th><th>F</th><th>型別</th><th>必填</th><th>規則／驗證</th><th>資料來源</th><th>互動行為</th></tr>
+  <tr><td>空間分析頁籤</td><td>F-01</td><td>頁籤</td><td>—</td><td>僅保留「繪製查詢」；地籍查詢、行政區查詢先移除</td><td>—</td><td>—</td></tr>
+  <tr><td>查詢方式</td><td>F-02</td><td>選單</td><td>是</td><td>選項：單點查詢／範圍查詢（繪製）／範圍查詢（上傳KML）；預設範圍查詢（繪製）；切換選項時清除目前範圍與已選檔案</td><td>固定</td><td>切換後面板內容依選項變化</td></tr>
+  <tr><td>選擇檔案</td><td>F-03</td><td>按鈕（無圖示）</td><td>是</td><td>虛線外框區塊（參考 Google 拖曳上傳）；說明文字：「可透過點擊選擇檔案，或將檔案拖曳至本區塊，即可上傳。」換行後接「檔案類型支援 .kml、.kmz 檔，範圍須為多邊形，不支援點、線範圍查詢」；說明文字分行條列（首句＋三條規則），避免整段過長；上傳檔含多個面時不支援，顯示錯誤；大小／頂點數上限【待定 Q-02】</td><td>使用者本機</td><td>可點「選擇檔案」或直接把檔案拖曳進灰框（拖入時灰框高亮），一次一個檔案；選檔成功：地圖顯示範圍並自動縮放；不自動分析，按「查詢」才分析</td></tr>
+  <tr><td>上傳錯誤訊息</td><td>F-03</td><td>文字</td><td>—</td><td>【AI 建議】含多個面：「檔案內含多個面，僅支援單一多邊形範圍」｜格式不符：「檔案格式不符，請上傳 .kml 或 .kmz 檔案」｜無多邊形：「檔案內沒有可用的面範圍（僅支援多邊形，不含點或線）」｜無法讀取：「檔案內容無法讀取，請確認檔案是否正確」</td><td>—</td><td>失敗時不顯示範圍、不可查詢；可重新選檔</td></tr>
+  <tr><td>查詢</td><td>F-02/03</td><td>按鈕</td><td>—</td><td>無範圍（未繪製、未選檔或檔案錯誤）時停用；單點查詢需已點選位置</td><td>—</td><td>進入分析結果</td></tr>
+  <tr><td>匯出資料</td><td>F-05</td><td>按鈕→小視窗</td><td>—</td><td>可複選：分析清單（Excel）、分析報告（PDF）、查詢範圍（KML）；選項下方不放說明；勾選框為青藍底白勾（同現有系統圖層勾選），勾選後只改變勾選框、整列不加底色或外框；至少勾一項才可按「匯出」，按鈕不顯示勾選數量；預設全勾；單點查詢不提供「查詢範圍」（不顯示該選項）；KML 檔名 <code>空間分析查詢範圍_YYYYMMDDHHMM.kml</code></td><td>本次分析結果與範圍</td><td>勾 2 項（含）以上打包成 zip（<code>空間分析匯出_YYYYMMDDHHMM.zip</code>），只勾 1 項直接下載原檔不壓縮；勾 PDF 時記入「資料下載紀錄」（3.2）</td></tr>
+  <tr><td>匯出報告</td><td>F-06</td><td>按鈕（預留）</td><td>—</td><td>屬 2.5 進階匯出成果，非本次工項；結果頁底部按鈕列需能容納「重新分析｜匯出資料｜匯出報告」三顆不換行</td><td>—</td><td>本次不顯示</td></tr></table>
+  <h3>業務規則</h3><ul><li>全登入者皆可使用 KML 上傳／下載，不另做權限判斷。</li><li>範圍的「面」是 KML／KMZ 的多邊形；點、線不作為查詢範圍。</li><li>上傳與繪製互斥，一次只有一個查詢範圍。</li></ul>
+  <h3>例外流程</h3><ul><li>檔案錯誤：顯示錯誤訊息，不顯示範圍、「查詢」停用。</li><li>重新分析：回到輸入階段，保留原範圍（可再調整或重新上傳）。</li></ul>`;
+}
+
+function render(){renderPanel();renderMap();renderNotes();}
+render();renderSpec();
+(function(){const q=new URLSearchParams(location.search);
+ if(q.get('notes')==='1')document.body.classList.add('notes');
+ if(q.get('spec')==='1')document.body.classList.add('spec');
+ if(q.get('state'))go(q.get('state'));})();
+</script>
+</body>
+</html>

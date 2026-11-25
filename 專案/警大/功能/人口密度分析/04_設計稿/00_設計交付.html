@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>設計交付 — 人口估算（框選工具）v2</title>
+<style>
+  :root{--navy:#1b4f8a;--blue:#2f6fb5;--ink:#2a3340;--soft:#5a6675;--line:#d8dee6;--bg:#eef1f5;
+        --warn:#e6a417;--red:#e0483d;--ok:#2e9b57;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.6;font-size:15px;}
+  header{background:var(--navy);color:#fff;padding:20px 32px;}
+  header h1{margin:0;font-size:20px;}
+  header .sub{color:#cfe0f2;font-size:13px;margin-top:4px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 32px 80px;}
+  .lead{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin:20px 0;box-shadow:0 2px 8px rgba(20,40,70,.08);}
+  .lead b{color:var(--navy);}
+  h2{font-size:17px;color:var(--navy);border-left:5px solid var(--blue);padding-left:10px;margin:34px 0 12px;}
+  .screen{display:flex;gap:22px;background:#fff;border:1px solid var(--line);border-radius:8px;
+          padding:18px;margin:16px 0;box-shadow:0 2px 8px rgba(20,40,70,.08);align-items:flex-start;}
+  .screen img{width:52%;border:1px solid var(--line);border-radius:6px;}
+  .screen .notes{flex:1;}
+  .screen .notes h3{margin:0 0 8px;font-size:15px;color:var(--ink);}
+  .screen .notes ul{margin:6px 0;padding-left:18px;}
+  .screen .notes li{margin:5px 0;font-size:14px;}
+  .pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:11px;font-weight:600;margin-right:6px;}
+  .pill.state{background:#fdf3e0;color:#a9760e;}
+  .pill.new{background:#e7f6ee;color:#1f7a45;}
+  .dont{background:#fdeef0;border:1px solid #f3c6cb;border-radius:6px;padding:12px 16px;color:#8a2b2b;}
+  .dont ul{margin:6px 0;padding-left:18px;}
+  table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0;font-size:14px;}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;}
+  th{background:#eef3f9;white-space:nowrap;}
+  .sw{display:inline-block;width:18px;height:18px;border-radius:4px;vertical-align:middle;margin-right:6px;border:1px solid #0002;}
+  code{background:#eef2f6;padding:1px 6px;border-radius:4px;font-size:13px;}
+  .todo{background:#fffbe8;border:1px dashed var(--warn);border-radius:6px;padding:6px 12px;margin:6px 0;font-size:14px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>設計交付 — 人口估算（框選工具）v2</h1>
+  <div class="sub">中央警察大學 115 年智慧災害模擬演練平台系統採購案　·　2026-08-24　·　依據雛型 v2（8/20 客戶訪談回填）</div>
+</header>
+
+<div class="wrap">
+
+  <div class="lead">
+    這是災害演練平台右側面板「<b>人口估算</b>」頁籤下的框選工具。使用者在地圖上框選任意多邊形範圍，
+    系統即算出範圍內<b>人數與面積</b>（v2 已移除密度），逐筆列在成果清單。<br>
+    <b>本工具沿用既有系統的視覺風格</b>（深藍 header、右側頁籤面板、Mapbox 淺色地圖），
+    請以「同一套系統的下一個頁籤」的一致性為前提出圖，不要另立風格。
+  </div>
+
+  <div class="todo">
+    <b>v1 → v2 主要異動（設計請注意）：</b>頁籤名稱由「人口密度」改為「<b>人口估算</b>」；成果清單<b>移除密度欄</b>，只剩人數＋面積(km²) 兩欄。
+  </div>
+
+  <!-- ============ 1. 要出什麼 ============ -->
+  <h2>① 要出什麼</h2>
+
+  <div class="screen">
+    <img src="圖/v2_人口估算_主畫面.png" alt="主畫面">
+    <div class="notes">
+      <h3>主畫面（人口估算框選工具）</h3>
+      <ul>
+        <li>右側面板「人口估算」頁籤內容：<b>框選計算範圍說明</b> → <b>開始框選</b> 按鈕 → <b>估算成果清單</b>。</li>
+        <li>成果清單<b>兩欄固定</b>：<b>人數 / 面積(km²)</b>；每列左有顯示/隱藏（眼睛）、右有刪除（垃圾桶）。</li>
+        <li>地圖上框選範圍以多邊形呈現；被點選的那筆改為<b>高亮</b>（下方色票）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="screen">
+    <img src="圖/v2_人口估算_繪製中.png" alt="繪製中">
+    <div class="notes">
+      <h3><span class="pill state">狀態</span>繪製中（單鈕變「取消」）</h3>
+      <ul>
+        <li>點「開始框選」進入繪製後，<b>同一顆按鈕變成「✕ 取消」</b>（次要外框樣式），面板上<b>沒有第二顆按鈕</b>。</li>
+        <li>使用者在地圖圈選完成（點回起點/雙擊）→ <b>自動計算</b>、成果入清單、按鈕回「開始框選」。</li>
+        <li>繪製中點「取消」或按 Esc → 放棄本次框選、回初始態。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin-top:24px">待設計交付的素材</h3>
+  <table>
+    <thead><tr><th>素材</th><th>用途</th><th>備註</th></tr></thead>
+    <tbody>
+      <tr><td>框選按鈕（單一顆，狀態切換）</td><td>面板唯一按鈕</td><td>初始「✛ 開始框選」（藍實心）；繪製中變「✕ 取消」（次要外框樣式）。<b>沒有「完成計算」鈕</b>——圈選完成即自動計算</td></tr>
+      <tr><td>顯示/隱藏 圖示（👁 睜眼 / 閉眼兩態）</td><td>成果清單每列</td><td>閉眼＝該範圍在地圖隱藏</td></tr>
+      <tr><td>刪除 圖示（🗑）</td><td>成果清單每列</td><td>點擊後跳二次確認彈窗才刪</td></tr>
+      <tr><td>「人口估算」頁籤圖示（👥 人群）</td><td>右側面板頁籤列第 6 個</td><td>與既有 圖層/已選/建物/繪製/EMIC 圖示同一套風格</td></tr>
+    </tbody>
+  </table>
+
+  <h3>色票（框選範圍與高亮，請定案）</h3>
+  <table>
+    <thead><tr><th>用途</th><th>暫用色</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td><span class="sw" style="background:#f3b34d55;border-color:#e39a2b"></span>一般框選範圍</td><td><code>#E39A2B</code> 邊框 / <code>#F3B34D33</code> 填色</td><td>清單中未選中的成果範圍</td></tr>
+      <tr><td><span class="sw" style="background:#e0483d33;border-color:#e0483d"></span>選中高亮範圍</td><td><code>#E0483D</code> 邊框 / <code>#E0483D22</code> 填色</td><td>點選清單列時，對應範圍改此色</td></tr>
+      <tr><td><span class="sw" style="background:#1b4f8a"></span>面板主色 / 按鈕</td><td><code>#1B4F8A</code> / <code>#2F6FB5</code></td><td>沿用既有系統</td></tr>
+    </tbody>
+  </table>
+  <div class="todo">請設計確認上述配色是否符合既有系統的圖徵色系；框選範圍配色最終以與地圖底圖對比清楚為準。</div>
+
+  <!-- ============ 2. 不可以動什麼 ============ -->
+  <h2>② 不可以動什麼</h2>
+  <div class="dont">
+    以下由需求規格鎖定，<b>設計不可自行增減欄位、按鈕或改文案</b>（少一欄或多一鈕都會讓規格、開發、驗收對不上）：
+    <ul>
+      <li>成果清單<b>固定兩欄</b>：人數、面積(km²) —— <b>不要加回密度欄</b>、不改欄名、不改單位。</li>
+      <li>成果<b>不提供命名欄位</b> —— 靠點選與地圖範圍連動辨識，不要加名稱輸入框。</li>
+      <li>每列固定兩個操作：<b>顯示/隱藏、刪除</b>（刪除需二次確認）—— 不新增其他列內操作。</li>
+      <li>互動行為固定：點整列→地圖對應範圍高亮、同時僅一列選中；框選採<b>單一按鈕</b>「開始框選↔取消」，<b>圈選完成自動計算</b>、<b>不要加「完成計算」鈕</b>。</li>
+      <li>說明文案：「點擊『開始框選』後，在地圖上點選多邊形範圍；圈選完成（點回起點）即自動計算範圍面積與範圍內人數。繪製中可點『取消』放棄。」</li>
+    </ul>
+    UI（配色、間距、圖示樣式、字級）可依設計專業調整；UX 流程與欄位一律以需求規格為準。
+  </div>
+
+  <!-- ============ 3. 非理想狀態也要出圖 ============ -->
+  <h2>③ 非理想狀態也要出圖</h2>
+
+  <div class="screen">
+    <img src="圖/v2_人口估算_空清單.png" alt="空清單">
+    <div class="notes">
+      <h3><span class="pill state">狀態</span>空清單（尚無估算成果）</h3>
+      <ul>
+        <li>清單區顯示空狀態文案：<b>「尚無估算成果」</b> + <b>「點擊『開始框選』在地圖上標示範圍」</b>。</li>
+        <li>不顯示兩欄表頭；「開始框選」按鈕正常可用。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="screen">
+    <img src="圖/v2_人口估算_演練完成唯讀.png" alt="演練完成唯讀">
+    <div class="notes">
+      <h3><span class="pill state">狀態</span>演練完成專案（唯讀）</h3>
+      <ul>
+        <li><b>整個「框選計算範圍」區塊都隱藏</b>：標題、「點擊開始框選…」說明文字、開始框選按鈕全部不出現；每列刪除鈕也隱藏。</li>
+        <li><b>不加任何提示橫幅</b>——面板由「估算成果清單」直接起頭。</li>
+        <li>已存成果仍可點選、在地圖高亮檢視。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="screen">
+    <img src="圖/v2_人口估算_演練人員檢視.png" alt="演練人員檢視">
+    <div class="notes">
+      <h3><span class="pill state">狀態</span>演練人員檢視</h3>
+      <ul>
+        <li>與「演練完成唯讀」<b>畫面完全一致</b>：隱藏整個框選區塊與刪除鈕、無橫幅、無「點擊開始框選…」文字。</li>
+        <li>可檢視清單、可點選高亮，但不能新框選、不能刪除。</li>
+        <li>差別只在觸發原因（此為角色，前者為專案狀態）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <table style="margin-top:20px">
+    <thead><tr><th>其他非理想情境</th><th>畫面表現</th></tr></thead>
+    <tbody>
+      <tr><td>框選頂點少於 3 即按完成計算</td><td>不結束繪製，提示「請至少標示 3 個點以圍成範圍」</td></tr>
+      <tr><td>框選範圍內無人口（山區/海域）</td><td>正常存一筆，人數欄顯示「0」（非錯誤，不跳提示）</td></tr>
+      <tr><td>點刪除</td><td>先跳二次確認「確定刪除此筆估算成果？」，按取消不刪</td></tr>
+    </tbody>
+  </table>
+
+  <div class="todo" style="margin-top:20px">
+    顯示精度已定案（客戶確認）：面積小數 2 位、人數四捨五入整數；此為數值格式，不影響版面。
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,300 @@
+/* =========================================================
+   警大 智慧災害模擬演練平台 — 雛型共用樣式 _shared.css
+   全資料夾唯一一份，改樣式用「追加」，不要複製新檔。
+   風格基準：_共用素材/現有系統截圖 與 規劃畫面_人口密度分析.png
+   （深藍 header + 白色工具列 + 右側頁籤面板 + Mapbox 淺色地圖）
+   ========================================================= */
+
+:root{
+  --navy:#1b4f8a;          /* header 主色 */
+  --navy-dark:#163f6e;
+  --blue:#2f6fb5;          /* 主要按鈕 */
+  --blue-hover:#265d9a;
+  --red:#e0483d;           /* 演練開始 */
+  --line:#d8dee6;
+  --ink:#2a3340;
+  --ink-soft:#5a6675;
+  --bg:#eef1f5;
+  --panel:#ffffff;
+  --chip:#eef4fb;
+  --ok:#2e9b57;
+  --warn:#e6a417;
+  --shadow:0 2px 8px rgba(20,40,70,.12);
+  --radius:6px;
+  font-synthesis:none;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;}
+body{
+  font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  font-size:14px;
+  line-height:1.5;
+  overflow:hidden;
+}
+
+/* ---------- Header ---------- */
+.app-header{
+  height:52px;background:var(--navy);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;position:relative;z-index:20;
+}
+.app-header .brand{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;letter-spacing:.5px;}
+.app-header .brand .logo{
+  width:28px;height:28px;border-radius:50%;background:#fff2;
+  display:flex;align-items:center;justify-content:center;font-size:15px;border:1.5px solid #ffffff66;
+}
+.app-header .to-admin{font-size:13px;color:#dbe6f4;text-decoration:none;}
+.app-header .to-admin:hover{color:#fff;}
+
+/* ---------- Toolbar ---------- */
+.app-toolbar{
+  height:46px;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;padding:0 14px;position:relative;z-index:15;
+}
+.tb-btn{
+  border:1px solid var(--line);background:#fff;color:var(--ink);
+  height:30px;padding:0 12px;border-radius:5px;font-size:13px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.tb-btn:hover{border-color:#b9c4d2;background:#f6f9fc;}
+.tb-btn.primary{background:var(--navy);border-color:var(--navy);color:#fff;}
+.tb-select{
+  border:1px solid var(--line);height:30px;border-radius:5px;padding:0 8px;
+  font-size:13px;background:#fff;color:var(--ink);min-width:96px;
+}
+.tb-proj{font-size:13px;color:var(--ink-soft);min-width:88px;}
+.tb-sep{width:1px;height:22px;background:var(--line);margin:0 2px;}
+.tb-spacer{flex:1;}
+.tb-date{font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
+.tb-toggle{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-soft);}
+.tb-toggle .sw{width:34px;height:18px;border-radius:10px;background:var(--blue);position:relative;}
+.tb-toggle .sw::after{content:"";position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;}
+.tb-btn.danger{background:var(--red);border-color:var(--red);color:#fff;font-weight:600;}
+
+/* ---------- Layout ---------- */
+.app-body{display:flex;height:calc(100% - 98px);position:relative;}
+
+/* ---------- Map (faked, offline) ---------- */
+.map{
+  flex:1;position:relative;overflow:hidden;
+  background:
+    linear-gradient(0deg,rgba(255,255,255,.0),rgba(255,255,255,.0)),
+    repeating-linear-gradient(0deg,#e9eef0 0 1px,transparent 1px 46px),
+    repeating-linear-gradient(90deg,#e9eef0 0 1px,transparent 1px 46px),
+    #f4f2ec;
+}
+.map .sea{position:absolute;inset:0;background:radial-gradient(120% 90% at 0% 0%,#cfe3ef 0%,#e8f0f3 40%,#f4f2ec 60%);}
+.map .land{position:absolute;left:6%;top:8%;width:74%;height:82%;
+  background:#eef1e6;border-radius:40% 46% 52% 44%/48% 40% 52% 46%;
+  box-shadow:inset 0 0 0 1px #dfe4d5;}
+.map-controls{position:absolute;left:16px;top:16px;display:flex;flex-direction:column;gap:8px;z-index:5;}
+.map-controls .mc{
+  width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:center;color:var(--navy);font-size:16px;cursor:pointer;border:1px solid #eef;
+}
+.map-controls .mc.solid{background:var(--blue);color:#fff;font-weight:700;font-size:13px;}
+.map-credit{position:absolute;left:10px;bottom:8px;font-size:11px;color:#8a93a0;background:#ffffffb0;padding:1px 6px;border-radius:3px;}
+
+/* 100m 網格中心點（示意計算用點位）＋ 框選多邊形 */
+.grid-dot{position:absolute;width:5px;height:5px;border-radius:50%;background:#c9705f;opacity:.55;transform:translate(-50%,-50%);}
+.grid-dot.in{background:#d9822b;opacity:1;box-shadow:0 0 0 2px #fff;}
+.poly{position:absolute;border:2px solid #e39a2b;background:#f3b34d33;pointer-events:none;}
+.poly.active{border-color:#e0483d;background:#e0483d22;}
+.poly-label{position:absolute;transform:translate(-50%,-120%);background:#fff;border:1px solid var(--line);
+  border-radius:4px;padding:1px 7px;font-size:12px;color:var(--ink);box-shadow:var(--shadow);white-space:nowrap;}
+
+/* ---------- Right panel ---------- */
+.panel{
+  width:340px;background:var(--panel);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;z-index:8;box-shadow:-2px 0 8px rgba(20,40,70,.05);
+}
+.panel-tabs{display:flex;border-bottom:1px solid var(--line);}
+.panel-tabs .tab{
+  flex:1;padding:9px 2px 7px;text-align:center;font-size:11px;color:var(--ink-soft);
+  cursor:pointer;border-bottom:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.panel-tabs .tab .ic{font-size:17px;line-height:1;}
+.panel-tabs .tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+.panel-body{padding:14px;overflow-y:auto;flex:1;}
+
+.p-section-title{font-size:13px;font-weight:700;color:var(--ink);margin:2px 0 8px;}
+.p-hint{font-size:12px;color:var(--ink-soft);background:#f6f8fb;border:1px solid #e7edf4;border-radius:5px;padding:8px 10px;line-height:1.55;}
+.p-hint b{color:var(--blue);}
+.btn-block{
+  width:100%;height:38px;border:none;border-radius:5px;background:var(--blue);color:#fff;
+  font-size:14px;font-weight:600;cursor:pointer;margin:12px 0;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-block:hover{background:var(--blue-hover);}
+.btn-block.drawing{background:#fff;color:var(--red);border:1.5px solid var(--red);}
+.btn-block:disabled{background:#c4ccd6;cursor:not-allowed;}
+
+/* 成果清單 */
+.result-title{font-size:13px;font-weight:700;margin:6px 0 4px;display:flex;align-items:center;justify-content:space-between;}
+.result-title .cnt{font-size:12px;color:var(--ink-soft);font-weight:400;}
+.result-table{width:100%;border-collapse:collapse;font-size:13px;}
+.result-table th{
+  text-align:right;font-weight:600;color:var(--ink-soft);font-size:11.5px;
+  padding:6px 6px;border-bottom:1px solid var(--line);
+}
+.result-table th.lead,.result-table td.lead{text-align:left;width:34px;}
+.result-table th.act,.result-table td.act{text-align:center;width:34px;}
+.result-table td{padding:8px 6px;border-bottom:1px solid #eef2f6;text-align:right;color:var(--ink);}
+.result-table tr.row{cursor:pointer;}
+.result-table tr.row:hover{background:#f4f9ff;}
+.result-table tr.row.sel{background:#eaf3ff;}
+.result-table tr.row.sel td{color:var(--navy);font-weight:600;}
+.result-table tr.hidden-row td:not(.lead):not(.act){opacity:.4;}
+.ic-btn{border:none;background:none;cursor:pointer;font-size:15px;color:#8a93a0;padding:2px;}
+.ic-btn:hover{color:var(--blue);}
+.ic-btn.del:hover{color:var(--red);}
+.ic-btn.eye.off{color:#c4ccd6;}
+.empty{padding:26px 10px;text-align:center;color:#9aa4b1;font-size:13px;}
+
+.readonly-banner{
+  background:#fff6e5;border:1px solid #f0d69a;color:#8a6413;font-size:12px;
+  border-radius:5px;padding:8px 10px;margin-bottom:10px;line-height:1.5;
+}
+
+/* ---------- 討論模式圖層 ---------- */
+.notes-toggle{
+  position:fixed;right:16px;bottom:16px;z-index:40;background:var(--navy);color:#fff;
+  border:none;border-radius:20px;height:36px;padding:0 16px;font-size:13px;cursor:pointer;box-shadow:var(--shadow);
+}
+.notes-panel{
+  position:fixed;right:16px;bottom:62px;width:330px;max-height:74vh;overflow:auto;z-index:40;
+  background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 28px rgba(20,40,70,.22);display:none;
+}
+.notes-panel.open{display:block;}
+.notes-head{background:var(--navy);color:#fff;padding:9px 14px;font-size:13px;font-weight:700;border-radius:8px 8px 0 0;}
+.notes-sec{padding:10px 14px;border-bottom:1px solid #eef2f6;}
+.notes-sec h4{margin:0 0 7px;font-size:12px;color:var(--ink-soft);}
+.scenario-switch{display:flex;flex-wrap:wrap;gap:6px;}
+.scenario-switch button{
+  border:1px solid var(--line);background:#fff;border-radius:14px;padding:4px 11px;font-size:12px;cursor:pointer;color:var(--ink);
+}
+.scenario-switch button.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+.undecided{list-style:none;margin:0;padding:0;}
+.undecided li{padding:7px 0;border-bottom:1px dashed #e3e9f0;font-size:12.5px;line-height:1.5;}
+.undecided li:last-child{border-bottom:none;}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;margin-right:5px;font-weight:600;}
+.tag.q{background:#eaf1fb;color:#2f6fb5;}
+.tag.client{background:#fdeef0;color:#c0392b;}
+.tag.tech{background:#fff3e0;color:#c77700;}
+
+/* ---------- 規格檢視圖層 ---------- */
+.spec-view{display:none;background:#fbfcfe;border-top:3px solid var(--navy);padding:18px 22px;overflow:auto;}
+body.show-spec .spec-view{display:block;}
+body.show-spec{overflow:auto;}
+body.show-spec .app-body{height:auto;min-height:60vh;}
+.spec-view h2{font-size:16px;color:var(--navy);margin:0 0 4px;}
+.spec-view h3{font-size:14px;color:var(--ink);margin:18px 0 6px;border-left:4px solid var(--blue);padding-left:8px;}
+.spec-view table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0;background:#fff;}
+.spec-view th,.spec-view td{border:1px solid #dbe2ea;padding:6px 8px;text-align:left;vertical-align:top;}
+.spec-view th{background:#eef3f9;color:var(--ink);white-space:nowrap;}
+.spec-view .fcode{font-family:ui-monospace,monospace;color:#b5651d;font-weight:600;}
+.spec-view ul{margin:6px 0;padding-left:20px;}
+.spec-view li{margin:3px 0;font-size:12.5px;}
+.spec-badge{position:fixed;left:16px;top:60px;z-index:30;background:var(--navy);color:#fff;padding:4px 12px;border-radius:14px;font-size:12px;}
+
+.hint-marker{
+  display:none;position:absolute;background:#e0483d;color:#fff;font-size:11px;border-radius:10px;
+  padding:1px 8px;z-index:6;box-shadow:var(--shadow);
+}
+body.show-notes .hint-marker{display:inline-block;}
+
+/* =========================================================
+   EMIC 災情整合模組 追加樣式（沿用同一份 _shared.css）
+   狀態 4 色＝灰未指派 / 紅待處理 / 黃處理中 / 綠已處理
+   （來源：規劃畫面_14類災情圖徵設計.png）
+   ========================================================= */
+:root{
+  --st-unassigned:#9aa4b1;   /* 未指派 灰 */
+  --st-pending:#e0483d;      /* 待處理 紅 */
+  --st-progress:#e6a417;     /* 處理中 黃 */
+  --st-done:#2e9b57;         /* 已處理 綠 */
+}
+
+/* ---- 頂部：演練日期單一區塊（非起迄）＋ 結束演練 ---- */
+.tb-drilldate{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);
+  border:1px solid var(--line);height:30px;padding:0 10px;border-radius:5px;background:#fff;}
+.tb-drilldate .lock{color:#8a93a0;font-size:12px;}
+.tb-toggle.on .sw{background:var(--blue);}
+.running-dot{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--red);font-weight:600;}
+.running-dot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--red);animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ---- 地圖災情點位 ---- */
+.marker{
+  position:absolute;width:30px;height:30px;border-radius:50%;transform:translate(-50%,-50%);
+  display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;
+  border:3px solid #fff;box-shadow:0 1px 5px rgba(20,40,70,.35);z-index:6;background:#9aa4b1;color:#fff;
+}
+.marker.st-unassigned{background:var(--st-unassigned);}
+.marker.st-pending{background:var(--st-pending);}
+.marker.st-progress{background:var(--st-progress);}
+.marker.st-done{background:var(--st-done);}
+.marker.hide{display:none;}
+.marker.sel{outline:3px solid var(--navy);outline-offset:1px;z-index:9;}
+.marker.isnew{animation:drop .5s ease;}
+@keyframes drop{0%{transform:translate(-50%,-160%);opacity:0}100%{transform:translate(-50%,-50%);opacity:1}}
+
+/* ---- 點位詳情彈窗 ---- */
+.detail-pop{
+  position:absolute;width:266px;background:#fff;border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 8px 26px rgba(20,40,70,.28);z-index:14;font-size:12.5px;display:none;overflow:hidden;
+}
+.detail-pop.open{display:block;}
+.detail-pop .dh{background:var(--navy);color:#fff;padding:8px 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.detail-pop .dh .x{cursor:pointer;font-size:15px;opacity:.85;}
+.detail-pop .db{padding:10px 12px;max-height:300px;overflow:auto;}
+.detail-pop .drow{display:flex;gap:8px;padding:3px 0;border-bottom:1px dashed #eef2f6;}
+.detail-pop .drow .k{color:var(--ink-soft);width:74px;flex:0 0 74px;}
+.detail-pop .drow .v{color:var(--ink);flex:1;}
+.detail-pop .files{margin-top:8px;}
+.detail-pop .files a{display:block;color:var(--blue);text-decoration:none;padding:2px 0;font-size:12px;}
+.detail-pop .files a:hover{text-decoration:underline;}
+.stbadge{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:10px;color:#fff;white-space:nowrap;}
+.stbadge.st-unassigned{background:var(--st-unassigned);}
+.stbadge.st-pending{background:var(--st-pending);}
+.stbadge.st-progress{background:var(--st-progress);}
+.stbadge.st-done{background:var(--st-done);}
+
+/* ---- 時間播放器（EMIC 面板頂 / 地圖底部皆用此組件） ---- */
+.player{background:#f6f8fb;border:1px solid #e7edf4;border-radius:6px;padding:10px 12px;margin-bottom:12px;}
+.player .pt{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.player .pt .now{font-size:14px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;}
+.player .pt .rng{font-size:11px;color:var(--ink-soft);}
+.player .ctl{display:flex;align-items:center;gap:8px;}
+.player .play{width:32px;height:32px;border-radius:50%;border:none;background:var(--blue);color:#fff;font-size:14px;cursor:pointer;flex:0 0 32px;}
+.player .play:hover{background:var(--blue-hover);}
+.player .track{flex:1;height:6px;border-radius:4px;background:#dbe4ee;position:relative;cursor:pointer;}
+.player .track .fill{position:absolute;left:0;top:0;bottom:0;background:var(--blue);border-radius:4px;width:60%;}
+.player .track .head{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--blue);transform:translate(-50%,-50%);left:60%;}
+.player .ticks{display:flex;justify-content:space-between;font-size:10px;color:#9aa4b1;margin-top:4px;}
+.player .speed{font-size:11px;color:var(--ink-soft);border:1px solid var(--line);border-radius:12px;padding:1px 8px;cursor:pointer;background:#fff;}
+
+/* ---- 篩選列 ---- */
+.filters{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px;}
+.filters .frow{display:flex;gap:8px;align-items:center;}
+.filters .frow label{font-size:12px;color:var(--ink-soft);flex:0 0 34px;}
+.filters .msel{flex:1;border:1px solid var(--line);border-radius:5px;height:28px;font-size:12px;padding:0 8px;background:#fff;color:var(--ink);}
+.st-legend{display:flex;flex-wrap:wrap;gap:6px;}
+.st-legend .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink);border:1px solid var(--line);
+  border-radius:12px;padding:2px 9px;cursor:pointer;background:#fff;user-select:none;}
+.st-legend .chip .dot{width:9px;height:9px;border-radius:50%;}
+.st-legend .chip.off{opacity:.4;}
+.st-legend .chip.future .dot{background:#fff;border:1.5px solid #9aa4b1;width:8px;height:8px;}
+
+/* ---- 清單：類型 icon 欄 + 狀態欄 ---- */
+.result-table td.type{width:26px;text-align:center;font-size:15px;}
+.result-table td.st{text-align:center;width:64px;}
+.emic-list tr.row td{padding:7px 5px;}
+.emic-list th{font-size:11px;}
+
+/* ---- 演練前提示卡 ---- */
+.pre-hint{text-align:center;padding:22px 12px;color:var(--ink-soft);}
+.pre-hint .big{font-size:30px;margin-bottom:8px;}
+.pre-hint b{color:var(--blue);}

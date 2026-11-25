@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>演練專案列表｜災害模擬演練展示平台</title>
+<link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+<!-- ================= 規格模式提示列 ================= -->
+<div class="spec-hint">📋 規格檢視模式（?spec=1）— 給 PL／PG／設計。移除 ?spec=1 回到乾淨畫面。</div>
+
+<!-- ================= 頂列 ================= -->
+<div class="topbar">
+  <span class="logo"><span class="dot">⛑</span> 智慧災害模擬演練平台</span>
+  <span class="sys">中央警察大學 防災研究所</span>
+  <span class="spacer"></span>
+  <span class="who">👤 王教官（教官）</span>
+</div>
+
+<!-- ================= 演練專案列表 F-01 ================= -->
+<!-- F-01 演練專案列表【對話確認】 / F-02 演練狀態流轉【對話確認】 -->
+<div class="page">
+  <div class="page-head">
+    <h1>演練專案</h1>
+    <span class="spacer" style="flex:1"></span>
+    <!-- SPEC: 新增演練專案 F-01 型別:動作 行為:建立空白專案，預設狀態=待演練 來源:教官 -->
+    <button class="btn primary">＋ 新增演練專案</button>
+  </div>
+
+  <!-- SPEC: 狀態篩選 F-02 型別:分頁篩選 選項:全部/待演練/演練中/演練結束 預設:全部 -->
+  <div class="tabs" id="tabs">
+    <button class="on" data-f="all">全部 <span class="count">6</span></button>
+    <button data-f="wait">待演練 <span class="count">2</span></button>
+    <button data-f="live">演練中 <span class="count">2</span></button>
+    <button data-f="done">演練結束 <span class="count">2</span></button>
+  </div>
+
+  <div class="card-grid" id="grid">
+
+    <!-- 演練中 -->
+    <div class="proj-card" data-status="live">
+      <div class="thumb">
+        <svg viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice"><rect width="320" height="120" fill="#e7eef3"/><path d="M0 78 Q80 60 160 74 T320 66 V120 H0 Z" fill="#cfe0d6"/><path d="M-5 40 L130 55 L200 30 L330 48" stroke="#c2cdd6" stroke-width="6" fill="none"/><circle cx="120" cy="60" r="9" fill="#d64545" opacity=".85"/><circle cx="180" cy="48" r="7" fill="#e0a100" opacity=".85"/><path d="M60 70 l40 -8 l30 14 l-20 22 l-46 -6 z" fill="#1f6feb" opacity=".22"/></svg>
+      </div>
+      <div class="body">
+        <div style="display:flex;align-items:center;gap:8px"><h3>115年 北北基豪雨淹水應變演練</h3></div>
+        <span class="badge live">演練中</span>
+        <div class="meta"><span>👤 王教官</span><span>🗓 115/08/14 建立</span><span>🌊 淹水</span><span>📍 新北市</span></div>
+      </div>
+      <div class="foot">
+        <span class="chip">EMIC 災情 12 筆</span><span class="spacer"></span>
+        <a class="btn sm primary" href="雛型_v1_演練操作台.html">開啟</a>
+      </div>
+    </div>
+
+    <div class="proj-card" data-status="live">
+      <div class="thumb">
+        <svg viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice"><rect width="320" height="120" fill="#efeae6"/><path d="M40 100 L110 30 L175 95 Z" fill="#d8c9bd"/><circle cx="112" cy="66" r="10" fill="#d64545" opacity=".8"/><circle cx="150" cy="80" r="7" fill="#e0a100" opacity=".8"/><path d="M0 60 L320 52" stroke="#c8b6a6" stroke-width="4" fill="none"/></svg>
+      </div>
+      <div class="body">
+        <div style="display:flex;align-items:center;gap:8px"><h3>大屯火山噴發疏散推演</h3></div>
+        <span class="badge live">演練中</span>
+        <div class="meta"><span>👤 陳教官</span><span>🗓 115/08/13 建立</span><span>🌋 火山</span><span>📍 陽明山</span></div>
+      </div>
+      <div class="foot">
+        <span class="chip">EMIC 災情 5 筆</span><span class="spacer"></span>
+        <a class="btn sm primary" href="雛型_v1_演練操作台.html">開啟</a>
+      </div>
+    </div>
+
+    <!-- 待演練 -->
+    <div class="proj-card" data-status="wait">
+      <div class="thumb">
+        <svg viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice"><rect width="320" height="120" fill="#e9eef2"/><path d="M0 84 Q90 70 170 80 T320 74 V120 H0 Z" fill="#d3dbe2"/><path d="M-5 45 L150 60 L330 40" stroke="#c2cdd6" stroke-width="6" fill="none"/></svg>
+      </div>
+      <div class="body">
+        <div style="display:flex;align-items:center;gap:8px"><h3>山陀兒颱風複合災害桌上演練</h3></div>
+        <span class="badge wait">待演練</span>
+        <div class="meta"><span>👤 王教官</span><span>🗓 115/08/12 建立</span><span>🌀 颱風</span><span>📍 全臺</span></div>
+      </div>
+      <div class="foot">
+        <span class="chip">草稿・編排中</span><span class="spacer"></span>
+        <a class="btn sm" href="雛型_v1_演練操作台.html">編輯</a>
+      </div>
+    </div>
+
+    <div class="proj-card" data-status="wait">
+      <div class="thumb">
+        <svg viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice"><rect width="320" height="120" fill="#e7eef3"/><path d="M120 20 Q140 60 120 100 Q180 80 240 100 L240 20 Z" fill="#cfe0d6"/><path d="M118 22 L118 100" stroke="#1f6feb" stroke-width="3" fill="none" opacity=".6"/></svg>
+      </div>
+      <div class="body">
+        <div style="display:flex;align-items:center;gap:8px"><h3>石門水庫潰壩下游疏散演練</h3></div>
+        <span class="badge wait">待演練</span>
+        <div class="meta"><span>👤 李教官</span><span>🗓 115/08/10 建立</span><span>🌊 潰壩</span><span>📍 桃園市</span></div>
+      </div>
+      <div class="foot">
+        <span class="chip">草稿・編排中</span><span class="spacer"></span>
+        <a class="btn sm" href="雛型_v1_演練操作台.html">編輯</a>
+      </div>
+    </div>
+
+    <!-- 演練結束（唯讀） F-13 -->
+    <div class="proj-card" data-status="done">
+      <div class="thumb">
+        <svg viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice"><rect width="320" height="120" fill="#e9edf1"/><path d="M30 96 L110 36 L180 92 Z" fill="#cdd6dd"/><circle cx="108" cy="66" r="9" fill="#94a2ad"/><circle cx="150" cy="82" r="6" fill="#94a2ad"/></svg>
+      </div>
+      <div class="body">
+        <div style="display:flex;align-items:center;gap:8px"><h3>0403 花蓮地震救災圖上推演</h3></div>
+        <span class="badge done">演練結束</span>
+        <div class="meta"><span>👤 陳教官</span><span>🗓 115/04/03 執行</span><span>🔺 地震</span><span>📍 花蓮縣</span></div>
+      </div>
+      <div class="foot">
+        <span class="chip">唯讀・可重播</span><span class="spacer"></span>
+        <!-- SPEC: 複製為新專案 F-13 型別:動作 行為:複製全部圖層與編排，產生狀態=待演練的新專案 來源:教官 -->
+        <button class="btn sm">複製</button>
+        <a class="btn sm" href="雛型_v1_演練操作台.html">回顧</a>
+      </div>
+    </div>
+
+    <div class="proj-card" data-status="done">
+      <div class="thumb">
+        <svg viewBox="0 0 320 120" preserveAspectRatio="xMidYMid slice"><rect width="320" height="120" fill="#e9edf1"/><path d="M-5 55 L150 66 L330 50" stroke="#b8c2cb" stroke-width="6" fill="none"/><rect x="120" y="48" width="26" height="26" fill="#94a2ad" opacity=".7"/></svg>
+      </div>
+      <div class="body">
+        <div style="display:flex;align-items:center;gap:8px"><h3>臺北捷運車廂火災應變演練</h3></div>
+        <span class="badge done">演練結束</span>
+        <div class="meta"><span>👤 王教官</span><span>🗓 114/11/20 執行</span><span>🔥 火災</span><span>📍 臺北市</span></div>
+      </div>
+      <div class="foot">
+        <span class="chip">唯讀・可重播</span><span class="spacer"></span>
+        <button class="btn sm">複製</button>
+        <a class="btn sm" href="雛型_v1_演練操作台.html">回顧</a>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="text-align:center;color:var(--ink-2);font-size:12px;margin-top:18px">
+    ← 這是雛型導覽用假資料。<a href="index.html">回導覽頁</a>
+  </p>
+</div>
+
+<!-- ================= 規格檢視圖層 ?spec=1 ================= -->
+<div class="spec-block">
+  <h2>📋 演練專案列表 — 本畫面規格</h2>
+  <table>
+    <tr><th>元素</th><th>F 編號</th><th>型別</th><th>必填</th><th>驗證規則</th><th>資料來源</th><th>互動行為</th></tr>
+    <tr><td>演練專案卡片</td><td class="fcode">F-01</td><td>清單項</td><td>—</td><td>—</td><td>演練專案資料表</td><td>點「開啟/編輯/回顧」進操作台</td></tr>
+    <tr><td>專案名稱</td><td class="fcode">F-01</td><td>文字</td><td>是</td><td>1–60 字，同教官下不可重名</td><td>教官輸入</td><td>建立時填寫</td></tr>
+    <tr><td>狀態標籤</td><td class="fcode">F-02</td><td>列舉</td><td>是</td><td>待演練／演練中／演練結束</td><td>系統流轉</td><td>顯示對應顏色 badge</td></tr>
+    <tr><td>狀態篩選頁籤</td><td class="fcode">F-02</td><td>篩選</td><td>—</td><td>—</td><td>—</td><td>切換只顯示該狀態的卡片，含筆數</td></tr>
+    <tr><td>新增演練專案</td><td class="fcode">F-01</td><td>動作</td><td>—</td><td>—</td><td>—</td><td>建立空白專案，狀態=待演練，進操作台編排</td></tr>
+    <tr><td>複製為新專案</td><td class="fcode">F-13</td><td>動作</td><td>—</td><td>僅「演練結束」提供</td><td>—</td><td>複製圖層與編排→新專案狀態=待演練</td></tr>
+  </table>
+
+  <h2>業務規則</h2>
+  <div class="rule"><ul>
+    <li><b>狀態流轉單向</b>：待演練 →（開始演練）→ 演練中 →（結束演練）→ 演練結束；不可回退。<span class="fcode">F-02</span></li>
+    <li><b>可編輯性</b>：只有「待演練」可編輯圖層與編排；「演練中」可推進時間軸/開關圖層但不改編排；「演練結束」全唯讀。</li>
+    <li><b>複製</b>：只有「演練結束」的專案可複製；複製出的新專案狀態一律為「待演練」，可再編排。<span class="fcode">F-13</span></li>
+    <li><b>權限</b>：教官可新增/編輯/開始/結束/複製；學員只能開啟檢視（見操作台 F-12）。</li>
+  </ul></div>
+
+  <h2>例外流程</h2>
+  <div class="rule"><ul>
+    <li>某狀態頁籤無資料 → 顯示空狀態插圖與「目前沒有{狀態}的演練專案」。</li>
+    <li>學員登入 → 只顯示「開啟檢視」，不顯示新增/編輯/複製。</li>
+    <li>複製名稱衝突 → 自動加序號（如「…演練 (複本)」）。</li>
+  </ul></div>
+  <p class="spec-only-note"></p>
+</div>
+
+<!-- ================= 討論模式圖層（只放未決事項） ================= -->
+<div class="layer-toggle">
+  <button class="lt-btn notes" onclick="toggleNotes()">💬 討論模式</button>
+</div>
+<div class="notes-panel">
+  <div class="np-head">💬 今天要決定的事（本畫面）</div>
+  <div class="np-sec">
+    <h4>① 待客戶／主管決定（2 項）</h4>
+    <div class="qitem"><span class="qid">Q-03</span>演練狀態是否就這三段（待演練／演練中／演練結束）？需不需要「暫停」狀態？
+      <span class="who">▸ 決策者：客戶（作業習慣）｜雛型現況：三段</span></div>
+    <div class="qitem"><span class="qid">Q-04</span>「外部圖層上架」是在這個平台做，還是走後台的圖層管理？此處只做「套疊已上架圖層」對嗎？
+      <span class="who">▸ 決策者：PM／客戶（與後台功能邊界）</span></div>
+  </div>
+  <div class="np-sec">
+    <details class="np-collapsed"><summary>② 已定案摘要（點開）</summary>
+      <p>• 使用者＝教官(控場)＋學員(檢視)　• 每場演練＝一個專案　• 結束後唯讀＋可重播＋可複製成新演練</p>
+    </details>
+  </div>
+</div>
+
+<script src="_layers.js"></script>
+<script>
+/* 狀態篩選 */
+document.querySelectorAll('#tabs button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    var f=b.dataset.f;
+    document.querySelectorAll('#grid .proj-card').forEach(function(c){
+      c.style.display=(f==='all'||c.dataset.status===f)?'':'none';
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+/* ============================================================
+   災害模擬演練展示平台 — 雛型共用樣式（全資料夾唯一一份）
+   改樣式一律「追加」，不要另存新檔。離線可開、不依賴 CDN/字型。
+   ============================================================ */
+:root{
+  --brand:#123a5e;        /* 主色：防災深藍 */
+  --brand-2:#1f6feb;      /* 互動藍 */
+  --accent:#0f8a7e;       /* 輔助青 */
+  --danger:#d64545;       /* 災情紅 */
+  --warn:#e0a100;         /* 警示黃 */
+  --ok:#2f9e6f;           /* 進行中綠 */
+  --ink:#1c2833;          /* 主要文字 */
+  --ink-2:#5b6b7a;        /* 次要文字 */
+  --line:#d7dee6;         /* 分隔線 */
+  --bg:#eef2f6;           /* 頁面底 */
+  --panel:#ffffff;        /* 面板底 */
+  --panel-2:#f6f9fc;      /* 淺面板 */
+  --shadow:0 2px 8px rgba(18,58,94,.10);
+  --radius:8px;
+  --font: "Microsoft JhengHei","PingFang TC","Noto Sans TC","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.55}
+a{color:var(--brand-2);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3{margin:0;font-weight:700;color:var(--brand)}
+
+/* ---------- 頂列 ---------- */
+.topbar{display:flex;align-items:center;gap:14px;height:52px;padding:0 16px;
+  background:var(--brand);color:#fff;box-shadow:var(--shadow);position:relative;z-index:20}
+.topbar .logo{font-weight:700;font-size:15px;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.topbar .logo .dot{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--brand-2));display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+.topbar .sys{opacity:.8;font-size:12px;border-left:1px solid rgba(255,255,255,.25);padding-left:14px}
+.topbar .spacer{flex:1}
+.topbar .proj{display:flex;align-items:center;gap:10px;font-weight:600}
+.topbar .who{font-size:12px;opacity:.9;display:flex;align-items:center;gap:6px}
+
+/* ---------- 通用元件 ---------- */
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:6px;
+  border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;font-size:13px;font-family:inherit}
+.btn:hover{border-color:var(--brand-2);color:var(--brand-2)}
+.btn.primary{background:var(--brand-2);border-color:var(--brand-2);color:#fff}
+.btn.primary:hover{background:#1a5fd0;color:#fff}
+.btn.ghost{background:transparent;border-color:rgba(255,255,255,.4);color:#fff}
+.btn.ghost:hover{background:rgba(255,255,255,.12);color:#fff}
+.btn.sm{height:26px;padding:0 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.badge{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:11px;font-size:12px;font-weight:600}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge.wait{background:#eef1f4;color:#6b7885}   /* 待演練 */
+.badge.live{background:#e5f5ec;color:var(--ok)} /* 演練中 */
+.badge.done{background:#e9edf1;color:#455363}   /* 演練結束 */
+
+.chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:13px;
+  background:var(--panel-2);border:1px solid var(--line);font-size:12px;color:var(--ink-2)}
+.pill{font-size:11px;padding:1px 7px;border-radius:10px;background:#eaf1fb;color:var(--brand-2);font-weight:600}
+
+/* ---------- 專案列表頁 ---------- */
+.page{max-width:1180px;margin:22px auto;padding:0 18px}
+.page-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.page-head h1{font-size:20px}
+.tabs{display:flex;gap:4px;background:var(--panel);padding:4px;border-radius:8px;box-shadow:var(--shadow);width:max-content}
+.tabs button{border:0;background:transparent;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--ink-2)}
+.tabs button.on{background:var(--brand);color:#fff;font-weight:600}
+.tabs .count{font-size:11px;opacity:.7;margin-left:5px}
+
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-top:16px}
+.proj-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+.proj-card .thumb{height:120px;background:linear-gradient(135deg,#dde8f0,#eaf0f5);position:relative;border-bottom:1px solid var(--line)}
+.proj-card .thumb svg{width:100%;height:100%;display:block}
+.proj-card .body{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:8px}
+.proj-card h3{font-size:15px;color:var(--ink)}
+.proj-card .meta{font-size:12px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 12px}
+.proj-card .foot{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);background:var(--panel-2)}
+.proj-card .foot .spacer{flex:1}
+
+/* ---------- 操作台版面 ---------- */
+/* 高度扣掉頂列 52 與底部時間軸 70，時間軸才不會被擠出畫面 */
+.console{display:flex;height:calc(100vh - 52px - 70px);overflow:hidden}
+.panel{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0}
+.panel.left{width:290px}
+.panel.right{width:300px;border-right:0;border-left:1px solid var(--line)}
+.panel .phead{padding:11px 14px;border-bottom:1px solid var(--line);font-weight:700;color:var(--brand);font-size:13px;display:flex;align-items:center;gap:8px}
+.panel .pbody{overflow:auto;flex:1;padding:8px}
+
+.mapwrap{flex:1;position:relative;background:#dfe7ec;overflow:hidden}
+.mapwrap .mapsvg{position:absolute;inset:0;width:100%;height:100%}
+.map-tools{position:absolute;top:12px;left:12px;display:flex;gap:8px;z-index:5}
+.map-tools .grp{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);overflow:hidden}
+.map-tools .grp button{border:0;background:transparent;padding:7px 11px;cursor:pointer;font-family:inherit;font-size:12px;color:var(--ink-2);border-right:1px solid var(--line)}
+.map-tools .grp button:last-child{border-right:0}
+.map-tools .grp button.on{background:var(--brand);color:#fff;font-weight:600}
+.map-search{position:absolute;top:12px;right:12px;z-index:5;display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:5px}
+.map-search select,.map-search input{border:1px solid var(--line);border-radius:5px;height:28px;padding:0 8px;font-family:inherit;font-size:12px}
+.map-scale{position:absolute;bottom:14px;right:14px;z-index:5;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:4px;font-size:11px;color:var(--ink-2);padding:2px 8px}
+.map-scale .bar{display:inline-block;width:60px;height:4px;border:1px solid var(--ink-2);border-top:0;vertical-align:middle;margin-left:6px}
+
+/* 圖層項 */
+.layer-group{margin-bottom:10px;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.layer-group .lg-head{background:var(--panel-2);padding:7px 10px;font-size:12px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:7px}
+.layer-group .lg-head .tag{font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;background:#eaf1fb;color:var(--brand-2)}
+.layer-group .lg-head .tag.time{background:#fdf1d6;color:#a9760a}
+.layer-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid var(--line);font-size:13px}
+.layer-item input[type=checkbox]{width:15px;height:15px;accent-color:var(--brand-2)}
+.layer-item .name{flex:1}
+.layer-item .src{font-size:10px;color:var(--ink-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.layer-item input[type=range]{width:70px;accent-color:var(--accent)}
+.layer-item .swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.15)}
+
+/* 右側工具：繪圖 / AI */
+.tool-block{border:1px solid var(--line);border-radius:7px;margin-bottom:10px;overflow:hidden}
+.tool-block .tb-head{background:var(--panel-2);padding:8px 10px;font-weight:700;font-size:12px;color:var(--brand);display:flex;align-items:center;gap:7px}
+.tool-block .tb-body{padding:10px}
+.draw-tools{display:flex;gap:6px;flex-wrap:wrap}
+.draw-tools button{flex:1;min-width:56px;height:38px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--ink-2)}
+.draw-tools button.on{border-color:var(--brand-2);color:var(--brand-2);background:#f2f7ff;font-weight:600}
+.draw-tools button .ic{font-size:16px}
+textarea.ai{width:100%;min-height:78px;border:1px solid var(--line);border-radius:6px;padding:8px;font-family:inherit;font-size:12px;resize:vertical}
+.ai-hint{font-size:11px;color:var(--ink-2);margin:6px 0 8px}
+
+/* ---------- 時間軸（只綁 EMIC） ---------- */
+.timeline{height:70px;border-top:1px solid var(--line);background:var(--panel);display:flex;align-items:center;gap:14px;padding:0 16px;position:relative;z-index:6}
+.timeline .tl-title{font-size:12px;font-weight:700;color:var(--brand);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.timeline .tl-title .tag{font-size:10px;background:#fdf1d6;color:#a9760a;padding:1px 6px;border-radius:8px}
+.timeline .play{width:34px;height:34px;border-radius:50%;border:0;background:var(--brand-2);color:#fff;cursor:pointer;font-size:15px}
+.tl-track{flex:1;position:relative;height:32px}
+.tl-line{position:absolute;top:15px;left:0;right:0;height:3px;background:var(--line);border-radius:2px}
+.tl-fill{position:absolute;top:15px;left:0;height:3px;background:var(--danger);border-radius:2px;width:46%}
+.tl-node{position:absolute;top:8px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--danger);transform:translateX(-50%);cursor:pointer}
+.tl-node.future{border-color:var(--line)}
+.tl-node .lbl{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--ink-2);white-space:nowrap}
+.tl-cursor{position:absolute;top:2px;left:46%;width:2px;height:28px;background:var(--brand);transform:translateX(-50%)}
+.tl-time{font-size:12px;color:var(--ink);font-weight:600;white-space:nowrap;min-width:112px;text-align:right}
+
+/* ---------- 地圖標記 / 資訊卡 ---------- */
+.mk-label{font-size:11px;fill:var(--ink);font-family:var(--font);paint-order:stroke;stroke:#fff;stroke-width:3px}
+.info-card{position:absolute;z-index:7;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);width:230px;font-size:12px}
+.info-card .ic-head{padding:8px 10px;border-bottom:1px solid var(--line);font-weight:700;color:var(--danger);display:flex;align-items:center;gap:6px}
+.info-card .ic-body{padding:8px 10px;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;color:var(--ink-2)}
+.info-card .ic-body b{color:var(--ink);font-weight:600}
+
+/* ============================================================
+   圖層 A：討論模式（?notes=1 或右下角按鈕）—— 只放未決事項
+   ============================================================ */
+.layer-toggle{position:fixed;right:16px;bottom:16px;z-index:40;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.layer-toggle .lt-btn{height:34px;padding:0 13px;border-radius:18px;border:0;box-shadow:var(--shadow);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;color:#fff;background:var(--brand)}
+.layer-toggle .lt-btn.notes{background:var(--warn);color:#4a3500}
+
+.notes-panel{position:fixed;right:16px;bottom:60px;width:340px;max-height:72vh;overflow:auto;z-index:41;
+  background:var(--panel);border:1px solid var(--warn);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18);display:none}
+body.show-notes .notes-panel{display:block}
+.notes-panel .np-head{background:var(--warn);color:#4a3500;padding:10px 14px;font-weight:700;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:8px}
+.notes-panel .np-sec{padding:10px 14px;border-bottom:1px solid var(--line)}
+.notes-panel .np-sec h4{margin:0 0 8px;font-size:12px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.5px}
+.qitem{border-left:3px solid var(--warn);background:#fffdf5;padding:8px 10px;border-radius:0 6px 6px 0;margin-bottom:8px;font-size:12px}
+.qitem .qid{font-weight:700;color:#a9760a;margin-right:6px}
+.qitem.tech{border-color:var(--brand-2);background:#f5f9ff}
+.qitem.tech .qid{color:var(--brand-2)}
+.qitem .who{display:inline-block;margin-top:4px;font-size:11px;color:var(--ink-2)}
+.scenario{display:flex;gap:6px;flex-wrap:wrap}
+.scenario button{border:1px solid var(--line);background:#fff;border-radius:15px;padding:4px 11px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink-2)}
+.scenario button.on{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
+.np-collapsed{color:var(--ink-2);font-size:12px}
+.np-collapsed summary{cursor:pointer;font-weight:600;color:var(--ink);padding:4px 0}
+
+/* ============================================================
+   圖層 B：規格檢視（?spec=1）—— 給 PL/PG/設計
+   ============================================================ */
+.spec-block{display:none;max-width:1180px;margin:0 auto;padding:18px}
+body.show-spec .spec-block{display:block}
+body.show-spec .spec-hint{display:block}
+.spec-hint{display:none;background:#0d2740;color:#cfe3f5;text-align:center;padding:6px;font-size:12px}
+.spec-block h2{font-size:16px;border-left:4px solid var(--brand-2);padding-left:10px;margin:18px 0 10px}
+.spec-block table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;box-shadow:var(--shadow);border-radius:8px;overflow:hidden}
+.spec-block th,.spec-block td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+.spec-block th{background:var(--brand);color:#fff;font-weight:600;white-space:nowrap}
+.spec-block tr:nth-child(even) td{background:var(--panel-2)}
+.spec-block .rule{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;box-shadow:var(--shadow)}
+.spec-block .rule li{margin:4px 0}
+.spec-block .fcode{font-family:ui-monospace,monospace;font-size:11px;color:var(--brand-2);font-weight:700}
+
+/* body 進入 spec 模式時把操作畫面壓在下面 */
+.spec-only-note{display:none}

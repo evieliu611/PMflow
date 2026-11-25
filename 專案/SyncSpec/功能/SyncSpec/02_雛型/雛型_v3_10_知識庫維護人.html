@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SyncSpec｜知識庫維護人（v3 草稿）</title><link rel="stylesheet" href="_shared.css">
+<style>
+.pm{display:grid;grid-template-columns:90px minmax(0,1fr) 230px;gap:12px;align-items:start;padding:14px 0;border-top:1px solid var(--line)}.pm:first-of-type{border-top:0}
+@media(max-width:800px){.pm{grid-template-columns:1fr}}
+.pc{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:99px;padding:3px 6px 3px 12px;background:#fff;font-size:13px;margin:0 6px 6px 0}.pc button{border:0;background:none;color:var(--muted);font-size:15px;line-height:1;padding:0 4px}.pc button:hover{color:var(--coral)}
+.mx td,.mx th{padding:10px 12px;font-size:13px}
+</style></head>
+<body data-nav="admin" data-scope="global" data-crumb="系統管理 › 知識庫維護人">
+<script>window.NOTES=[
+ {id:'Q-51',text:'「經手」怎麼認定（專案成員即算？離開專案後還看得到嗎）？單位知識的新增權是否也只給主 PM？',who:'主管／PM'},
+ {id:'Q-52',text:'維護人由誰指定（系統管理員？各領域的負責主管？），離職或調動時怎麼交接？',who:'主管'}
+];</script>
+<script src="_data.js"></script><script src="_data_v2.js"></script><script src="_data_v3.js"></script><script src="_shared.js"></script><script>V3.boot()</script>
+<div id="page"><div id="root"></div>
+<section class="spec"><h2>本畫面規格（v3 草稿）</h2>
+<table><tr><th>元素</th><th>規則</th></tr>
+<tr><td>用途</td><td>系統管理下的設定頁：指定「領域、功能、產品、規範」四類知識的維護人（可編輯的人）。這四類所有進到系統的人都看得到，只有維護人可以編輯、核准入庫</td></tr>
+<tr><td>單位不在這裡設定</td><td>單位知識只有經手過該單位專案的人員看得到，該單位專案的主 PM 可新增與編輯；主 PM 在各專案的「專案設定」指定（主 PM、協同 PM、PL、PG）</td></tr>
+<tr><td>維護人</td><td>每類可指定多位；從系統成員清單挑選；可移除。變更會影響知識庫的編輯按鈕與待提取的顯示（待提取只給該類維護人看）</td></tr>
+<tr><td>權限一覽</td><td>列出五類知識誰看得到、誰能編輯，方便管理者對照</td></tr>
+<tr><td>誰能進這頁</td><td>系統管理員（示意：此示範不另做登入權限）</td></tr></table></section></div>
+<script>
+let ed,me;
+function draw(){const people=V3.users(),kinds=['領域','功能','產品','規範'];
+ $('#root').innerHTML=`<div class="page-head"><div><h1>知識庫維護人 <span class="chip sun xs">v3 草稿</span></h1><p>指定誰可以編輯領域、功能、產品、規範知識。這四類所有進到系統的人都看得到；單位知識的可見與編輯權限由專案成員決定。</p></div></div>
+ <div class="card" style="margin-bottom:16px"><h2>維護人設定</h2><div class="sub">每類可指定多位；變更立即影響知識庫的編輯按鈕與待提取顯示</div>
+ ${kinds.map(k=>`<div class="pm"><span class="chip ${({領域:'mint',功能:'brand',產品:'sun',規範:'coral'})[k]}">${k}</span><div>${(ed[k]||[]).map(n=>`<span class="pc">${n}<button data-rm="${k}|${n}" title="移除">×</button></span>`).join('')||'<span class="sm muted">尚未指定維護人，目前沒有人可以編輯</span>'}</div><div class="row" style="gap:6px"><select class="select" data-sel="${k}"><option value="">加入維護人…</option>${people.filter(p=>!(ed[k]||[]).includes(p)).map(p=>`<option>${p}</option>`).join('')}</select></div></div>`).join('')}
+ <div class="xs muted" style="margin-top:8px">預設值是示意（Ian 負責領域與規範、Allen 負責產品、功能由 Ian 與 Allen 維護），請團隊確認後調整。</div></div>
+ <div class="card"><h2>權限一覽</h2><div class="tbl-wrap" style="box-shadow:none"><table class="tbl mx"><thead><tr><th style="width:90px">知識</th><th>誰看得到</th><th>誰能編輯</th></tr></thead><tbody>
+ <tr><td><span class="chip violet">單位</span></td><td>經手過該單位專案的人員（專案成員）</td><td>該單位專案的主 PM（可新增、編輯）</td></tr>
+ ${kinds.map(k=>`<tr><td><span class="chip ${({領域:'mint',功能:'brand',產品:'sun',規範:'coral'})[k]}">${k}</span></td><td>所有進到系統的人</td><td>${(ed[k]||[]).join('、')||'尚未指定'}</td></tr>`).join('')}
+ </tbody></table></div></div>`;
+ $$('[data-rm]').forEach(b=>b.onclick=()=>{const [k,n]=b.dataset.rm.split('|');ed[k]=(ed[k]||[]).filter(x=>x!==n);V3.setEditors(ed);draw();toast('已移除 '+n+' 的「'+k+'」維護權限')});
+ $$('[data-sel]').forEach(s=>s.onchange=()=>{if(!s.value)return;const k=s.dataset.sel;ed[k]=(ed[k]||[]).concat(s.value);V3.setEditors(ed);toast('已指定 '+s.value+' 為「'+k+'」維護人');draw()})}
+window.pageInit=function(){ed=V3.getEditors();draw()};
+</script>
+</body></html>
